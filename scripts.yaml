@@ -347,7 +347,7 @@ retry_bedroom_radiator_target:
         value_template: '{{ command_confirmed | default(false) | bool }}'
 alexa_output_with_configured_volume:
   alias: Alexa - Output at configured volume
-  description: Temporarily applies the configured volume to the speaking Echo devices and restores their previous volume afterwards.
+  description: Applies the configured announcement volume to every target Echo, then restores the previous or scheduled volume.
   mode: queued
   max: 10
   fields:
@@ -388,16 +388,29 @@ alexa_output_with_configured_volume:
           multiline: true
   sequence:
   - variables:
-      previous_volumes: "{% set ns = namespace(values=[]) %} {% for entity_id in volume_targets %}\n  {% set ns.values = ns.values\
-        \ + [state_attr(entity_id, 'volume_level')] %}\n{% endfor %} {{ ns.values }}"
+      previous_volumes: >-
+        {% set ns = namespace(values=[]) %}
+        {% set quiet_time = today_at(states('input_datetime.echo_volume_quiet_time')) %}
+        {% set fallback_time = today_at(states('input_datetime.echo_volume_fallback_time')) %}
+        {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
+        {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
+        {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
+        {% set night_volume = (states('input_number.echo_night_volume') | float(2)) / 10 %}
+        {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
+        {% set scheduled_volume = day_volume if scheduled_day else night_volume %}
+        {% for entity_id in volume_targets %}
+          {% set current_volume = state_attr(entity_id, 'volume_level') %}
+          {% set ns.values = ns.values + [current_volume if current_volume is not none else scheduled_volume] %}
+        {% endfor %}
+        {{ ns.values }}
       configured_volume: '{{ (states(''input_number.echo_announcement_volume'') | float(3)) / 10 }}'
-  - repeat:
-      for_each: '{{ volume_targets }}'
-      sequence:
-      - if:
-        - condition: template
-          value_template: '{{ state_attr(repeat.item, ''volume_level'') is not none }}'
-        then:
+  - if:
+    - condition: template
+      value_template: "{{ output_type == 'announce' }}"
+    then:
+    - repeat:
+        for_each: '{{ volume_targets }}'
+        sequence:
         - action: media_player.volume_set
           target:
             entity_id: '{{ repeat.item }}'
@@ -431,21 +444,25 @@ alexa_output_with_configured_volume:
           continue_on_error: true
   - delay:
       seconds: 10
-  - repeat:
-      for_each: '{{ volume_targets }}'
-      sequence:
-      - variables:
-          previous_volume: '{{ previous_volumes[repeat.index - 1] | default(none) }}'
-      - if:
-        - condition: template
-          value_template: '{{ previous_volume is not none }}'
-        then:
-        - action: media_player.volume_set
-          target:
-            entity_id: '{{ repeat.item }}'
-          data:
-            volume_level: '{{ previous_volume }}'
-          continue_on_error: true
+  - if:
+    - condition: template
+      value_template: "{{ output_type == 'announce' }}"
+    then:
+    - repeat:
+        for_each: '{{ volume_targets }}'
+        sequence:
+        - variables:
+            previous_volume: '{{ previous_volumes[repeat.index - 1] | default(none) }}'
+        - if:
+          - condition: template
+            value_template: '{{ previous_volume is not none }}'
+          then:
+          - action: media_player.volume_set
+            target:
+              entity_id: '{{ repeat.item }}'
+            data:
+              volume_level: '{{ previous_volume }}'
+            continue_on_error: true
 master_dnd_override_on:
   alias: Master DND override ON
   sequence:
