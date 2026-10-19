@@ -2570,7 +2570,7 @@
         data:
           desired: 'on'
         response_variable: snom_dnd_result
-      - if: '{{ snom_dnd_result[''returncode''] == 0 and (snom_dnd_result[''stdout''] | from_json).get(''changed'', false) }}'
+      - if: '{{ snom_dnd_result[''returncode''] == 0 }}'
         then:
         - action: input_boolean.turn_on
           target:

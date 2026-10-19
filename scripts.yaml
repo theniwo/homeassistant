@@ -419,13 +419,16 @@ alexa_output_with_configured_volume:
           media_content_id: '{{ message }}'
         continue_on_error: true
     default:
-    - action: notify.alexa_media
-      data:
-        target: "{{ output_targets | default([output_target]) }}"
-        message: '{{ message }}'
-        data:
-          type: announce
-      continue_on_error: true
+    - repeat:
+        for_each: "{{ output_targets | default([output_target]) }}"
+        sequence:
+        - action: notify.alexa_media
+          data:
+            target: "{{ repeat.item }}"
+            message: '{{ message }}'
+            data:
+              type: announce
+          continue_on_error: true
   - delay:
       seconds: 10
   - repeat:
@@ -497,8 +500,7 @@ sleep_mode_now:
     response_variable: snom_dnd_result
   - if:
     - condition: template
-      value_template: '{{ snom_dnd_result[''returncode''] == 0 and (snom_dnd_result[''stdout''] | from_json).get(''changed'',
-        false) }}'
+      value_template: '{{ snom_dnd_result[''returncode''] == 0 }}'
     then:
     - action: input_boolean.turn_on
       target:
@@ -669,7 +671,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
               response_variable: snom_dnd_result
             - if:
                 - condition: template
-                  value_template: "{{ snom_dnd_result['returncode'] == 0 and (snom_dnd_result['stdout'] | from_json).get('changed', false) }}"
+                  value_template: "{{ snom_dnd_result['returncode'] == 0 }}"
               then:
                 - action: input_boolean.turn_on
                   target:
