@@ -1,0 +1,99 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+template: !include templates.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+#http:
+  # For extra security set this to only accept connections on localhost if NGINX is on the same machine
+  # Uncommenting this will mean that you can only reach Home Assistant using the proxy, not directly via IP from other clients.
+  # server_host: 127.0.0.1
+  #use_x_forwarded_for: true
+  # You must set the trusted proxy IP address so that Home Assistant will properly accept connections
+  # Set this to your NGINX machine IP, or localhost if hosted on the same machine.
+  #trusted_proxies: 172.23.0.4
+  #trusted_proxies: 192.168.1.4
+  #ip_ban_enabled: false
+
+homeassistant:
+  auth_providers:
+    - type: homeassistant
+    - type: trusted_networks
+      trusted_networks:
+        - 192.168.1.0/24
+        - 10.8.0.0/24
+# Example configuration.yaml entry for the Telegram Bot
+#telegram_bot:
+#  - platform: polling
+#    api_key: !secret telegram_bot_api_key
+#    allowed_chat_ids:
+#      - !secret telegram_bot_chat_id
+
+# Example configuration.yaml entry for the notifier
+#notify:
+#  - platform: telegram
+#    name: NOTIFIER_NAME
+#    chat_id: !secret telegram_bot_chat_id
+
+alexa:
+  smart_home:
+    locale: de-DE
+    filter:
+      include_entity_globs:
+        - light.*
+
+#alexa_media:
+  #accounts:
+    #- email: !secret amazon_username
+      #password: !secret amazon_password
+      #url: amazon.com
+
+#emulated_hue:
+  #verify_ssl: false
+  #host_ip: 192.168.1.8
+  #listen_port: 80
+  #advertise_ip: 10.0.0.10
+  #advertise_port: 8080
+  #expose_by_default: true
+  #exposed_domains:
+    #- light
+#logger:
+  #default: info
+  #logs:
+    #homeassistant.components.alexa: debug
+
+#calendar:
+  #- platform: caldav
+    #username: !secret baikal_username
+    #password: !secret baikal_password
+    #url: http://baikal.niwo.home/dav.php/calendars/niwo/default/
+    #verify_ssl: false
+    #days: 7
+    #custom_calendars:
+      #- name: "Baikal"
+        #calendar: "Agenda"
+        #search: "default"
+      #- name: "Shifts"
+        #calendar: "Agenda"
+        #search: "shift"
+
+shell_command:
+  snom_dnd_set: >-
+    python3 /config/scripts/snom_dnd_control.py --desired "{{ desired }}"
+  snom_dnd_status: >-
+    python3 /config/scripts/snom_dnd_control.py --status
+  fritzbox_tam_set: >-
+    python3 /config/scripts/fritzbox_tam_control.py --enabled "{{ enabled }}"
+
+input_text:
+  tomorrow_shift_status:
+    name: Tomorrow shift status
+    max: 255
+    initial: "Status wird aktualisiert"
+    icon: mdi:calendar-clock

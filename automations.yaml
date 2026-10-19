@@ -1,0 +1,4574 @@
+- id: '1701558603052'
+  alias: Fenster Arbeitszimmer auf
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: 62101cf63c7a4d92239cfa5f3b086c93
+    entity_id: b26faf2245e7c7f1570aeab004438d5a
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  - type: opened
+    platform: device
+    device_id: 4f24d1515f49e74f8d489d82edeab448
+    entity_id: 32802619e7e99def1dd8eb6f46832b52
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  condition:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: 4f24d1515f49e74f8d489d82edeab448
+        entity_id: 32802619e7e99def1dd8eb6f46832b52
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: 4f24d1515f49e74f8d489d82edeab448
+        entity_id: 51c0052f493d75937093b6b5adeff6f1
+        domain: sensor
+        below: 7
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: 62101cf63c7a4d92239cfa5f3b086c93
+        entity_id: b26faf2245e7c7f1570aeab004438d5a
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: 62101cf63c7a4d92239cfa5f3b086c93
+        entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
+        domain: sensor
+        below: 7
+  action:
+  - if:
+    - condition: device
+      device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: is_hvac_mode
+      hvac_mode: heat
+    then:
+    - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: set_hvac_mode
+      hvac_mode: 'off'
+  mode: single
+- id: '1701558640150'
+  initial_state: false
+  alias: Fenster Arbeitszimmer zu
+  description: ''
+  trigger:
+  - type: not_opened
+    platform: device
+    device_id: 62101cf63c7a4d92239cfa5f3b086c93
+    entity_id: b26faf2245e7c7f1570aeab004438d5a
+    domain: binary_sensor
+  - type: not_opened
+    platform: device
+    device_id: 4f24d1515f49e74f8d489d82edeab448
+    entity_id: 32802619e7e99def1dd8eb6f46832b52
+    domain: binary_sensor
+  condition:
+  - condition: and
+    conditions:
+    - type: is_not_open
+      condition: device
+      device_id: 62101cf63c7a4d92239cfa5f3b086c93
+      entity_id: b26faf2245e7c7f1570aeab004438d5a
+      domain: binary_sensor
+    - type: is_not_open
+      condition: device
+      device_id: 4f24d1515f49e74f8d489d82edeab448
+      entity_id: 32802619e7e99def1dd8eb6f46832b52
+      domain: binary_sensor
+  action:
+  - if:
+    - condition: device
+      device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: is_hvac_mode
+      hvac_mode: 'off'
+    then:
+    - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: single
+- id: '1701618029452'
+  alias: Home Leave - Heizung
+  description: ''
+  trigger:
+  - platform: zone
+    entity_id: device_tracker.samsung_s25
+    zone: zone.home
+    event: leave
+  - platform: time_pattern
+    minutes: /10
+  condition:
+  - condition: not
+    conditions:
+    - condition: zone
+      entity_id: device_tracker.samsung_s25
+      zone: zone.home
+  action:
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_office_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_bedroom_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+  mode: single
+- id: '1701618433298'
+  alias: Fenster Überall offen
+  description: ''
+  trigger:
+  - platform: zone
+    entity_id: device_tracker.samsung_s25
+    zone: zone.home
+    event: leave
+    enabled: true
+  condition:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: f9798d86f248c6fb1c8ad0050218b685
+        entity_id: f2451cebf7baa596a319d15aebd97a1b
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: f9798d86f248c6fb1c8ad0050218b685
+        entity_id: 4c7c1d4501b83c81e481002bc5d4645e
+        domain: sensor
+        below: 3
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: 62101cf63c7a4d92239cfa5f3b086c93
+        entity_id: b26faf2245e7c7f1570aeab004438d5a
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: 62101cf63c7a4d92239cfa5f3b086c93
+        entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
+        domain: sensor
+        below: 3
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: 4f24d1515f49e74f8d489d82edeab448
+        entity_id: 32802619e7e99def1dd8eb6f46832b52
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: 4f24d1515f49e74f8d489d82edeab448
+        entity_id: 51c0052f493d75937093b6b5adeff6f1
+        domain: sensor
+        below: 3
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: d6f6d019647371ae3aedca8009437a96
+        entity_id: fea938cd0420bd2d4063f38350def3ba
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: d6f6d019647371ae3aedca8009437a96
+        entity_id: 00eee2d55839bea5df8900f91a212e82
+        domain: sensor
+        below: 3
+    - type: is_open
+      condition: device
+      device_id: 273da5061f9510e795e103c425d2fbd6
+      entity_id: fb1abe95addf288a9f069055178b0f86
+      domain: binary_sensor
+  action:
+  - service: notify.mobile_app_samsung_s25
+    data:
+      message: Du hast ein Fenster aufgelassen.
+      title: Fensterwarnung!
+  - service: telegram_bot.send_message
+    data:
+      title: Fensterwarnung!
+      message: Du hast ein Fenster aufgelassen.
+  mode: single
+- id: '1702215033034'
+  alias: Fenster Wohnzimmer auf
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: f9798d86f248c6fb1c8ad0050218b685
+    entity_id: f2451cebf7baa596a319d15aebd97a1b
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  - type: opened
+    platform: device
+    device_id: 273da5061f9510e795e103c425d2fbd6
+    entity_id: fb1abe95addf288a9f069055178b0f86
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  condition:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: f9798d86f248c6fb1c8ad0050218b685
+        entity_id: f2451cebf7baa596a319d15aebd97a1b
+        domain: binary_sensor
+      - type: is_value
+        condition: device
+        device_id: f9798d86f248c6fb1c8ad0050218b685
+        entity_id: 4c7c1d4501b83c81e481002bc5d4645e
+        domain: sensor
+        below: 5
+    - type: is_open
+      condition: device
+      device_id: 273da5061f9510e795e103c425d2fbd6
+      entity_id: fb1abe95addf288a9f069055178b0f86
+      domain: binary_sensor
+  action:
+  - if:
+    - condition: device
+      device_id: b639ddd69f920446b2e72073910c4825
+      domain: climate
+      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+      type: is_hvac_mode
+      hvac_mode: heat
+    then:
+    - service: input_number.set_value
+      data_template:
+        value: '{{ state_attr(''climate.shellytrv_8cf68118891f'',''temperature'') }}'
+        entity_id: input_number.heizung_wohnzimmer
+      enabled: true
+    - action: script.turn_on
+      target:
+        entity_id: script.retry_living_room_radiator_target
+      data:
+        variables:
+          command_type: hvac_mode
+          target_hvac_mode: 'off'
+    enabled: true
+  mode: parallel
+  max: 10
+- id: '1702215128268'
+  initial_state: false
+  alias: Fenster Wohnzimmer zu
+  description: ''
+  trigger:
+  - type: not_opened
+    platform: device
+    device_id: f9798d86f248c6fb1c8ad0050218b685
+    entity_id: f2451cebf7baa596a319d15aebd97a1b
+    domain: binary_sensor
+  - type: not_opened
+    platform: device
+    device_id: 273da5061f9510e795e103c425d2fbd6
+    entity_id: fb1abe95addf288a9f069055178b0f86
+    domain: binary_sensor
+    enabled: true
+  condition:
+  - condition: and
+    conditions:
+    - type: is_not_open
+      condition: device
+      device_id: f9798d86f248c6fb1c8ad0050218b685
+      entity_id: f2451cebf7baa596a319d15aebd97a1b
+      domain: binary_sensor
+    - type: is_not_open
+      condition: device
+      device_id: 273da5061f9510e795e103c425d2fbd6
+      entity_id: fb1abe95addf288a9f069055178b0f86
+      domain: binary_sensor
+  action:
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') }}'
+  - if:
+    - condition: device
+      device_id: b639ddd69f920446b2e72073910c4825
+      domain: climate
+      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+      type: is_hvac_mode
+      hvac_mode: 'off'
+    then:
+    - device_id: b639ddd69f920446b2e72073910c4825
+      domain: climate
+      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: queued
+  max: 10
+- id: '1702546319600'
+  alias: Home Enter - Flurlicht
+  description: ''
+  trigger:
+  - platform: zone
+    entity_id: person.niwo
+    zone: zone.home
+    event: enter
+  condition:
+  - condition: sun
+    before: sunrise
+    after: sunset
+    enabled: true
+  action:
+  - type: turn_on
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  mode: single
+- id: '1704309452560'
+  alias: Home Leave - Flurlicht
+  description: ''
+  trigger:
+  - platform: zone
+    entity_id: person.niwo
+    zone: zone.home
+    event: leave
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  - type: turn_off
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - type: turn_off
+    device_id: da9ab8619b2a722f3df4f691cddc1a90
+    entity_id: dd9a376c426d69e432eb55e97bf759df
+    domain: light
+  mode: single
+- id: '1704631889561'
+  initial_state: false
+  alias: Home Enter - Heizung
+  description: ''
+  trigger:
+  - platform: zone
+    entity_id: person.niwo
+    zone: zone.home
+    event: enter
+  condition: []
+  action:
+  - if:
+    - condition: device
+      device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: is_hvac_mode
+      hvac_mode: 'off'
+    then:
+    - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+      domain: climate
+      entity_id: e5abdf495a69fef76a5976744db49081
+      type: set_hvac_mode
+      hvac_mode: heat
+  - if:
+    - condition: device
+      device_id: b639ddd69f920446b2e72073910c4825
+      domain: climate
+      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+      type: is_hvac_mode
+      hvac_mode: 'off'
+    then:
+    - device_id: b639ddd69f920446b2e72073910c4825
+      domain: climate
+      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+      type: set_hvac_mode
+      hvac_mode: heat
+  mode: single
+- id: '1704669783034'
+  alias: Heizungsverstärker an
+  description: ''
+  trigger:
+  - platform: device
+    device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: hvac_mode_changed
+    to: heat
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 455a0b2fbaf95ecaa4af6c365b7742e8
+    entity_id: 5e13c8386a84c338ac6ae8931af27ef7
+    domain: switch
+  mode: single
+- id: '1704669817060'
+  alias: Heizungsverstärker aus
+  description: ''
+  trigger:
+  - platform: device
+    device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: hvac_mode_changed
+    to: 'off'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 455a0b2fbaf95ecaa4af6c365b7742e8
+    entity_id: 5e13c8386a84c338ac6ae8931af27ef7
+    domain: switch
+  mode: single
+- id: '1705144183106'
+  alias: Fenster Schlafzimmer auf
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+  condition:
+  - condition: and
+    conditions:
+    - type: is_open
+      condition: device
+      device_id: d6f6d019647371ae3aedca8009437a96
+      entity_id: fea938cd0420bd2d4063f38350def3ba
+      domain: binary_sensor
+    - type: is_value
+      condition: device
+      device_id: d6f6d019647371ae3aedca8009437a96
+      entity_id: 00eee2d55839bea5df8900f91a212e82
+      domain: sensor
+      below: 5
+      enabled: false
+  action:
+  - if:
+    - condition: device
+      device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+      domain: climate
+      entity_id: cd63c37e0e33e0ba93a12d38699adee4
+      type: is_hvac_mode
+      hvac_mode: heat
+      enabled: false
+    then:
+    - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+      domain: climate
+      entity_id: cd63c37e0e33e0ba93a12d38699adee4
+      type: set_hvac_mode
+      hvac_mode: 'off'
+  mode: single
+- id: '1705144258186'
+  initial_state: false
+  alias: Fenster Schlafzimmer zu
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+  condition:
+  - type: is_not_open
+    condition: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+  action:
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_hvac_mode
+    hvac_mode: heat
+  mode: single
+- id: '1705245289399'
+  alias: Fenster Schlafzimmer auf - Schlechtes Wetter
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 5
+      seconds: 0
+  condition:
+  - condition: and
+    conditions:
+    - condition: and
+      conditions:
+      - type: is_open
+        condition: device
+        device_id: d6f6d019647371ae3aedca8009437a96
+        entity_id: fea938cd0420bd2d4063f38350def3ba
+        domain: binary_sensor
+        for:
+          hours: 0
+          minutes: 0
+          seconds: 0
+      - type: is_value
+        condition: device
+        device_id: d6f6d019647371ae3aedca8009437a96
+        entity_id: 00eee2d55839bea5df8900f91a212e82
+        domain: sensor
+        below: 3
+    - condition: state
+      entity_id: weather.forecast_home
+      state:
+      - exceptional
+      - hail
+      - lightning
+      - lightning-rainy
+      - pouring
+      - raining
+      - snowy
+      - snowy-rainy
+  action:
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Fenster Schlafzimmer offen bei schlechtem Wetter! 🌧
+  - service: telegram_bot.send_message
+    data:
+      message: Fenster Schlafzimmer offen bei schlechtem Wetter! 🌧
+  mode: single
+- id: '1705314142413'
+  alias: Fenster Arbeitszimmer auf - Schlechtes Wetter
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: 62101cf63c7a4d92239cfa5f3b086c93
+    entity_id: b26faf2245e7c7f1570aeab004438d5a
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  - type: opened
+    platform: device
+    device_id: 4f24d1515f49e74f8d489d82edeab448
+    entity_id: 32802619e7e99def1dd8eb6f46832b52
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+  condition:
+  - condition: and
+    conditions:
+    - condition: state
+      entity_id: weather.forecast_home
+      state:
+      - exceptional
+      - hail
+      - lightning
+      - lightning-rainy
+      - pouring
+      - raining
+      - snowy
+      - snowy-rainy
+    - condition: or
+      conditions:
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: b26faf2245e7c7f1570aeab004438d5a
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
+          domain: sensor
+          below: 3
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 32802619e7e99def1dd8eb6f46832b52
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 51c0052f493d75937093b6b5adeff6f1
+          domain: sensor
+          below: 3
+  action:
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Fenster Arbeitszimmer offen bei schlechtem Wetter! 🌧
+  - service: telegram_bot.send_message
+    data:
+      message: Fenster Arbeitszimmer offen bei schlechtem Wetter! 🌧
+  mode: single
+- id: '1705314381216'
+  alias: Fenster Schlafzimmer - Noch offen nach 30 Minuten
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 30
+      seconds: 0
+    enabled: true
+  - platform: time_pattern
+    hours: /1
+  condition:
+  - condition: and
+    conditions:
+    - type: is_open
+      condition: device
+      device_id: d6f6d019647371ae3aedca8009437a96
+      entity_id: fea938cd0420bd2d4063f38350def3ba
+      domain: binary_sensor
+    - type: is_value
+      condition: device
+      device_id: d6f6d019647371ae3aedca8009437a96
+      entity_id: 00eee2d55839bea5df8900f91a212e82
+      domain: sensor
+      below: 3
+    - condition: not
+      conditions:
+      - condition: zone
+        entity_id: device_tracker.sm_g988b
+        zone: zone.home
+      enabled: false
+  action:
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Fenster Schlafzimmer ist noch offen!
+  - service: telegram_bot.send_message
+    data:
+      message: Fenster Schlafzimmer ist noch offen!
+  mode: single
+- id: '1705420153069'
+  alias: Wetter - Fenster
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - weather.forecast_home
+    attribute: forecast
+    to:
+    - exceptional
+    - hail
+    - lightning
+    - lightning-rainy
+    - pouring
+    - raining
+    - snowy
+    - snowy-rainy
+  condition:
+  - type: is_open
+    condition: device
+    device_id: d6f6d019647371ae3aedca8009437a96
+    entity_id: fea938cd0420bd2d4063f38350def3ba
+    domain: binary_sensor
+  action:
+  - service: telegram_bot.send_message
+    data:
+      message: Fenster Test
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Fenster - Test
+  mode: single
+- id: '1705493187750'
+  alias: Motion on - Flur
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+    entity_id: f4c9945c2d7a5b09a650177f301ea21a
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+  - type: motion
+    platform: device
+    device_id: be1cdac8447b438ef3fb38b0df60c417
+    entity_id: 6cbc6d37d5b7d5b9001800536b24b382
+    domain: binary_sensor
+  condition:
+  - condition: or
+    conditions:
+    - type: is_illuminance
+      condition: device
+      device_id: be1cdac8447b438ef3fb38b0df60c417
+      entity_id: 73bbb5ed0587aa106a4fd518351c25ea
+      domain: sensor
+      below: 500
+    - type: is_illuminance
+      condition: device
+      device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+      entity_id: 87fa65f6a9245341b912a11cf330bd17
+      domain: sensor
+      below: 500
+  action:
+  - type: turn_on
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  - type: turn_on
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - type: turn_on
+    device_id: da9ab8619b2a722f3df4f691cddc1a90
+    entity_id: dd9a376c426d69e432eb55e97bf759df
+    domain: light
+  mode: single
+  initial_state: false
+- id: '1705493722233'
+  alias: Motion off - Flur
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: be1cdac8447b438ef3fb38b0df60c417
+    entity_id: 6cbc6d37d5b7d5b9001800536b24b382
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  - type: no_motion
+    platform: device
+    device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+    entity_id: f4c9945c2d7a5b09a650177f301ea21a
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  - type: turn_off
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - type: turn_off
+    device_id: da9ab8619b2a722f3df4f691cddc1a90
+    entity_id: dd9a376c426d69e432eb55e97bf759df
+    domain: light
+  mode: single
+  initial_state: false
+- id: '1705501149271'
+  alias: Motion Flur - Burglar
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+    entity_id: f4c9945c2d7a5b09a650177f301ea21a
+    domain: binary_sensor
+  - type: motion
+    platform: device
+    device_id: be1cdac8447b438ef3fb38b0df60c417
+    entity_id: 6cbc6d37d5b7d5b9001800536b24b382
+    domain: binary_sensor
+  condition:
+  - condition: not
+    conditions:
+    - condition: zone
+      entity_id: person.niwo
+      zone: zone.home
+  action:
+  - service: telegram_bot.send_message
+    data:
+      message: Einbrecher⚠️
+  mode: single
+- id: '1705517929944'
+  alias: Motion on - Flur Vorne
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: be1cdac8447b438ef3fb38b0df60c417
+    entity_id: 6cbc6d37d5b7d5b9001800536b24b382
+    domain: binary_sensor
+  condition:
+  - condition: or
+    conditions:
+    - type: is_illuminance
+      condition: device
+      device_id: be1cdac8447b438ef3fb38b0df60c417
+      entity_id: 73bbb5ed0587aa106a4fd518351c25ea
+      domain: sensor
+      below: 30
+  action:
+  - type: turn_on
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  - type: turn_on
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - service: light.turn_on
+    target:
+      area_id: esszimmer
+    data:
+      brightness: 50
+    enabled: false
+  mode: single
+  initial_state: false
+- id: '1705518573039'
+  alias: Motion on - Flur Hinten
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+    entity_id: f4c9945c2d7a5b09a650177f301ea21a
+    domain: binary_sensor
+  condition:
+  - condition: or
+    conditions:
+    - type: is_illuminance
+      condition: device
+      device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+      entity_id: 87fa65f6a9245341b912a11cf330bd17
+      domain: sensor
+      below: 30
+  action:
+  - type: turn_on
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - type: turn_on
+    device_id: da9ab8619b2a722f3df4f691cddc1a90
+    entity_id: dd9a376c426d69e432eb55e97bf759df
+    domain: light
+  mode: single
+  initial_state: false
+- id: '1705518638873'
+  alias: Motion off - Flur Vorne
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: be1cdac8447b438ef3fb38b0df60c417
+    entity_id: 6cbc6d37d5b7d5b9001800536b24b382
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 89d0146af7f26e618950ef0c8b90266b
+    entity_id: 8052d3a5c97f91dd9ffcbe7ae80e5af9
+    domain: light
+  - type: turn_off
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - service: light.turn_off
+    target:
+      area_id: esszimmer
+    data: {}
+    enabled: false
+  mode: single
+  initial_state: false
+- id: '1705518678547'
+  alias: Motion off - Flur Hinten
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: d63fbd5ad7d2710eb7f6fd503ee4ddde
+    entity_id: f4c9945c2d7a5b09a650177f301ea21a
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 38eee746d92bb634156bdeb4c7fe283a
+    entity_id: cf5dfc5562cbf90497b2562c068ffa1f
+    domain: light
+  - type: turn_off
+    device_id: da9ab8619b2a722f3df4f691cddc1a90
+    entity_id: dd9a376c426d69e432eb55e97bf759df
+    domain: light
+  mode: single
+  initial_state: false
+- id: '1705650847834'
+  alias: Motion on - Küche
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: f0cac636e641c72ca00d393566dc43da
+    entity_id: 333448d791b21495748dc0ff0a3e29eb
+    domain: binary_sensor
+  condition:
+  - condition: or
+    conditions:
+    - type: is_illuminance
+      condition: device
+      device_id: f0cac636e641c72ca00d393566dc43da
+      entity_id: bbaaaf6de107a485660e0ae00116f510
+      domain: sensor
+      below: 300
+    enabled: true
+  action:
+  - type: turn_on
+    device_id: bfcf823a17869380e6a35e9f0098e411
+    entity_id: 36ed15a94511fb245564c5210235daf6
+    domain: switch
+  mode: single
+  initial_state: false
+- id: '1705650887273'
+  alias: Motion off - Küche
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: f0cac636e641c72ca00d393566dc43da
+    entity_id: 333448d791b21495748dc0ff0a3e29eb
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 2
+      seconds: 0
+  condition:
+  - condition: or
+    conditions:
+    - condition: device
+      type: is_on
+      device_id: bfcf823a17869380e6a35e9f0098e411
+      entity_id: 36ed15a94511fb245564c5210235daf6
+      domain: switch
+    - condition: device
+      type: is_on
+      device_id: bfcf823a17869380e6a35e9f0098e411
+      entity_id: fbb5ad49b1b53a93510b111c4998f19c
+      domain: switch
+  action:
+  - type: turn_off
+    device_id: bfcf823a17869380e6a35e9f0098e411
+    entity_id: 36ed15a94511fb245564c5210235daf6
+    domain: switch
+  - type: turn_off
+    device_id: bfcf823a17869380e6a35e9f0098e411
+    entity_id: fbb5ad49b1b53a93510b111c4998f19c
+    domain: switch
+  mode: single
+  initial_state: false
+- id: '1705991600731'
+  alias: Heizung Schedule - Frühschicht
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  mode: single
+- id: '1705992217036'
+  alias: Heizung Schedule - Mittagsschicht
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  mode: single
+- id: '1705992248495'
+  alias: Heizung Schedule - Spätschicht
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  mode: single
+- id: '1705992270207'
+  alias: Heizung Schedule - Freischicht
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Freischicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Freischicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Freischicht
+  mode: single
+- id: '1705992292487'
+  alias: Heizung Schedule - Urlaub
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Urlaub
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Urlaub
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Urlaub
+  mode: single
+- id: '1705992313281'
+  alias: Heizung Schedule - None
+  initial_state: false
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: none
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: none
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: none
+  mode: single
+- id: '1706539276772'
+  alias: Calendar - Shifts - Spätschicht
+  initial_state: false
+  description: ''
+  triggers:
+  - event: start
+    offset: -0:0:0
+    entity_id: calendar.shifts
+    trigger: calendar
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Spätschicht
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: SV Spät
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Spätschicht
+  actions:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Spätschicht
+  mode: single
+- id: '1706540339066'
+  alias: Calendar - Shifts - Frühschicht
+  initial_state: false
+  description: ''
+  triggers:
+  - event: start
+    offset: -0:0:0
+    entity_id: calendar.shifts
+    trigger: calendar
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: SVV Früh
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: SV Früh
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Frühschicht
+  actions:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Frühschicht
+  mode: single
+- id: '1706540411688'
+  initial_state: false
+  alias: Calendar - Shifts - Mittagsschicht
+  description: ''
+  trigger:
+  - platform: calendar
+    event: start
+    offset: -0:0:0
+    entity_id: calendar.shifts
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Mittagsschicht
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Mittelschicht
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Mittagsschicht
+  mode: single
+- id: '1706540505191'
+  initial_state: false
+  alias: Calendar - Shifts - Freischicht
+  description: ''
+  trigger:
+  - platform: calendar
+    event: start
+    offset: -0:0:0
+    entity_id: calendar.shifts
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: Freischicht
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Freischicht
+  - device_id: b639ddd69f920446b2e72073910c4825
+    domain: climate
+    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
+    type: set_preset_mode
+    preset_mode: Freischicht
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Freischicht
+  mode: single
+- id: '1706541569247'
+  alias: Calendar - Feiertage
+  description: ''
+  trigger:
+  - platform: calendar
+    event: start
+    offset: -0:0:0
+    entity_id: calendar.deutschland_by
+    id: bavaria_state_holiday
+  - platform: calendar
+    event: start
+    offset: -0:0:0
+    entity_id: calendar.feiertage_in_deutschland
+    id: vohburg_local_holiday
+  condition:
+  - condition: not
+    conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: Freischicht
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: SV Früh
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: SVV Früh
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: Mittagsschicht
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: SV Spät
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: SVV Spät
+  - condition: template
+    value_template: "{{ trigger.id == 'bavaria_state_holiday'\n   or 'mariä himmelfahrt' in (trigger.calendar_event.summary | lower) }}"
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Urlaub
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: preset_mode
+        target_preset_mode: Urlaub
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Urlaub
+  mode: single
+- id: '1706541837864'
+  alias: Calendar - Urlaub
+  description: ''
+  trigger:
+  - platform: calendar
+    event: start
+    offset: -0:0:0
+    entity_id: calendar.urlaub
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: calendar.urlaub
+      attribute: message
+      state: Urlaub
+  action:
+  - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
+    domain: climate
+    entity_id: e5abdf495a69fef76a5976744db49081
+    type: set_preset_mode
+    preset_mode: Urlaub
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: preset_mode
+        target_preset_mode: Urlaub
+  - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
+    domain: climate
+    entity_id: cd63c37e0e33e0ba93a12d38699adee4
+    type: set_preset_mode
+    preset_mode: Urlaub
+  mode: single
+- id: '1706560109995'
+  alias: Fenster - Alle - noch auf nach 22 Uhr
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /30
+  condition:
+  - condition: and
+    conditions:
+    - condition: or
+      conditions:
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: SVV Früh
+      - condition: state
+        entity_id: calendar.shifts
+        attribute: message
+        state: Freischicht
+    - condition: or
+      conditions:
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: b26faf2245e7c7f1570aeab004438d5a
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 32802619e7e99def1dd8eb6f46832b52
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 51c0052f493d75937093b6b5adeff6f1
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: f9798d86f248c6fb1c8ad0050218b685
+          entity_id: f2451cebf7baa596a319d15aebd97a1b
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: f9798d86f248c6fb1c8ad0050218b685
+          entity_id: 4c7c1d4501b83c81e481002bc5d4645e
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: d6f6d019647371ae3aedca8009437a96
+          entity_id: fea938cd0420bd2d4063f38350def3ba
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: d6f6d019647371ae3aedca8009437a96
+          entity_id: 00eee2d55839bea5df8900f91a212e82
+          domain: sensor
+          below: 5
+      - type: is_open
+        condition: device
+        device_id: 273da5061f9510e795e103c425d2fbd6
+        entity_id: fb1abe95addf288a9f069055178b0f86
+        domain: binary_sensor
+    - condition: time
+      after: '22:00:00'
+      before: 06:00:00
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - sun
+  action:
+  - service: telegram_bot.send_message
+    data:
+      message: Ein Fenster ist noch auf
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Ein Fenster ist noch auf!
+  mode: single
+- id: '1706561040019'
+  alias: Fenster - Alle - Noch offen nach 00:00 Uhr
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /30
+  condition:
+  - condition: and
+    conditions:
+    - condition: time
+      weekday:
+      - mon
+      - tue
+      - wed
+      - thu
+      - sun
+      after: 00:00:00
+      before: 08:00:00
+    - condition: state
+      entity_id: calendar.shifts
+      attribute: message
+      state: SVV Spät
+    - condition: or
+      conditions:
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: b26faf2245e7c7f1570aeab004438d5a
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 62101cf63c7a4d92239cfa5f3b086c93
+          entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 32802619e7e99def1dd8eb6f46832b52
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: 4f24d1515f49e74f8d489d82edeab448
+          entity_id: 51c0052f493d75937093b6b5adeff6f1
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: f9798d86f248c6fb1c8ad0050218b685
+          entity_id: f2451cebf7baa596a319d15aebd97a1b
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: f9798d86f248c6fb1c8ad0050218b685
+          entity_id: 4c7c1d4501b83c81e481002bc5d4645e
+          domain: sensor
+          below: 5
+      - condition: and
+        conditions:
+        - type: is_open
+          condition: device
+          device_id: d6f6d019647371ae3aedca8009437a96
+          entity_id: fea938cd0420bd2d4063f38350def3ba
+          domain: binary_sensor
+        - type: is_value
+          condition: device
+          device_id: d6f6d019647371ae3aedca8009437a96
+          entity_id: 00eee2d55839bea5df8900f91a212e82
+          domain: sensor
+          below: 5
+      - type: is_open
+        condition: device
+        device_id: 273da5061f9510e795e103c425d2fbd6
+        entity_id: fb1abe95addf288a9f069055178b0f86
+        domain: binary_sensor
+  action:
+  - service: telegram_bot.send_message
+    data:
+      message: Ein Fenster ist noch auf
+  - service: notify.mobile_app_sm_g988b
+    data:
+      message: Ein Fenster ist noch auf!
+  mode: single
+- id: '1707976235478'
+  alias: Update
+  description: ''
+  trigger:
+  - platform: template
+    value_template: "alias: ShellyUpdate-Testscript\nsequence:\n  - service: button.press\n    data_template:\n      entity_id: >\n        {%- for shellyupdate in states.button -%}  \n          {%- if state_attr(shellyupdate.entity_id,'device_class') == 'update'  -%} \n            - {{ shellyupdate.entity_id +\"\\n\"}} \n          {%- endif -%} \n        {%- endfor -%}\nmode: single"
+  condition: []
+  action:
+  - wait_template: "alias: ShellyUpdate-Testscript\nsequence:\n  - service: button.press\n    data_template:\n      entity_id: >\n        {%- for shellyupdate in states.button -%}  \n          {%- if state_attr(shellyupdate.entity_id,'device_class') == 'update'  -%} \n            - {{ shellyupdate.entity_id +\"\\n\"}} \n          {%- endif -%} \n        {%- endfor -%}\nmode: single"
+    continue_on_timeout: true
+  mode: single
+- id: '1736347060043'
+  alias: Home Leave - All
+  description: Turns off all lights and room equipment on departure while keeping the PC and server powered.
+  trigger:
+  - platform: zone
+    entity_id: person.niwo
+    zone: zone.home
+    event: leave
+  - platform: state
+    entity_id: device_tracker.samsung_s25
+    to: not_home
+  condition: []
+  action:
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.wohnzimmer
+    data:
+      media_content_type: routine
+      media_content_id: Wohnzimmer aus
+    continue_on_error: true
+  - delay:
+      seconds: 2
+  - service: media_player.play_media
+    target:
+      entity_id: media_player.arbeitszimmer
+    data:
+      media_content_type: routine
+      media_content_id: Arbeitszimmer aus
+    continue_on_error: true
+  - service: light.turn_off
+    target:
+      entity_id: all
+    continue_on_error: true
+  - service: switch.turn_off
+    target:
+      entity_id:
+      - switch.deckenlicht_wohnzimmer_switch_0
+      - switch.deckenlicht_wohnzimmer_switch_1
+      - switch.deckenlicht_kuche_switch_0
+      - switch.deckenlicht_kuche_switch_1
+      - switch.shellyplus1pm_80646fc78098_switch_0
+      - switch.shellyplusplugs_e465b84153ec_switch_0
+      - switch.shellyplusplugs_d48afc569968_switch_0
+      - switch.shellyplus1pm_80646fc77f7c_switch_0
+      - switch.shellyplusplugs_e465b8426ca8_switch_0
+      - switch.shellyplusplugs_e465b8428700_switch_0
+      - switch.shellyplusplugs_a0a3b3e84e1c_switch_0
+      - switch.shellyplusplugs_a0a3b3e9bd44_switch_0
+      - switch.shellyplusplugs_e465b8417234_switch_0
+    continue_on_error: true
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
+      sequence:
+      - service: media_player.play_media
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          media_content_type: custom
+          media_content_id: Turn on Mückenlampe
+        continue_on_error: true
+  mode: single
+- id: '1740797479983'
+  alias: TRÅDFRI Stop Dimming
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+      command: stop_with_on_off
+      comment: Lichtschalter Groß
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: c4:d8:c8:ff:fe:1b:4a:30
+      command: stop_with_on_off
+      comment: Lichtschalter Schlafzimmer
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: d4:48:67:ff:fe:57:95:db
+      command: stop_with_on_off
+      comment: Lichtschalter Wohnzimmer
+  action:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.tradfri_stop_event
+  mode: restart
+- id: '1740830166947'
+  alias: TRÅDFRI Debug Stop Temp
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.tradfri_stop_temp
+  action:
+  - service: persistent_notification.create
+    data:
+      title: DEBUG tradfri_stop_temp
+      message: 'Neuer Status: {{ states(''input_boolean.tradfri_stop_temp'') }}'
+  mode: restart
+- id: '1740832235997'
+  alias: TRÅDFRI Debug
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+  action:
+  - service: persistent_notification.create
+    data:
+      title: ZHA Event Debug
+      message: '{{ trigger.event.data }}'
+  mode: restart
+- id: '1740839238007'
+  alias: Licht Ein/Aus - Nachttisch
+  description: ''
+  trigger:
+  - device_id: f6800626e7ce2d89f297417e20fd1fb4
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: turn_on
+  - device_id: f6800626e7ce2d89f297417e20fd1fb4
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_off
+    id: turn_off
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: turn_on
+      sequence:
+      - service: light.turn_on
+        target:
+          device_id: 4001b11c81ef15b3ad55a9cc4a938abc
+        data:
+          kelvin: 2000
+          brightness: 50
+    - conditions:
+      - condition: trigger
+        id: turn_off
+      sequence:
+      - service: light.turn_off
+        data: {}
+        target:
+          area_id: bedroom
+      - service: switch.turn_off
+        data: {}
+        target:
+          area_id: bedroom
+  mode: single
+- id: '1740839783206'
+  alias: Licht Dim Up & Down - Schlafzimmer
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: c4:d8:c8:ff:fe:1b:4a:30
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move_with_on_off'' and trigger.event.data.args[0] == 0 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: 10
+                transition: 0
+              target:
+                area_id: bedroom
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: c4:d8:c8:ff:fe:1b:4a:30
+              command: stop_with_on_off
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move'' and trigger.event.data.args[0] == 1 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: -10
+                transition: 0
+              target:
+                area_id: bedroom
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: c4:d8:c8:ff:fe:1b:4a:30
+              command: stop_with_on_off
+  mode: restart
+- id: '1740847108357'
+  alias: Licht Dim Up & Down - Wohnzimmer
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: d4:48:67:ff:fe:57:95:db
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move_with_on_off'' and trigger.event.data.args[0] == 0 }}'
+      sequence:
+      - repeat:
+          while:
+          - condition: template
+            value_template: 'true'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness_step: 10
+              transition: 0
+            target:
+              area_id: living_room
+          - delay:
+              milliseconds: 100
+      - wait_for_trigger:
+        - platform: event
+          event_type: zha_event
+          event_data:
+            device_ieee: d4:48:67:ff:fe:57:95:db
+            command: stop_with_on_off
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move'' and trigger.event.data.args[0] == 1 }}'
+      sequence:
+      - repeat:
+          while:
+          - condition: template
+            value_template: '{{ states.light | selectattr(''entity_id'', ''in'', area_entities(''living_room'')) | selectattr(''state'', ''eq'', ''on'') | selectattr(''attributes.brightness'', ''defined'') | map(attribute=''attributes.brightness'') | select(''gt'', 2) | list | count > 0 }}'
+          sequence:
+          - service: light.turn_on
+            data:
+              brightness_step: -10
+              transition: 0
+            target:
+              area_id: living_room
+          - delay:
+              milliseconds: 100
+      - service: light.turn_on
+        data:
+          brightness: 1
+        target:
+          area_id: living_room
+      - delay:
+          milliseconds: 200
+      - service: light.turn_off
+        target:
+          area_id: living_room
+        data: {}
+      - wait_for_trigger:
+        - platform: event
+          event_type: zha_event
+          event_data:
+            device_ieee: d4:48:67:ff:fe:57:95:db
+            command: stop_with_on_off
+  mode: restart
+- id: '1740847173331'
+  alias: Licht Ein/Aus - Wohnzimmer
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+      command: 'on'
+    id: turn_on
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+      command: 'off'
+    id: turn_off
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+      command: hold
+    id: hold
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: a4:6d:d4:ff:fe:4e:24:3e
+      command: press
+    id: press
+  condition:
+  - condition: template
+    value_template: "{% if trigger.id == \"turn_on\" %}\n  {{ time_diff > 1 }}\n{% else %}\n  true\n{% endif %}"
+  action:
+  - service: persistent_notification.create
+    data:
+      title: Button Debug
+      message: 'Trigger: {{ trigger.id }}, Command: {{ trigger.event.data.command }}'
+  variables:
+    last_hold_time: "{% set last_time = states('input_datetime.last_hold_time') %} {% if last_time in ['unknown', 'none'] %}\n  {{ as_datetime('1970-01-01 00:00:00') }}\n{% else %}\n  {{ last_time | as_datetime }}\n{% endif %}"
+    event_time: '{{ now() }}'
+    time_diff: '{{ (event_time - last_hold_time).total_seconds() | int(0) }}'
+  mode: single
+- id: '1740859564166'
+  alias: Licht Ein/Aus - Wohnzimmer
+  description: ''
+  trigger:
+  - device_id: 58b92be74bcc5645d60f27da7ecefe49
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: turn_on
+  - device_id: 58b92be74bcc5645d60f27da7ecefe49
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_off
+    id: turn_off
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: turn_on
+      sequence:
+      - service: switch.turn_on
+        data: {}
+        target:
+          entity_id:
+          - switch.deckenlicht_wohnzimmer_switch_0
+          - switch.deckenlicht_wohnzimmer_switch_1
+    - conditions:
+      - condition: trigger
+        id: turn_off
+      sequence:
+      - service: switch.turn_off
+        data: {}
+        target:
+          entity_id:
+          - switch.deckenlicht_wohnzimmer_switch_0
+          - switch.deckenlicht_wohnzimmer_switch_1
+  mode: single
+- id: '1741472366856'
+  alias: Licht Ein/Aus - Schlafzimmer
+  description: ''
+  trigger:
+  - device_id: f6800626e7ce2d89f297417e20fd1fb4
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: turn_on
+  - device_id: f6800626e7ce2d89f297417e20fd1fb4
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_off
+    id: turn_off
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: turn_on
+      sequence:
+      - service: light.turn_on
+        target:
+          device_id: 4001b11c81ef15b3ad55a9cc4a938abc
+        data:
+          kelvin: 2000
+          brightness: 50
+    - conditions:
+      - condition: trigger
+        id: turn_off
+      sequence:
+      - service: light.turn_off
+        data: {}
+        target:
+          area_id:
+          - bedroom
+          - flur
+      - service: switch.turn_off
+        data: {}
+        target:
+          area_id: bedroom
+  mode: single
+- id: '1761790107591'
+  alias: Licht Ein/Aus - Flur
+  description: ''
+  trigger:
+  - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+    id: turn_on
+  - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_off
+    id: turn_off
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: turn_on
+      sequence:
+      - service: light.turn_on
+        target:
+          area_id: flur
+        data: {}
+    - conditions:
+      - condition: trigger
+        id: turn_off
+      sequence:
+      - service: light.turn_off
+        target:
+          area_id: flur
+        data: {}
+  mode: single
+- id: '1761790944649'
+  alias: Licht Ein/Aus - Alle
+  description: ''
+  trigger:
+  - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: right
+    id: right
+  - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: left
+    id: left
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - left
+      sequence:
+      - service: light.turn_on
+        target:
+          area_id:
+          - flur
+          - arbeitszimmer
+          - esszimmer
+          - bedroom
+          - living_room
+        data: {}
+      - service: switch.turn_on
+        target:
+          device_id:
+          - e5167606926273f55f80720480b43e08
+          - bfcf823a17869380e6a35e9f0098e411
+          - 2b41c51801b307be0bf73d4498484c00
+          - e97d3f653e6c5d09e90a92feafbd61a4
+          - 239283e625e56a02ed879f70ef7ab1f9
+        data: {}
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 30
+          milliseconds: 0
+      - service: select.select_option
+        target:
+          entity_id: light.wled
+        data:
+          option: Weisses Licht
+    - conditions:
+      - condition: trigger
+        id:
+        - right
+      sequence:
+      - service: light.turn_off
+        target:
+          area_id:
+          - flur
+          - arbeitszimmer
+          - esszimmer
+          - bedroom
+          - living_room
+        data: {}
+      - service: switch.turn_off
+        target:
+          device_id:
+          - e5167606926273f55f80720480b43e08
+          - bfcf823a17869380e6a35e9f0098e411
+          - 2b41c51801b307be0bf73d4498484c00
+          - e97d3f653e6c5d09e90a92feafbd61a4
+          - 239283e625e56a02ed879f70ef7ab1f9
+        data: {}
+  mode: single
+- id: '1761791451254'
+  alias: Licht Dim Up & Down - Flur
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: 08:fd:52:ff:fe:4f:56:a4
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move_with_on_off'' and trigger.event.data.args[0] == 0 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: 10
+                transition: 0
+              target:
+                area_id:
+                - flur
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: 08:fd:52:ff:fe:4f:56:a4
+              command: stop_with_on_off
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''move'' and trigger.event.data.args[0] == 1 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: -10
+                transition: 0
+              target:
+                area_id: flur
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: 08:fd:52:ff:fe:4f:56:a4
+              command: stop_with_on_off
+  mode: restart
+- id: '1761791488420'
+  alias: Licht Dim Up & Down - All
+  description: ''
+  trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_ieee: 08:fd:52:ff:fe:4f:56:a4
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''arrow_left_click'' and trigger.event.data.args[0] == 0 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: 10
+                transition: 0
+              target:
+                area_id:
+                - flur
+                - arbeitszimmer
+                - esszimmer
+                - bedroom
+                - living_room
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: 08:fd:52:ff:fe:4f:56:a4
+              command: stop_with_on_off
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.event.data.command == ''arrow_right_click'' and trigger.event.data.args[0] == 1 }}'
+      sequence:
+      - parallel:
+        - repeat:
+            while:
+            - condition: template
+              value_template: 'true'
+            sequence:
+            - service: light.turn_on
+              data:
+                brightness_step: -10
+                transition: 0
+              target:
+                area_id:
+                - flur
+                - arbeitszimmer
+                - esszimmer
+                - bedroom
+                - living_room
+            - delay:
+                milliseconds: 0
+        - wait_for_trigger:
+          - platform: event
+            event_type: zha_event
+            event_data:
+              device_ieee: 08:fd:52:ff:fe:4f:56:a4
+              command: stop_with_on_off
+  mode: restart
+- id: '1784022338118'
+  alias: 'Alexa: Wecker in Sperrzeit blockieren (Universal)'
+  description: Löscht Wecker in der Sperrzeit, egal für welchen Tag sie gestellt wurden.
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.wohnzimmer_next_alarm
+    - sensor.arbeitszimmer_next_alarm
+    - sensor.badezimmer_next_alarm
+    - sensor.schlafzimmer_next_alarm
+  condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.state not in [''unavailable'', ''unknown'', ''none''] }}'
+  - condition: template
+    value_template: "{% if trigger.to_state.state is defined and trigger.to_state.state != 'unknown' %}\n  {% set alarm_dt = trigger.to_state.state | as_datetime %}\n  {% if alarm_dt is not none %}\n    {% set alarm_time = (alarm_dt | as_local).strftime('%H:%M') %}\n    {{ '22:00' <= alarm_time or alarm_time < '06:00' }}\n  {% else %}\n    false\n  {% endif %}\n{% else %}\n  false\n{% endif %}\n"
+  action:
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: custom
+      output_target: '{{ trigger.entity_id | replace(''sensor.'', ''media_player.'') | replace(''_next_alarm'', '''') }}'
+      volume_targets:
+      - '{{ trigger.entity_id | replace(''sensor.'', ''media_player.'') | replace(''_next_alarm'', '''') }}'
+      message: '{% set alarm_dt = trigger.to_state.state | as_datetime %} Lösche meinen Wecker für {{ (alarm_dt | as_local).strftime(''%H:%M'') }} Uhr
+
+        '
+  mode: parallel
+  max: 10
+- id: '1789932303759'
+  alias: Calendar - Shifts - Wecker für morgen
+  description: Sets an Alexa alarm for tomorrow's early shift, late shift, or an unmarked weekday free shift. Never sets one for weekends or explicit days off.
+  triggers:
+  - trigger: time
+    at: input_datetime.alarm_setup_time
+  actions:
+  - condition: template
+    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 5
+  - variables:
+      tomorrow_start: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+      tomorrow_end: '{{ (today_at(''00:00'') + timedelta(days=2)).isoformat() }}'
+      tomorrow_weekday: '{{ (today_at(''00:00'') + timedelta(days=1)).weekday() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ tomorrow_start }}'
+      end_date_time: '{{ tomorrow_end }}'
+    response_variable: shifts
+  - condition: template
+    value_template: '{{ tomorrow_weekday | int < 5 }}'
+  - variables:
+      shift_events: '{{ shifts.get(''calendar.shifts'', {}).get(''events'', []) }}'
+      shift_titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | join('' | '') }}'
+      early_alarm_time: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+      late_alarm_time: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+      free_alarm_time: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ ''früh'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') == ''Automatisch'' }}'
+      sequence:
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: Stell den Wecker für morgen früh um {{ early_alarm_time }} Uhr mit meinen Lieblingssongs
+    - conditions:
+      - condition: template
+        value_template: '{{ ''spät'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') == ''Automatisch'' }}'
+      sequence:
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: Stell den Wecker für morgen früh um {{ late_alarm_time }} Uhr mit meinen Lieblingssongs
+    - conditions:
+      - condition: template
+        value_template: '{{ (''freischicht'' in shift_titles or ''support standby'' in shift_titles) and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') != ''Krank'' }}'
+      sequence:
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: Stell den Wecker für morgen früh um {{ free_alarm_time }} Uhr mit meinen Lieblingssongs
+  mode: single
+- id: '1790775343784'
+  alias: Calendar - Shifts - Samsung Work mode
+  description: Controls Samsung Work mode and phone handover reminders
+  triggers:
+  - trigger: time
+    at: input_datetime.early_shift_start
+    id: early_start
+  - trigger: time
+    at: input_datetime.late_shift_start
+    id: late_start
+  - trigger: time
+    at: input_datetime.phone_handover_time
+    id: phone_handover
+  - trigger: time
+    at: input_datetime.early_shift_end
+    id: early_end
+  - trigger: time
+    at: input_datetime.late_shift_end
+    id: late_end
+  actions:
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_titles: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | join('' | '') }}'
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: early_start
+      - condition: template
+        value_template: '{{ ''frühschicht'' in shift_titles }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'off'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.work_mode_calendar
+      - delay:
+          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+      - delay: 00:00:01
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: announce
+          output_target: media_player.arbeitszimmer
+          volume_targets:
+          - media_player.arbeitszimmer
+          message: Bitte prüfe, ob das Telefon zu dir umgestellt und die Rufumleitung aktiviert ist.
+    - conditions:
+      - condition: trigger
+        id: late_start
+      - condition: template
+        value_template: '{{ ''spätschicht'' in shift_titles }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'off'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.work_mode_calendar
+    - conditions:
+      - condition: trigger
+        id: phone_handover
+      - condition: template
+        value_template: '{{ ''frühschicht'' in shift_titles }}'
+      sequence:
+      - delay:
+          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+      - delay: 00:00:01
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: announce
+          output_target: media_player.arbeitszimmer
+          volume_targets:
+          - media_player.arbeitszimmer
+          message: Bitte prüfe, ob das Telefon wieder abgegeben und korrekt umgestellt wurde.
+    - conditions:
+      - condition: trigger
+        id: phone_handover
+      - condition: template
+        value_template: '{{ ''spätschicht'' in shift_titles }}'
+      sequence:
+      - delay:
+          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+      - delay: 00:00:01
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: announce
+          output_target: media_player.arbeitszimmer
+          volume_targets:
+          - media_player.arbeitszimmer
+          message: Bitte prüfe, ob das Telefon jetzt bei dir liegt und die Rufumleitung aktiviert ist.
+    - conditions:
+      - condition: trigger
+        id: early_end
+      - condition: template
+        value_template: '{{ ''frühschicht'' in shift_titles }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'on'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.work_mode_calendar
+    - conditions:
+      - condition: trigger
+        id: late_end
+      - condition: template
+        value_template: '{{ ''spätschicht'' in shift_titles }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'on'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.work_mode_calendar
+  mode: single
+  conditions:
+  - condition: template
+    value_template: '{{ now().weekday() < 5 }}'
+- id: '1791356584531'
+  alias: Calendar - Shifts - Samsung Sleep mode
+  description: Coordinates Samsung Sleep mode and Snom DND with calendar shifts, checking actual phone DND state to avoid toggling manual choices.
+  triggers:
+  - trigger: template
+    id: early_sleep_on
+    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_time') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+  - trigger: template
+    id: late_sleep_on
+    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_time') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+  - trigger: template
+    id: early_dnd_on
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %} {% set dnd_lead = states(''input_number.dnd_lead_time'') | int(60) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
+  - trigger: template
+    id: late_dnd_on
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %} {% set dnd_lead = states(''input_number.dnd_lead_time'') | int(60) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
+  - trigger: template
+    id: early_sleep_off
+    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+  - trigger: template
+    id: late_sleep_off
+    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+  - trigger: template
+    id: free_sleep_on
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_time'') | float(8) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+  - trigger: template
+    id: free_dnd_on
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_time'') | float(8) * 60) | int %}{% set dnd = states(''input_number.dnd_lead_time'') | int(60) %}{{ now().hour * 60 + now().minute == (start - alarm - sleep - dnd) % 1440 }}'
+  - trigger: template
+    id: free_sleep_off
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm) % 1440 }}'
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else (''Spätschicht'' if trigger.id.startswith(''late_'') else ''Freischicht'') }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.freischicht_arbeitsbeginn'') }}'
+      total_lead_minutes: '{% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %}{% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %}{% set dnd_lead = states(''input_number.dnd_lead_time'') | int(60) %}{% if trigger.id.endswith(''_dnd_on'') %}{{ alarm_lead + sleep_lead + dnd_lead }}{% elif trigger.id.endswith(''_sleep_on'') %}{{ alarm_lead + sleep_lead }}{% else %}{{ alarm_lead }}{% endif %}'
+  - variables:
+      calendar_day_offset: "{% set t = states(shift_start_entity).split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{\n  1\n  if shift_minutes - (total_lead_minutes | int) < 0\n  else 0\n}}"
+      calendar_query_start: "{{\n  (now() + timedelta(days=calendar_day_offset | int))\n  .replace(hour=0, minute=0, second=0, microsecond=0)\n  .isoformat()\n}}"
+      calendar_query_end: "{{\n  (now() + timedelta(days=(calendar_day_offset | int) + 1))\n  .replace(hour=0, minute=0, second=0, microsecond=0)\n  .isoformat()\n}}"
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ calendar_query_start }}'
+      end_date_time: '{{ calendar_query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: '{% set target_day = (now() + timedelta(days=calendar_day_offset | int)).weekday() %}{% set titles = shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if target_day >= 5 %}false{% elif trigger.id.startswith(''free_'') %}{{ ''freischicht'' in titles or ''support standby'' in titles }}{% elif trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in titles or ''sv früh'' in titles or ''svv früh'' in titles }}{% else %}{{ ''spätschicht'' in titles or ''sv spät'' in titles or ''svv spät'' in titles }}{% endif %}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.snom_dnd_calendar
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'on'
+        response_variable: snom_dnd_result
+      - if: '{{ snom_dnd_result[''returncode''] == 0 and (snom_dnd_result[''stdout''] | from_json).get(''changed'', false) }}'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.snom_dnd_calendar
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      - condition: template
+        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'off'
+        response_variable: snom_dnd_result
+      - if: '{{ snom_dnd_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.fritz_box_answering_machines_calendar
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      sequence:
+      - action: shell_command.fritzbox_tam_set
+        data:
+          enabled: 'on'
+        response_variable: fritzbox_tam_result
+      - if: '{{ fritzbox_tam_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.fritz_box_answering_machines_calendar
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.fritz_box_answering_machines_calendar
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      - condition: template
+        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+      sequence:
+      - action: shell_command.fritzbox_tam_set
+        data:
+          enabled: 'off'
+        response_variable: fritzbox_tam_result
+      - if: '{{ fritzbox_tam_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.fritz_box_answering_machines_calendar
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''early_dnd_on'', ''late_dnd_on'', ''free_dnd_on''] and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_dnd
+          data:
+            command: priority_only
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.sleep_mode_calendar
+    - conditions:
+      - condition: template
+        value_template: "{{
+  trigger.id in ['early_sleep_off', 'late_sleep_off', 'free_sleep_off']
+  and (shift_found | bool)
+}}"
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'on'
+      - condition: template
+        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+      sequence:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_activity
+          data:
+            intent_action: android.intent.action.MAIN
+            intent_package_name: com.samsung.android.app.routines
+            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.sleep_mode_calendar
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
+      sequence:
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: announce
+          output_target: media_player.uberall
+          volume_targets:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+          message: Es ist Zeit, schlafen zu gehen.
+  mode: queued
+  max: 10
+- id: '1791378679790'
+  alias: Calendar - Shifts - Alexa Bluetooth disconnect
+  description: Mutes the bedroom Echo briefly while disconnecting Bluetooth before the calculated alarm.
+  triggers:
+  - trigger: time_pattern
+    seconds: /1
+    id: second_tick
+  conditions:
+  - condition: template
+    value_template: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set current_key = now().strftime(''%Y-%m-%d %H:%M:%S'') %} {% set early_today = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set late_today = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set candidates = [early_today.strftime(''%Y-%m-%d %H:%M:%S''), (early_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S''), late_today.strftime(''%Y-%m-%d %H:%M:%S''), (late_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S'')] %} {{ current_key in candidates }}'
+  actions:
+  - variables:
+      current_time_key: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  - variables:
+      early_match_today: '{{ current_time_key == early_today_key }}'
+      early_match_tomorrow: '{{ current_time_key == early_tomorrow_key }}'
+      late_match_today: '{{ current_time_key == late_today_key }}'
+      late_match_tomorrow: '{{ current_time_key == late_tomorrow_key }}'
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if (early_match_today | bool) or (early_match_tomorrow | bool) else ''Spätschicht'' }}'
+      shift_day_offset: '{{ 1 if (early_match_tomorrow | bool) or (late_match_tomorrow | bool) else 0 }}'
+      bluetooth_lead_seconds: '{{ states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) }}'
+      previous_mute_state: '{{ state_attr(''media_player.schlafzimmer'', ''is_volume_muted'') | default(false) | bool }}'
+  - variables:
+      calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
+      calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ calendar_query_start }}'
+      end_date_time: '{{ calendar_query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ shift_found | bool }}'
+  - if:
+    - condition: template
+      value_template: '{{ (bluetooth_lead_seconds | int) > 5 and not (previous_mute_state | bool) }}'
+    then:
+    - action: media_player.volume_mute
+      target:
+        entity_id: media_player.schlafzimmer
+      data:
+        is_volume_muted: true
+      continue_on_error: true
+    - delay:
+        seconds: 1
+  - action: media_player.select_source
+    target:
+      entity_id: media_player.schlafzimmer
+    data:
+      source: Local Speaker
+    continue_on_error: true
+  - if:
+    - condition: template
+      value_template: '{{ (bluetooth_lead_seconds | int) > 5 and not (previous_mute_state | bool) }}'
+    then:
+    - delay:
+        seconds: 3
+    - action: media_player.volume_mute
+      target:
+        entity_id: media_player.schlafzimmer
+      data:
+        is_volume_muted: '{{ previous_mute_state | bool }}'
+      continue_on_error: true
+  mode: single
+- id: calendar_shifts_heating_profile_today_20261007
+  alias: Calendar - Shifts - Shelly-Zeitpläne deaktivieren
+  description: Keeps native Shelly weekly schedules disabled so Home Assistant owns radiator timing.
+  triggers:
+  - trigger: time
+    at: 00:01:00
+  - trigger: homeassistant
+    event: start
+  - trigger: calendar
+    event: start
+    entity_id: calendar.shifts
+  actions:
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: preset_mode
+        target_preset_mode: none
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_office_radiator_target
+    data:
+      variables:
+        command_type: preset_mode
+        target_preset_mode: none
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_bedroom_radiator_target
+    data:
+      variables:
+        command_type: preset_mode
+        target_preset_mode: none
+  mode: single
+- id: calendar_shifts_heating_schedule_20261007
+  alias: Calendar - Shifts - Heizzeiten nach Kalender
+  initial_state: false
+  description: Controls the three Shelly TRVs from the shift calendar and GUI helpers.
+  triggers:
+  - trigger: template
+    id: early_living_morning
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: late_living_morning
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: early_office_start
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: late_office_start
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: early_living_shift_start
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: late_living_shift_start
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: early_office_end
+    value_template: '{% set t = states(''input_datetime.early_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: late_office_end
+    value_template: '{% set t = states(''input_datetime.late_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: early_living_end
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_end'').split('':'')[1] | int)) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: late_living_end
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_end'').split('':'')[1] | int)) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: early_bedroom_start
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - ((states(''input_number.sleep_time'') | float(8) * 60) | int) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: late_bedroom_start
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - ((states(''input_number.sleep_time'') | float(8) * 60) | int) - (states(''input_number.heating_preheat_time'') | int(60))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: early_bedroom_end
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: template
+    id: late_bedroom_end
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+  - trigger: time
+    at: '22:00:00'
+    id: early_living_night_off_2200
+  - trigger: time
+    at: '23:59:00'
+    id: early_living_night_off_2359
+  - trigger: time
+    at: '23:59:00'
+    id: late_living_night_off_2359
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else ''Spätschicht'' }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else ''input_datetime.late_shift_start'' }}'
+      shift_day_offset: "{% set start = states(shift_start_entity).split(':') %} {% set start_minutes = (start[0] | int) * 60 + (start[1] | int) %} {% set alarm_lead = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set sleep_lead = (states('input_number.sleep_time') | float(8) * 60) | int %} {% set bedroom_lead = states('input_number.heating_preheat_time') | int(60) %} {% set living_lead = states('input_number.heating_preheat_time') | int(60) %} {% set shift_lead = states('input_number.heating_preheat_time') | int(60) %} {% if 'living_morning' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - living_lead < 0 else 0 }}\n{% elif 'bedroom_start' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - sleep_lead - bedroom_lead < 0 else 0 }}\n{% elif 'bedroom_end' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead < 0 else 0 }}\n{% elif 'office_start' in trigger.id %}\n  {{ 1 if start_minutes - (states('input_number.heating_preheat_time') | int(0)) < 0 else\
+        \ 0 }}\n{% elif 'office_end' in trigger.id or 'living_end' in trigger.id %}\n  {{ 1 if (states('input_datetime.' ~ ('early_shift_end' if trigger.id.startswith('early_') else 'late_shift_end')).split(':')[0] | int) * 60 + (states('input_datetime.' ~ ('early_shift_end' if trigger.id.startswith('early_') else 'late_shift_end')).split(':')[1] | int) - shift_lead < 0 else 0 }}\n{% else %}\n  0\n{% endif %}"
+      query_start: "{{ (now() + timedelta(days=shift_day_offset | int))\n   .replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+      query_end: "{{ (now() + timedelta(days=(shift_day_offset | int) + 1))\n   .replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 2
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ query_start }}'
+      end_date_time: '{{ query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set accepted = ['frühschicht', 'sv früh', 'svv früh'] if shift_name == 'Frühschicht' else ['spätschicht', 'sv spät', 'svv spät'] %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) in accepted %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ shift_found | bool }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''living_morning'') or trigger.id.endswith(''living_end'') }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_07a36f_door'', ''on'') }}'
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_a4cf12f4307a_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''living_shift_start'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: 'off'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''office_start'') }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_aa9da4_door'', ''on'') }}'
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_6c3e7e_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_arbeitszimmer'') | float(21) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''office_end'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: 'off'
+    - conditions:
+      - condition: template
+        value_template: '{{ ''living_night_off'' in trigger.id }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: "{% set day = now().weekday() %} {% if trigger.id.endswith('2200') %}\n  {{ day < 4 or day == 6 }}\n{% elif trigger.id.endswith('early_living_night_off_2359') %}\n  {{ day in [4, 5] }}\n{% else %}\n  true\n{% endif %}"
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 4
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''bedroom_start'') }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_08f9e051afef_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_schlafzimmer'') | float(18) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id.endswith(''bedroom_end'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: 'off'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id == ''home_enter'' }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: preset_mode
+            target_preset_mode: none
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: preset_mode
+            target_preset_mode: none
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: preset_mode
+            target_preset_mode: none
+  mode: queued
+  max: 20
+- id: calendar_shifts_free_day_heating_20261007
+  alias: Calendar - Shifts - Freischicht-Heizplan
+  initial_state: false
+  description: Recreates the Shelly Freischicht weekly schedules in Home Assistant.
+  triggers:
+  - trigger: time
+    at: 06:00:00
+    id: living_morning_on
+  - trigger: time
+    at: 07:00:00
+    id: living_morning_off
+  - trigger: time
+    at: 06:30:00
+    id: office_morning_on
+  - trigger: time
+    at: '15:30:00'
+    id: office_afternoon_off
+  - trigger: time
+    at: '15:30:00'
+    id: living_afternoon_on
+  - trigger: time
+    at: '22:00:00'
+    id: living_evening_off_2200
+  - trigger: time
+    at: '23:59:00'
+    id: living_evening_off_2359
+  - trigger: time
+    at: '10:00:00'
+    id: living_weekend_on
+  - trigger: time
+    at: '11:00:00'
+    id: office_weekend_on
+  - trigger: time
+    at: '12:00:00'
+    id: office_weekend_off
+  - trigger: time
+    at: 07:00:00
+    id: bedroom_morning_off
+  - trigger: time
+    at: '11:00:00'
+    id: bedroom_weekend_off
+  - trigger: time
+    at: '14:00:00'
+    id: bedroom_afternoon_on
+  - trigger: time
+    at: '15:00:00'
+    id: bedroom_afternoon_off
+  - trigger: time
+    at: '21:30:00'
+    id: bedroom_night_on_weekdays
+  - trigger: time
+    at: '23:59:00'
+    id: bedroom_night_on_weekend
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 2
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_titles: "{{ shift_calendar.get('calendar.shifts', {}).get('events', [])\n   | map(attribute='summary') | map('lower') | list }}"
+      has_work_shift: "{{ shift_titles | select('search', '(früh|spät|mittel|mittag|schicht)') | list\n   | reject('search', 'frei') | list | length > 0 }}"
+  - variables:
+      has_free_day_event: '{{ shift_titles | select(''search'', ''(4tw-frei|urlaub)'') | list | length > 0 }}'
+  - condition: template
+    value_template: '{% set fixed_weekday_ids = [''living_morning_on'', ''living_morning_off'', ''office_morning_on'', ''office_afternoon_off'', ''living_afternoon_on'', ''living_evening_off_2200''] %} {{ trigger.id not in fixed_weekday_ids or has_free_day_event | bool }}'
+  - condition: template
+    value_template: '{{ not (has_work_shift | bool) }}'
+  - condition: template
+    value_template: "{% set day = now().weekday() %} {% if trigger.id in ['living_morning_on', 'living_morning_off', 'office_morning_on', 'office_afternoon_off', 'living_afternoon_on', 'bedroom_morning_off'] %}\n  {{ day < 5 }}\n{% elif trigger.id in ['living_evening_off_2200', 'bedroom_night_on_weekdays'] %}\n  {{ day < 4 or day == 6 }}\n{% elif trigger.id in ['living_evening_off_2359', 'bedroom_night_on_weekend'] %}\n  {{ day in [4, 5] }}\n{% elif trigger.id in ['living_weekend_on', 'office_weekend_on', 'office_weekend_off', 'bedroom_weekend_off'] %}\n  {{ day >= 5 }}\n{% else %}\n  true\n{% endif %}"
+  - condition: state
+    entity_id: person.niwo
+    state: home
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''living_morning_on'', ''living_afternoon_on'', ''living_weekend_on''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 21
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''living_morning_off'', ''living_evening_off_2200'', ''living_evening_off_2359''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 4
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''office_morning_on'', ''office_weekend_on''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 21
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''office_afternoon_off'', ''office_weekend_off''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 4
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''bedroom_afternoon_on''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 20
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''bedroom_morning_off'', ''bedroom_weekend_off'', ''bedroom_afternoon_off''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 4
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''bedroom_night_on_weekdays''] }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 18
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id == ''bedroom_night_on_weekend'' }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: 18
+  mode: queued
+  max: 10
+- id: calendar_shifts_heating_return_sync_20261007
+  alias: Calendar - Shifts - Heizplan bei Rückkehr
+  description: Restores the current shift or free-day heating state after arriving home.
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+  - trigger: zone
+    entity_id: person.niwo
+    zone: zone.home
+    event: enter
+  - trigger: template
+    id: homeoffice_living_preheat
+    value_template: "{{ now().hour * 60 + now().minute\n   == 480 - (states('input_number.heating_preheat_time') | int(60)) }}"
+  - trigger: template
+    id: sick_living_preheat
+    value_template: "{% set minute = now().hour * 60 + now().minute %} {% set alarm_lead = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set preheat = states('input_number.heating_preheat_time') | int(60) %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {{ is_state('input_select.arbeitsmodus', 'Krank') and minute in [\n  (early_start - alarm_lead - preheat) % 1440,\n  (late_start - alarm_lead - preheat) % 1440,\n  (free_start - alarm_lead - preheat) % 1440\n] }}"
+  - trigger: template
+    id: homeoffice_office_preheat
+    value_template: "{{ now().hour * 60 + now().minute\n   == 480 - (states('input_number.heating_preheat_time') | int(60)) }}"
+  - trigger: template
+    id: homeoffice_evening_preheat
+    value_template: "{{ now().hour * 60 + now().minute\n   == 1080 - (states('input_number.heating_preheat_time') | int(60)) }}"
+  - trigger: time
+    at: 08:00:00
+    id: homeoffice_start
+  - trigger: time
+    at: '18:00:00'
+    id: homeoffice_end
+  - trigger: time
+    at: 00:01:00
+    id: daily_schedule_refresh
+  - trigger: state
+    entity_id:
+    - input_boolean.sleep_mode_calendar
+    - input_number.heizung_wohnzimmer
+    - input_number.heizung_arbeitszimmer
+    - input_number.heizung_schlafzimmer
+    - input_number.heating_preheat_time
+    - input_number.heating_preheat_time
+    - input_number.heating_preheat_time
+    - input_number.heating_preheat_time
+    - input_number.sleep_time
+    - input_number.alarm_before_shift
+    - input_select.arbeitsmodus
+    - input_number.krank_offset
+    - input_number.heizung_mindesttemperatur
+    - input_number.heizungs_cooldown
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_07a36f_door
+    id: window_close_living
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_a4cf12f4307a_door
+    id: window_close_balcony
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_aa9da4_door
+    id: window_close_office
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_6c3e7e_door
+    id: window_close_office_large
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_08f9e051afef_door
+    id: window_close_bedroom
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 2
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: shift_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.deutschland_by
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: holiday_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.feiertage_in_deutschland
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: regional_holiday_calendar
+  - variables:
+      shift_titles: "{{ shift_calendar.get('calendar.shifts', {}).get('events', [])\n   | map(attribute='summary') | map('lower') | map('trim') | list }}"
+      early_shift_found: "{% set ns = namespace(found=false) %} {% for title in shift_titles %}\n  {% if title in ['frühschicht', 'sv früh', 'svv früh'] %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      late_shift_found: "{% set ns = namespace(found=false) %} {% for title in shift_titles %}\n  {% if title in ['spätschicht', 'sv spät', 'svv spät'] %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      free_home_day_found: '{% set ns = namespace(found=false) %}{% for title in shift_titles %}{% if title in [''4tw-frei'', ''urlaub''] %}{% set ns.found = true %}{% endif %}{% endfor %}{{ ns.found }}'
+      current_minute: '{{ now().hour * 60 + now().minute }}'
+      current_weekday: '{{ now().weekday() }}'
+      shift_start_minutes: '{% set entity = ''input_datetime.early_shift_start'' if early_shift_found | bool else ''input_datetime.late_shift_start'' %} {% set value = states(entity).split('':'') %} {{ (value[0] | int) * 60 + (value[1] | int) }}'
+      shift_end_minutes: '{% set entity = ''input_datetime.early_shift_end'' if early_shift_found | bool else ''input_datetime.late_shift_end'' %} {% set value = states(entity).split('':'') %} {{ (value[0] | int) * 60 + (value[1] | int) }}'
+      shift_lead_minutes: '{{ states(''input_number.heating_preheat_time'') | int(60) }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
+      bedroom_lead_minutes: '{{ states(''input_number.heating_preheat_time'') | int(60) }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
+      living_lead_minutes: '{{ states(''input_number.heating_preheat_time'') | int(60) }}'
+      alarm_minutes: '{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}'
+      sleep_on_minutes: '{{ (alarm_minutes | int) - (sleep_lead_minutes | int) }}'
+      morning_living_minutes: '{{ (alarm_minutes | int) - (living_lead_minutes | int) }}'
+      free_shift_event_found: '{% set ns = namespace(found=false) %}{% for title in shift_titles %}{% if ''freischicht'' in title or ''support standby'' in title %}{% set ns.found = true %}{% endif %}{% endfor %}{{ ns.found }}'
+      mode_is_sick: '{{ is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+      mode_is_free_shift: '{{ is_state(''input_select.arbeitsmodus'', ''Freischicht'') }}'
+      sick_offset: '{{ states(''input_number.krank_offset'') | float(2) if mode_is_sick | bool else 0 }}'
+      minimum_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+      weekday: '{{ now().weekday() < 5 }}'
+      holiday_found: '{% set bavaria = holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) %}{% set regional = regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list %}{{ bavaria | length > 0 or regional | length > 0 }}'
+      shift_work_active: '{{ (early_shift_found | bool or late_shift_found | bool) and not (mode_is_sick | bool) and not (mode_is_free_shift | bool) and (weekday | bool) }}'
+      free_shift_active: '{{ (weekday | bool) and not (free_home_day_found | bool) and not (mode_is_sick | bool) and (mode_is_free_shift | bool or free_shift_event_found | bool or ((shift_titles | length == 0) and not (holiday_found | bool))) }}'
+      free_day_active: '{{ (free_home_day_found | bool) or not (weekday | bool) or ((holiday_found | bool) and not (early_shift_found | bool or late_shift_found | bool or free_shift_event_found | bool)) or (mode_is_sick | bool) or not (shift_work_active | bool) and not (free_shift_active | bool) }}'
+      free_shift_start_minutes: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{{ (t[0] | int) * 60 + (t[1] | int) }}'
+      shift_duration_minutes: '{{ (shift_end_minutes | int) - (shift_start_minutes | int) }}'
+      free_shift_end_minutes: '{{ (free_shift_start_minutes | int) + (shift_duration_minutes | int) }}'
+      schedule_start_minutes: '{{ shift_start_minutes | int if shift_work_active | bool else free_shift_start_minutes | int }}'
+      schedule_alarm_minutes: '{{ (schedule_start_minutes | int) - (alarm_lead_minutes | int) }}'
+      schedule_sleep_on_minutes: '{{ (schedule_alarm_minutes | int) - (sleep_lead_minutes | int) }}'
+      living_preheat_start: '{{ (schedule_alarm_minutes | int) - (living_lead_minutes | int) }}'
+      sick_start_minutes: '{{ shift_start_minutes | int if early_shift_found | bool or late_shift_found | bool else free_shift_start_minutes | int }}'
+      sick_wake_minutes: '{{ (sick_start_minutes | int) - (alarm_lead_minutes | int) }}'
+      sick_living_preheat_start: '{{ (sick_wake_minutes | int) - (living_lead_minutes | int) }}'
+      cooldown_minutes: '{{ states(''input_number.heizungs_cooldown'') | int(30) }}'
+      free_office_start: '{{ (free_shift_start_minutes | int) - (shift_lead_minutes | int) }}'
+      free_office_end: '{{ (free_shift_end_minutes | int) - (cooldown_minutes | int) }}'
+      home_day_start_minutes: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %}{{ (t[0] | int) * 60 + (t[1] | int) }}'
+      should_heat_living: "{% set minute = current_minute | int %} {% set day_start = (home_day_start_minutes | int) - (living_lead_minutes | int) %} {% set free_morning_start = (free_shift_start_minutes | int) - (living_lead_minutes | int) %} {% set evening_start = ((shift_end_minutes | int) if shift_work_active | bool else (free_shift_end_minutes | int)) - (shift_lead_minutes | int) %} {% if mode_is_sick | bool %}\n  {{ minute >= day_start }}\n{% elif is_state('input_boolean.sleep_mode_calendar', 'on') %}\n  false\n{% elif shift_work_active | bool %}\n  {{ (minute >= (living_preheat_start | int) and minute < (shift_start_minutes | int)) or (minute >= evening_start) }}\n{% elif free_shift_active | bool %}\n  {{ (minute >= free_morning_start and minute < (free_shift_start_minutes | int)) or (minute >= evening_start) }}\n{% elif free_day_active | bool %}\n  {{ minute >= day_start }}\n{% else %}\n  false\n{% endif %}"
+      should_heat_office: '{% set minute = current_minute | int %}{% set shift_preheat = (shift_start_minutes | int) - (shift_lead_minutes | int) %}{% set shift_cooldown = (shift_end_minutes | int) - (cooldown_minutes | int) %}{% set day_start = (home_day_start_minutes | int) - (shift_lead_minutes | int) %}{% if is_state(''input_boolean.sleep_mode_calendar'', ''on'') %}false{% elif shift_work_active | bool %}{{ minute >= shift_preheat and minute < shift_cooldown }}{% elif free_shift_active | bool %}{{ minute >= (free_office_start | int) and minute < (free_office_end | int) }}{% elif free_day_active | bool %}{{ minute >= day_start }}{% else %}false{% endif %}'
+      bedroom_target: '{% set minute = current_minute | int %}{% set minimum = minimum_temperature | float(4) %}{% set target = [minimum_temperature | float(4), (states(''input_number.heizung_schlafzimmer'') | float(18)) + (sick_offset | float(0))] | max %}{% set preheat_start = ((schedule_sleep_on_minutes | int) - (bedroom_lead_minutes | int)) % 1440 %}{% set alarm_minute = schedule_alarm_minutes | int %}{% if is_state(''input_boolean.sleep_mode_calendar'', ''on'') %}{{ target }}{% elif (shift_work_active | bool or (free_shift_active | bool and (free_shift_event_found | bool or mode_is_free_shift | bool))) and not (mode_is_sick | bool) and ((preheat_start <= minute < alarm_minute) if preheat_start < alarm_minute else (minute >= preheat_start or minute < alarm_minute)) %}{{ target }}{% else %}{{ minimum }}{% endif %}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ should_heat_living | bool }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_07a36f_door'', ''on'') }}'
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_a4cf12f4307a_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.heizung_wohnzimmer'') | float(22) + (sick_offset | float(0))] | max }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ should_heat_office | bool }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_aa9da4_door'', ''on'') }}'
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_6c3e7e_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.heizung_arbeitszimmer'') | float(21) + (sick_offset | float(0))] | max }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ bedroom_target | float(4) > (minimum_temperature | float(4)) }}'
+      - condition: state
+        entity_id: person.niwo
+        state: home
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_08f9e051afef_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ bedroom_target | float(minimum_temperature | float(4)) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ not (should_heat_living | bool)\n   or is_state('binary_sensor.shellydw2_07a36f_door', 'on')\n   or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_hvac_mode: 'off'
+            target_temperature: '{{ minimum_temperature | float(4) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ not (should_heat_office | bool)\n   or is_state('binary_sensor.shellydw2_aa9da4_door', 'on')\n   or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_hvac_mode: 'off'
+            target_temperature: '{{ minimum_temperature | float(4) }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ bedroom_target | float(4) <= (minimum_temperature | float(4)) or is_state(''binary_sensor.shellydw2_08f9e051afef_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_hvac_mode: 'off'
+            target_temperature: '{{ minimum_temperature | float(4) }}'
+  mode: queued
+  max: 20
+- id: calendar_shifts_pill_reminder_20261008
+  alias: Calendar - Shifts - Pill reminder
+  description: Announces a pill reminder before a scheduled work shift.
+  triggers:
+  - trigger: template
+    id: early_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = states(''input_number.pill_morning_lead_time'') | int(15) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
+  - trigger: template
+    id: late_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = states(''input_number.pill_morning_lead_time'') | int(15) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_pill_reminder'' else ''Spätschicht'' }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
+      pill_lead_minutes: '{{ states(''input_number.pill_morning_lead_time'') | int(15) }}'
+  - variables:
+      calendar_day_offset: '{% set shift_start = states(shift_start_entity).split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {{ 1 if shift_minutes - (pill_lead_minutes | int) < 0 else 0 }}'
+  - condition: template
+    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
+  - variables:
+      calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).isoformat() }}'
+      calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ calendar_query_start }}'
+      end_date_time: '{{ calendar_query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ shift_found | bool }}'
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: "{% if pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Schicht beginnt jetzt!\n{% else %}\nDenk daran, deine Tabletten einzunehmen. Deine {{ shift_name }} beginnt in\n{{ pill_lead_minutes }} Minuten.\n{% endif %}"
+- id: calendar_shifts_bedtime_pill_reminder_20261008
+  alias: Calendar - Shifts - Bedtime pill reminder
+  description: Announces a pill reminder before calculated bedtime on scheduled work-shift days.
+  triggers:
+  - trigger: template
+    id: early_bedtime_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set pill_lead_minutes = states(''input_number.pill_bedtime_lead_time'') | int(30) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
+  - trigger: template
+    id: late_bedtime_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set pill_lead_minutes = states(''input_number.pill_bedtime_lead_time'') | int(30) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_bedtime_pill_reminder'' else ''Spätschicht'' }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_bedtime_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
+      pill_lead_minutes: '{{ states(''input_number.pill_bedtime_lead_time'') | int(30) }}'
+  - variables:
+      calendar_day_offset: '{% set shift_start = states(shift_start_entity).split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {{ 1 if shift_minutes - (alarm_lead_minutes | int) - (sleep_lead_minutes | int) - (pill_lead_minutes | int) < 0 else 0 }}'
+  - condition: template
+    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
+  - variables:
+      calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).isoformat() }}'
+      calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ calendar_query_start }}'
+      end_date_time: '{{ calendar_query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ shift_found | bool }}'
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: "{% if pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Es ist jetzt Zeit, schlafen zu gehen.\n{% else %}\n  Denk daran, deine Tabletten einzunehmen. In {{ pill_lead_minutes }} Minuten ist Zubettgehzeit.\n{% endif %}"
+- id: calendar_shifts_master_dnd_override
+  alias: Calendar - Shifts - Master DND override
+  description: Manually enables or disables Snom DND, both FRITZ!Box answering machines, Samsung Android DND, and GNOME DND without changing Samsung Sleep mode.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.master_dnd_override
+    to: 'on'
+    id: enable
+  - trigger: state
+    entity_id: input_boolean.master_dnd_override
+    to: 'off'
+    id: disable
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''enable'', ''startup''] and is_state(''input_boolean.master_dnd_override'', ''on'') }}'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'on'
+        response_variable: snom_master_result
+      - if:
+          condition: template
+          value_template: '{{ snom_master_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+      - action: shell_command.fritzbox_tam_set
+        data:
+          enabled: 'on'
+        response_variable: fritzbox_master_result
+      - if:
+          condition: template
+          value_template: '{{ fritzbox_master_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.fritz_box_answering_machines_calendar
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_dnd
+          data:
+            command: priority_only
+        continue_on_error: true
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id == ''disable'' }}'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'off'
+        response_variable: snom_master_result
+      - if:
+          condition: template
+          value_template: '{{ snom_master_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+      - action: shell_command.fritzbox_tam_set
+        data:
+          enabled: 'off'
+        response_variable: fritzbox_master_result
+      - if:
+          condition: template
+          value_template: '{{ fritzbox_master_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.fritz_box_answering_machines_calendar
+      - action: notify.mobile_app_samsung_s25
+        data:
+          message: command_dnd
+          data:
+            command: false
+        continue_on_error: true
+  mode: single
+- id: calendar_shifts_wind_down_reminder
+  alias: Calendar - Shifts - Wind down reminder
+  description: Announces the configured wind-down lead time before calculated bedtime on scheduled weekdays.
+  triggers:
+  - trigger: template
+    id: early_wind_down
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
+  - trigger: template
+    id: late_wind_down
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_wind_down'' else ''Spätschicht'' }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_wind_down'' else ''input_datetime.late_shift_start'' }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
+      wind_down_lead_hours: '{{ states(''input_number.wind_down_lead_time'') | float(2) }}'
+      wind_down_lead_minutes: '{{ (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int }}'
+  - variables:
+      calendar_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ 1 if shift_minutes - (alarm_lead_minutes | int) - (sleep_lead_minutes | int) - (wind_down_lead_minutes | int) < 0 else 0 }}'
+  - variables:
+      shift_day_weekday: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() }}'
+  - variables:
+      calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).isoformat() }}'
+      calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ calendar_query_start }}'
+      end_date_time: '{{ calendar_query_end }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ shift_day_weekday | int < 5 }}'
+  - condition: template
+    value_template: '{{ shift_found | bool }}'
+  - if:
+    - condition: template
+      value_template: '{{ is_state(media_player.nils_s_fire_tv, playing) or is_state(media_player.fire_tv_wohnzimmer_alt, playing) }}'
+    then:
+    - action: media_player.media_pause
+      target:
+        entity_id: "{{ states.media_player | selectattr(entity_id, in, [media_player.nils_s_fire_tv, media_player.fire_tv_wohnzimmer_alt])\n   | selectattr(state, eq, playing) | map(attribute=entity_id) | list }}"
+      continue_on_error: true
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: "{% set hours = wind_down_lead_hours | float %} {% if hours == 0 %}\n  Es ist jetzt Schlafenszeit. Bitte beende Arbeit und Nebentätigkeiten und fahr langsam herunter.\n{% else %}\n  {% if hours == hours | int %}In {{ hours | int }}{% else %}In {{ hours | string | replace('.', ',') }}{% endif %} Stunden ist Schlafenszeit. Bitte beende jetzt Arbeit und Nebentätigkeiten und fahr langsam herunter.\n{% endif %}"
+  mode: single
+- id: calendar_shifts_shift_start_announcement
+  alias: Calendar - Shifts - Schichtbeginn-Ansage
+  description: Announces five minutes before a scheduled early or late shift on all Echo devices.
+  triggers:
+  - trigger: template
+    id: early_shift_start_announcement
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start_minutes - 5) % 1440 }}'
+  - trigger: template
+    id: late_shift_start_announcement
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start_minutes - 5) % 1440 }}'
+  actions:
+  - variables:
+      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_shift_start_announcement'' else ''Spätschicht'' }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: shift_calendar
+  - variables:
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower %}\n  {% if (trigger.id == 'early_shift_start_announcement' and 'früh' in title)\n     or (trigger.id == 'late_shift_start_announcement' and 'spät' in title) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+  - condition: template
+    value_template: '{{ now().weekday() < 5 and shift_found | bool }}'
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: In fünf Minuten beginnt deine {{ shift_name }}.
+  mode: single
+- id: calendar_shifts_echo_clock_display
+  alias: Calendar - Shifts - Echo display and bedroom wake lights
+  description: Shows the bedroom Echo clock and turns on the bedside and standing lamps during the calculated wake window for shifts and eligible free weekdays.
+  triggers:
+  - trigger: template
+    id: early_wake
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+  - trigger: template
+    id: late_wake
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+  - trigger: template
+    id: free_wake
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+  - trigger: template
+    id: early_bedtime
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+  - trigger: template
+    id: late_bedtime
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+  - trigger: template
+    id: free_bedtime
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+  actions:
+  - variables:
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.freischicht_arbeitsbeginn'') }}'
+      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ 1 if trigger.id.endswith(''_bedtime'') and start - alarm - sleep < 0 else 0 }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
+    response_variable: shift_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.deutschland_by
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
+    response_variable: holiday_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.feiertage_in_deutschland
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
+    response_variable: regional_holiday_calendar
+  - variables:
+      shift_events: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) }}'
+      holiday_events: '{{ holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) }}'
+      regional_holiday_events: '{{ regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list }}'
+      titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
+      work_shift_found: '{% set event_titles = shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in event_titles or ''sv früh'' in event_titles or ''svv früh'' in event_titles }}{% elif trigger.id.startswith(''late_'') %}{{ ''spätschicht'' in event_titles or ''sv spät'' in event_titles or ''svv spät'' in event_titles }}{% else %}{{ (''freischicht'' in event_titles or ''support standby'' in event_titles) and ''4tw-frei'' not in event_titles and ''urlaub'' not in event_titles }}{% endif %}'
+  - condition: template
+    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and (not is_state(''input_select.arbeitsmodus'', ''Krank'') or trigger.id.endswith(''_bedtime'')) }}'
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.schlafzimmer
+    data:
+      media_content_type: custom
+      media_content_id: '{{ ''show clock'' if trigger.id.endswith(''_wake'') else ''turn off display'' }}'
+    continue_on_error: true
+  - if:
+    - condition: template
+      value_template: '{{ trigger.id.endswith(''_wake'') }}'
+    then:
+    - action: light.turn_on
+      target:
+        entity_id:
+        - light.nachttischlampe_licht
+        - light.stehlampe_schlafzimmer_licht
+      continue_on_error: true
+  mode: single
+- id: calendar_shifts_echo_volume_schedule
+  alias: Calendar - Shifts - Echo volume schedule
+  description: Lowers all Echo volumes at 22:00, raises them when the bedroom Alexa alarm rings, and uses noon when no alarm is scheduled for today.
+  triggers:
+  - trigger: time
+    id: quiet_22
+    at: input_datetime.echo_volume_quiet_time
+  - trigger: time
+    id: alexa_alarm
+    at: sensor.schlafzimmer_next_alarm
+  - trigger: time
+    id: fallback_noon
+    at: input_datetime.echo_volume_fallback_time
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: quiet_22
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: '{{ (states(''input_number.echo_night_volume'') | float(2)) / 10 }}'
+    - conditions:
+      - condition: trigger
+        id: alexa_alarm
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+    - conditions:
+      - condition: trigger
+        id: fallback_noon
+      - condition: template
+        value_template: '{% set next_alarm = states(''sensor.schlafzimmer_next_alarm'') | as_datetime(default=none) %} {{ next_alarm is none or next_alarm.date() != now().date() }}'
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+  mode: single
+- id: calendar_shifts_freischicht_dynamic_heating
+  alias: Calendar - Shifts - Freischicht-Heizzeiten
+  initial_state: false
+  description: Derives weekday free-shift heating times from the GUI work-start helper, duration derived from the regular shift helpers, and shared preheat settings.
+  triggers:
+  - trigger: template
+    id: free_living_morning_on
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set preheat = states(''input_number.heating_preheat_time'') | int(60) %} {{ now().hour * 60 + now().minute == (start - alarm - preheat) % 1440 }}'
+  - trigger: template
+    id: free_living_work_start
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: free_office_start
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = states(''input_number.heating_preheat_time'') | int(60) %} {{ now().hour * 60 + now().minute == (start - preheat) % 1440 }}'
+  - trigger: template
+    id: free_office_end
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - (states(''input_number.heizungs_cooldown'') | int(30))) % 1440 }}'
+  - trigger: template
+    id: free_living_return_on
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = states(''input_number.heating_preheat_time'') | int(60) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - preheat) % 1440 }}'
+  - trigger: template
+    id: free_living_night_off
+    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+  actions:
+  - variables:
+      event_day_offset: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ 0 }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=event_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(event_day_offset | int) + 1)).isoformat() }}'
+    response_variable: shift_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.deutschland_by
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=event_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(event_day_offset | int) + 1)).isoformat() }}'
+    response_variable: holiday_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.feiertage_in_deutschland
+    data:
+      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=event_day_offset | int)).isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(event_day_offset | int) + 1)).isoformat() }}'
+    response_variable: regional_holiday_calendar
+  - variables:
+      event_titles: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | list }}'
+      has_scheduled_shift: '{{ event_titles | select(''search'', ''(früh|spät|mittel|mittag|schicht)'') | list | length > 0 }}'
+      has_calendar_free_day: '{{ event_titles | select(''search'', ''(4tw-frei|urlaub)'') | list | length > 0 }}'
+      has_holiday: '{{ holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) | length > 0 }}'
+      has_local_bavarian_holiday: '{{ regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list | length > 0 }}'
+  - condition: template
+    value_template: '{{ (today_at(''00:00'') + timedelta(days=event_day_offset | int)).weekday() < 5 and not (has_scheduled_shift | bool) and not (has_calendar_free_day | bool) and not (has_holiday | bool) and not (has_local_bavarian_holiday | bool) }}'
+  - condition: state
+    entity_id: person.niwo
+    state: home
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: free_living_morning_on
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_07a36f_door'', ''on'') and not is_state(''binary_sensor.shellydw2_a4cf12f4307a_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+    - conditions:
+      - condition: trigger
+        id: free_living_work_start
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: false
+    - conditions:
+      - condition: trigger
+        id: free_office_start
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_aa9da4_door'', ''on'') and not is_state(''binary_sensor.shellydw2_6c3e7e_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_arbeitszimmer'') | float(21) }}'
+    - conditions:
+      - condition: trigger
+        id: free_office_end
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: false
+    - conditions:
+      - condition: trigger
+        id: free_living_return_on
+      - condition: template
+        value_template: '{{ not is_state(''binary_sensor.shellydw2_07a36f_door'', ''on'') and not is_state(''binary_sensor.shellydw2_a4cf12f4307a_door'', ''on'') }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+    - conditions:
+      - condition: trigger
+        id: free_living_night_off
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: hvac_mode
+            target_hvac_mode: false
+  mode: queued
+  max: 10
+- id: calendar_shifts_cancel_alexa_alarms_when_sick
+  alias: Calendar - Shifts - Cancel Alexa alarms when sick
+  description: Cancels every active Alexa alarm on the Echo devices when the work mode changes to sick.
+  triggers:
+  - trigger: state
+    entity_id: input_select.arbeitsmodus
+    to: Krank
+  actions:
+  - delay: 00:00:02
+  - variables:
+      alarm_sources:
+      - sensor: sensor.arbeitszimmer_next_alarm
+        player: media_player.arbeitszimmer
+      - sensor: sensor.badezimmer_next_alarm
+        player: media_player.badezimmer
+      - sensor: sensor.fire_tv_arbeitszimmer_next_alarm
+        player: media_player.fire_tv_wohnzimmer_alt
+      - sensor: sensor.nils_s_fire_tv_next_alarm
+        player: media_player.nils_s_fire_tv
+      - sensor: sensor.kuche_next_alarm
+        player: media_player.kuche
+      - sensor: sensor.schlafzimmer_next_alarm
+        player: media_player.schlafzimmer
+      - sensor: sensor.wohnzimmer_next_alarm
+        player: media_player.wohnzimmer
+  - variables:
+      active_alarms: "{% set ns = namespace(items=[]) %} {% for source in alarm_sources %}\n  {% set alarm_data = state_attr(source.sensor, 'brief') %}\n  {% if alarm_data is mapping %}\n    {% for alarm in alarm_data.get('active', []) %}\n      {% if alarm.get('status') in ['ON', 'SNOOZED'] and alarm.get('date_time') %}\n        {% set ns.items = ns.items + [{'player': source.player, 'date_time': alarm.get('date_time')}] %}\n      {% endif %}\n    {% endfor %}\n  {% endif %}\n{% endfor %} {{ ns.items }}"
+  - repeat:
+      for_each: '{{ active_alarms }}'
+      sequence:
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: '{{ repeat.item.player }}'
+          volume_targets:
+          - '{{ repeat.item.player }}'
+          message: Lösche meinen Wecker für {{ (repeat.item.date_time | as_datetime | as_local).strftime('%H:%M') }} Uhr
+  mode: single
+- id: calendar_shifts_sick_pill_reminder_20261014
+  alias: Calendar - Shifts - Sick pill reminder
+  description: Announces the morning pill reminder during sick mode, offset from the late-shift reminder time.
+  triggers:
+  - trigger: template
+    id: sick_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = states(''input_number.pill_morning_lead_time'') | int(15) %} {% set sick_offset_minutes = (states(''input_number.krank_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes + sick_offset_minutes) % 1440 }}'
+  conditions:
+  - condition: state
+    entity_id: input_select.arbeitsmodus
+    state: Krank
+  actions:
+  - variables:
+      sick_offset_hours: '{{ states(''input_number.krank_offset_tablettenerinnerung'') | float(2) }}'
+      pill_lead_minutes: '{{ states(''input_number.pill_morning_lead_time'') | int(15) }}'
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: "{% if sick_offset_hours | float == 0 and pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Es ist jetzt Zeit.\n{% elif sick_offset_hours | float == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Spätschicht-Erinnerung liegt {{ pill_lead_minutes }} Minuten vor der üblichen Zeit.\n{% else %}\n  Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung ist um {{ sick_offset_hours }} Stunden verschoben.\n{% endif %}"
+  mode: single
+- id: motion_hall_lighting_hold_20261015
+  alias: Motion - Flur Vorne Lichtsteuerung
+  description: Control this hallway zone with its motion sensor; keep the shared middle light on until both sensors clear.
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.shellymotion2_8cf6811ca4ff_motion
+    to:
+    - 'on'
+    - 'off'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf6811ca4ff_motion
+        state: 'on'
+      - condition: numeric_state
+        entity_id: sensor.shellymotion2_8cf6811ca4ff_luminosity
+        below: 500
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.flur_vorne_licht
+          - light.flur_mitte_licht_2
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf6811ca4ff_motion
+        state: 'off'
+      sequence:
+      - delay:
+          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf6811ca4ff_motion
+        state: 'off'
+      - service: light.turn_off
+        target:
+          entity_id: light.flur_vorne_licht
+      - if:
+        - condition: state
+          entity_id:
+          - binary_sensor.shellymotion2_8cf6811ca4ff_motion
+          - binary_sensor.shellymotion2_8cf681088e35_motion
+          state: 'off'
+        then:
+        - service: light.turn_off
+          target:
+            entity_id: light.flur_mitte_licht_2
+  mode: restart
+- id: motion_kitchen_lighting_hold_20261015
+  alias: Motion - Küche Lichtsteuerung
+  description: Keep the kitchen lights on during motion and respect either Shelly wall input being on before automatic shutoff.
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.shellymotion2_8cf68108d3e3_motion
+    to:
+    - 'on'
+    - 'off'
+  - platform: state
+    entity_id: binary_sensor.deckenlicht_kuche_input_0_input
+    to:
+    - 'on'
+    - 'off'
+  - platform: state
+    entity_id: binary_sensor.deckenlicht_kuche_input_1_input
+    to:
+    - 'on'
+    - 'off'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf68108d3e3_motion
+        state: 'on'
+      - condition: numeric_state
+        entity_id: sensor.shellymotion2_8cf68108d3e3_luminosity
+        below: 300
+      sequence:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.deckenlicht_kuche_switch_0
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf68108d3e3_motion
+        state: 'off'
+      sequence:
+      - delay:
+          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf68108d3e3_motion
+        state: 'off'
+      - condition: template
+        value_template: "{{ is_state('binary_sensor.deckenlicht_kuche_input_0_input', 'off')\n   and is_state('binary_sensor.deckenlicht_kuche_input_1_input', 'off') }}"
+      - service: switch.turn_off
+        target:
+          entity_id:
+          - switch.deckenlicht_kuche_switch_0
+          - switch.deckenlicht_kuche_switch_1
+  mode: restart
+- id: motion_hall_rear_lighting_hold_20261015
+  alias: Motion - Flur Hinten Lichtsteuerung
+  description: Control this hallway zone with its motion sensor; keep the shared middle light on until both sensors clear.
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.shellymotion2_8cf681088e35_motion
+    to:
+    - 'on'
+    - 'off'
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf681088e35_motion
+        state: 'on'
+      - condition: numeric_state
+        entity_id: sensor.shellymotion2_8cf681088e35_luminosity
+        below: 500
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id:
+          - light.flur_mitte_licht_2
+          - light.flur_hinten_licht_2
+    - conditions:
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf681088e35_motion
+        state: 'off'
+      sequence:
+      - delay:
+          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+      - condition: state
+        entity_id: binary_sensor.shellymotion2_8cf681088e35_motion
+        state: 'off'
+      - service: light.turn_off
+        target:
+          entity_id: light.flur_hinten_licht_2
+      - if:
+        - condition: state
+          entity_id:
+          - binary_sensor.shellymotion2_8cf681088e35_motion
+          - binary_sensor.shellymotion2_8cf6811ca4ff_motion
+          state: 'off'
+        then:
+        - service: light.turn_off
+          target:
+            entity_id: light.flur_mitte_licht_2
+  mode: restart
+- id: calendar_shifts_snom_dnd_status
+  alias: Calendar - Shifts - Snom DND status
+  description: Read the actual Snom DND state, including manual changes made on the phone.
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: startup
+  - trigger: time_pattern
+    minutes: /1
+    id: poll
+  actions:
+  - action: shell_command.snom_dnd_status
+    response_variable: snom_status_result
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ snom_status_result[''returncode''] == 0 and (snom_status_result[''stdout''] | from_json).get(''state'') == ''on'' }}'
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.snom_dnd_status
+    - conditions:
+      - condition: template
+        value_template: '{{ snom_status_result[''returncode''] == 0 and (snom_status_result[''stdout''] | from_json).get(''state'') == ''off'' }}'
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.snom_dnd_status
+  mode: single
+- id: sleep_mode_mueckenlampe_alexa
+  alias: Sleep Mode - Mückenlampe via Alexa
+  description: Keeps the Popotan plug on outside Sleep Mode and turns it off while Sleep Mode is active using Alexa Media Player commands.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'on'
+    id: sleep_on
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'off'
+    id: sleep_off
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'on'
+      sequence:
+      - action: media_player.play_media
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          media_content_type: custom
+          media_content_id: Turn off Mückenlampe
+        continue_on_error: true
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
+      sequence:
+      - action: media_player.play_media
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          media_content_type: custom
+          media_content_id: Turn on Mückenlampe
+        continue_on_error: true
+  mode: restart
+- id: sleep_mode_enforce_rooms
+  alias: Sleep Mode - Enforce room shutdown
+  description: Runs the living and work room Alexa off routines, turns off other lights, and leaves the hallway lit while Sleep Mode is active and Enforce Sleep is enabled.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'on'
+    id: sleep_enabled
+  - trigger: state
+    entity_id: input_boolean.enforce_sleep
+    to: 'on'
+    id: enforcement_enabled
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleep_mode_calendar
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.enforce_sleep
+    state: 'on'
+  actions:
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.wohnzimmer
+    data:
+      media_content_type: routine
+      media_content_id: Wohnzimmer aus
+    continue_on_error: true
+  - delay: 00:00:02
+  - action: media_player.play_media
+    target:
+      entity_id: media_player.arbeitszimmer
+    data:
+      media_content_type: routine
+      media_content_id: Arbeitszimmer aus
+    continue_on_error: true
+  - variables:
+      sleep_lights_to_turn_off: "{{ states.light\n   | rejectattr('entity_id', 'in', [\n       'light.stehlampe_schlafzimmer_licht',\n       'light.nachttischlampe_licht',\n       'light.flur_vorne_licht',\n       'light.flur_mitte_licht_2',\n       'light.flur_hinten_licht_2'\n     ])\n   | map(attribute='entity_id') | list }}"
+  - action: light.turn_off
+    target:
+      entity_id: '{{ sleep_lights_to_turn_off }}'
+    continue_on_error: true
+  - action: switch.turn_off
+    target:
+      entity_id:
+      - switch.deckenlicht_kuche_switch_0
+      - switch.deckenlicht_kuche_switch_1
+    continue_on_error: true
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.stehlampe_schlafzimmer_licht
+      - light.nachttischlampe_licht
+    continue_on_error: true
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.flur_vorne_licht
+      - light.flur_mitte_licht_2
+      - light.flur_hinten_licht_2
+    continue_on_error: true
+  mode: restart
+- id: sleep_mode_reset_enforce_sleep
+  alias: Sleep Mode - Reset Enforce Sleep
+  description: Applies the selected Enforce Sleep reset mode when Sleep Mode ends.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_select.enforce_sleep_reset_mode
+        state: Normally On
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.enforce_sleep
+    - conditions:
+      - condition: state
+        entity_id: input_select.enforce_sleep_reset_mode
+        state: Normally Off
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.enforce_sleep
+  mode: single
+- id: calendar_shifts_living_sleep_profile_override_20261017
+  alias: Calendar - Shifts - Wohnzimmer Sleep Mode heating profile
+  description: Uses the selected or calendar-derived day profile to preheat the living room during Sleep Mode; without a scheduled shift, the comfort target remains set.
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: ha_start
+  - trigger: state
+    entity_id:
+    - input_boolean.sleep_mode_calendar
+    - input_select.living_room_sleep_profile
+    - input_select.arbeitsmodus
+    - input_datetime.early_shift_start
+    - input_datetime.early_shift_end
+    - input_datetime.late_shift_start
+    - input_datetime.late_shift_end
+    - input_datetime.freischicht_arbeitsbeginn
+    - input_datetime.vacation_wake_time
+    - input_number.alarm_before_shift
+    - input_number.heating_preheat_time
+    - input_number.heizung_wohnzimmer
+    - input_number.heizung_mindesttemperatur
+    - calendar.shifts
+    - calendar.deutschland_by
+    - calendar.feiertage_in_deutschland
+    - person.niwo
+    - binary_sensor.shellydw2_07a36f_door
+    - binary_sensor.shellydw2_a4cf12f4307a_door
+    id: state_refresh
+  - trigger: template
+    id: profile_preheat
+    value_template: "{% set selected = states('input_select.living_room_sleep_profile') %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set vacation = states('input_datetime.vacation_wake_time').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {% set vacation_start = (vacation[0] | int) * 60 + (vacation[1] | int) %} {% set alarm = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set lead = states('input_number.heating_preheat_time') | int(60) %} {% set current = now().hour * 60 + now().minute %} {% set candidates = [\n  (early_start - alarm - lead) % 1440,\n  (free_start - alarm - lead) % 1440,\n  (late_start - alarm - lead) % 1440,\n  (vacation_start\
+      \ - lead) % 1440\n] %} {% if selected == 'Frühschicht' %}\n  {{ current == candidates[0] }}\n{% elif selected == 'Freischicht' %}\n  {{ current == candidates[1] }}\n{% elif selected == 'Spätschicht' %}\n  {{ current == candidates[2] }}\n{% elif selected == 'Urlaub' %}\n  {{ current == candidates[3] }}\n{% elif selected == 'Automatisch' %}\n  {{ current in candidates }}\n{% else %}false{% endif %}"
+  - trigger: template
+    id: profile_shift_start
+    value_template: "{% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set starts = [\n  (early[0] | int) * 60 + (early[1] | int),\n  (late[0] | int) * 60 + (late[1] | int),\n  (free[0] | int) * 60 + (free[1] | int)\n] %} {{ now().hour * 60 + now().minute in starts }}"
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleep_mode_calendar
+    state: 'on'
+  - condition: template
+    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 2
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: shift_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.deutschland_by
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: holiday_calendar
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.feiertage_in_deutschland
+    data:
+      start_date_time: '{{ today_at(''00:00'').isoformat() }}'
+      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+    response_variable: bavarian_holiday_calendar
+  - variables:
+      selected_profile: '{{ states(''input_select.living_room_sleep_profile'') }}'
+      event_titles: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
+      early_shift_found: '{{ event_titles | select(''in'', [''frühschicht'', ''sv früh'', ''svv früh'']) | list | length > 0 }}'
+      late_shift_found: '{{ event_titles | select(''in'', [''spätschicht'', ''sv spät'', ''svv spät'']) | list | length > 0 }}'
+      free_shift_found: '{{ event_titles | select(''search'', ''(freischicht|support standby)'') | list | length > 0 }}'
+      free_day_found: '{{ event_titles | select(''search'', ''(4tw-frei|urlaub)'') | list | length > 0 }}'
+      weekday: '{{ now().weekday() < 5 }}'
+      holiday_found: "{% set bavaria = holiday_calendar.get('calendar.deutschland_by', {}).get('events', []) %} {% set regional = bavarian_holiday_calendar.get('calendar.feiertage_in_deutschland', {}).get('events', [])\n  | map(attribute='summary') | map('lower') | select('search', 'mariä himmelfahrt') | list %}\n{{ bavaria | length > 0 or regional | length > 0 }}"
+      automatic_profile: "{% if not (weekday | bool) or (free_day_found | bool) %}Urlaub {% elif early_shift_found | bool %}Frühschicht {% elif late_shift_found | bool %}Spätschicht {% elif free_shift_found | bool or (event_titles | length == 0 and not (holiday_found | bool))\n  or is_state('input_select.arbeitsmodus', 'Freischicht') %}Freischicht\n{% else %}Deaktiviert{% endif %}"
+      effective_profile: '{{ automatic_profile if selected_profile == ''Automatisch'' else selected_profile }}'
+      profile_start_entity: '{% if effective_profile == ''Frühschicht'' %}input_datetime.early_shift_start {% elif effective_profile == ''Spätschicht'' %}input_datetime.late_shift_start {% elif effective_profile == ''Freischicht'' %}input_datetime.freischicht_arbeitsbeginn {% elif effective_profile == ''Urlaub'' %}input_datetime.vacation_wake_time {% else %}input_datetime.early_shift_start{% endif %}'
+      profile_start_minutes: '{% set parts = states(profile_start_entity).split('':'') %} {{ (parts[0] | int) * 60 + (parts[1] | int) }}'
+      profile_preheat_start: '{% set lead = states(''input_number.heating_preheat_time'') | int(60) %} {% set alarm = 0 if effective_profile == ''Urlaub'' else (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {{ ((profile_start_minutes | int) - alarm - lead) % 1440 }}'
+      current_minute: '{{ now().hour * 60 + now().minute }}'
+      in_profile_warmup: '{% set minute = current_minute | int %} {% set start = profile_start_minutes | int %} {% set preheat = profile_preheat_start | int %} {% if preheat < start %}{{ preheat <= minute < start }} {% elif preheat > start %}{{ minute >= preheat or minute < start }} {% else %}false{% endif %}'
+      matching_calendar_shift: "{{ (effective_profile == 'Frühschicht' and (early_shift_found | bool))\n   or (effective_profile == 'Spätschicht' and (late_shift_found | bool))\n   or (effective_profile == 'Freischicht' and (free_shift_found | bool)) }}"
+      profile_shift_has_started: '{{ (matching_calendar_shift | bool) and (current_minute | int >= profile_start_minutes | int) }}'
+      windows_closed: "{{ not is_state('binary_sensor.shellydw2_07a36f_door', 'on')\n   and not is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ effective_profile == ''Deaktiviert'' }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ (profile_shift_has_started | bool) or (trigger.id == ''profile_shift_start'' and (matching_calendar_shift | bool)) }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ (in_profile_warmup | bool) and is_state(''person.niwo'', ''home'') and (windows_closed | bool) }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''state_refresh'', ''ha_start''] or not is_state(''person.niwo'', ''home'') or not (windows_closed | bool) }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+  mode: queued
+  max: 10
+
+- id: system_backup_failure_telegram
+  alias: System - Backups - Telegram bei Fehler
+  description: Send a Telegram notification when an automatic Home Assistant backup fails.
+  triggers:
+    - trigger: state
+      entity_id: event.backup_automatisches_backup
+  conditions:
+    - condition: template
+      value_template: >-
+        {{ trigger.to_state is not none and
+           trigger.to_state.attributes.event_type == "failed" }}
+  actions:
+    - action: telegram_bot.send_message
+      data:
+        parse_mode: plain_text
+        message: >-
+          ⚠️ Das automatische Home-Assistant-Backup ist fehlgeschlagen.
+          Grund: {{ state_attr("event.backup_automatisches_backup", "failed_reason") or "Unbekannt" }}
+  mode: single
+- id: calendar_shifts_tomorrow_status_panel
+  alias: Calendar - Shifts - Tomorrow status panel
+  description: Refreshes the dashboard summary for tomorrow using the shift calendar and schedule helpers.
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: startup
+  - trigger: time
+    at: input_datetime.alarm_setup_time
+    id: daily_refresh
+  - trigger: state
+    entity_id:
+    - input_datetime.early_shift_start
+    - input_datetime.late_shift_start
+    - input_datetime.freischicht_arbeitsbeginn
+    - input_number.alarm_before_shift
+    - input_number.sleep_time
+    - input_number.wind_down_lead_time
+    - input_select.arbeitsmodus
+    id: schedule_changed
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 5
+  - variables:
+      tomorrow_start: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
+      tomorrow_end: '{{ (today_at(''00:00'') + timedelta(days=2)).isoformat() }}'
+      tomorrow_weekday: '{{ (today_at(''00:00'') + timedelta(days=1)).weekday() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ tomorrow_start }}'
+      end_date_time: '{{ tomorrow_end }}'
+    response_variable: tomorrow_calendar
+  - variables:
+      shift_titles: "{{ tomorrow_calendar.get('calendar.shifts', {}).get('events', [])
+   | map(attribute='summary') | map('lower') | map('trim') | list }}"
+      early_shift_found: "{{ shift_titles | select('search', 'früh') | list | length > 0 }}"
+      late_shift_found: "{{ shift_titles | select('search', 'spät') | list | length > 0 }}"
+      free_shift_found: "{{ shift_titles | select('search', '(freischicht|support standby)') | list | length > 0 }}"
+      free_day_found: "{{ shift_titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 }}"
+      mode_is_sick: "{{ is_state('input_select.arbeitsmodus', 'Krank') }}"
+      shift_start_entity: "{% if shift_titles | select('search', 'früh') | list | length > 0 %}input_datetime.early_shift_start{% elif shift_titles | select('search', 'spät') | list | length > 0 %}input_datetime.late_shift_start{% else %}input_datetime.freischicht_arbeitsbeginn{% endif %}"
+      shift_label: "{% if shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei{% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub{% elif shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht{% elif shift_titles | select('search', 'spät') | list | length > 0 %}Spätschicht{% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby{% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht{% else %}Kein Schichteintrag{% endif %}"
+  - variables:
+      shift_start_minutes: "{% set t = states(shift_start_entity).split(':') %}{{ (t[0] | int) * 60 + (t[1] | int) }}"
+      alarm_lead_minutes: "{{ (states('input_number.alarm_before_shift') | float(1) * 60) | int }}"
+      sleep_minutes: "{{ (states('input_number.sleep_time') | float(9) * 60) | int }}"
+      wind_down_minutes: "{{ (states('input_number.wind_down_lead_time') | float(2) * 60) | int }}"
+      alarm_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}"
+      bedtime_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) }}"
+      wind_down_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) - (wind_down_minutes | int) }}"
+      alarm_is_planned: "{{ (tomorrow_weekday | int < 5) and not (free_day_found | bool) and not (mode_is_sick | bool) and (((early_shift_found | bool or late_shift_found | bool) and is_state('input_select.arbeitsmodus', 'Automatisch')) or (free_shift_found | bool)) }}"
+      alarm_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(alarm_raw_minutes | int))).strftime('%H:%M') }}"
+      bedtime_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int))).strftime('%H:%M') }}"
+      wind_down_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(wind_down_raw_minutes | int))).strftime('%H:%M') }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.tomorrow_shift_status
+    data:
+      value: >-
+        {% if tomorrow_weekday | int >= 5 %}
+          Wochenende · kein Wecker
+        {% elif free_day_found | bool %}
+          {{ shift_label }} · kein Wecker
+        {% elif mode_is_sick | bool and shift_label != 'Kein Schichteintrag' %}
+          {{ shift_label }} · Krankmodus · kein Wecker
+        {% elif shift_label == 'Kein Schichteintrag' %}
+          Kein Schichteintrag · kein Wecker
+        {% elif not (alarm_is_planned | bool) %}
+          {{ shift_label }} · kein Wecker (Arbeitsmodus {{ states('input_select.arbeitsmodus') }})
+        {% else %}
+          {{ shift_label }} · Runterfahren {{ wind_down_display }} · Schlafenszeit {{ bedtime_display }} · Wecker {{ alarm_display }}
+        {% endif %}
+  mode: restart
+
+
+- id: calendar_shifts_tomorrow_status_announcement
+  alias: Calendar - Shifts - Tomorrow status announcement
+  description: Announces the calendar result and planned alarm after the daily calendar check.
+  triggers:
+    - trigger: time
+      at: input_datetime.alarm_setup_time
+  actions:
+    - delay:
+        seconds: 20
+    - action: script.calendar_shifts_announce_tomorrow_status
+  mode: single

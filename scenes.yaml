@@ -1,0 +1,36 @@
+- id: '1705992596402'
+  name: Heizungen ein
+  entities:
+    climate.shellytrv_8cf68118891f:
+      hvac_modes:
+      - 'off'
+      - heat
+      min_temp: 4
+      max_temp: 31
+      target_temp_step: 0.5
+      preset_modes:
+      - none
+      - Frühschicht
+      - Mittagsschicht
+      - Spätschicht
+      - Freischicht
+      - Urlaub
+      current_temperature: 22.2
+      temperature: 22
+      hvac_action: heating
+      preset_mode: Mittagsschicht
+      icon: mdi:thermostat
+      friendly_name: Heizung
+      supported_features: 17
+      state: heat
+    number.shellytrv_8cf68118891f_valve_position:
+      min: 0
+      max: 100
+      step: 1
+      mode: slider
+      unit_of_measurement: '%'
+      icon: mdi:pipe-valve
+      friendly_name: Heizung valve position
+      state: '5.0'
+  icon: mdi:heat-wave
+  metadata: {}

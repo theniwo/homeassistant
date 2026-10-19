@@ -1,0 +1,17 @@
+# Home Assistant runtime state and local credentials
+*
+!.gitignore
+!README.md
+!configuration.yaml
+!automations.yaml
+!scripts.yaml
+!templates.yaml
+!scenes.yaml
+!scripts/
+!scripts/*.py
+
+# Never commit Home Assistant secrets files
+secrets.yaml
+secrets.yml
+**/secrets.yaml
+**/secrets.yml

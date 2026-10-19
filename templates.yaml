@@ -1,0 +1,20 @@
+- trigger:
+    - platform: state
+      entity_id: sensor.shellytrv_8cf68118891f_battery
+      not_to:
+        - unavailable
+        - unknown
+    - platform: homeassistant
+      event: start
+  sensor:
+    - name: Heizung Wohnzimmer Batteriestand
+      unique_id: shellytrv_living_room_battery_last_known
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+      state: >-
+        {% if trigger.platform == "state" and trigger.to_state is not none and is_number(trigger.to_state.state) %}
+          {{ trigger.to_state.state | int }}
+        {% else %}
+          {{ this.state | int(100) }}
+        {% endif %}
