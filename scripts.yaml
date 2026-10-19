@@ -404,6 +404,7 @@ alexa_output_with_configured_volume:
         {% endfor %}
         {{ ns.values }}
       configured_volume: '{{ (states(''input_number.echo_announcement_volume'') | float(3)) / 10 }}'
+      announcement_targets: "{{ output_targets | default(volume_targets if output_target in ['media_player.uberall', 'media_player.uberall_2'] else [output_target]) }}"
   - if:
     - condition: template
       value_template: "{{ output_type == 'announce' }}"
@@ -432,16 +433,13 @@ alexa_output_with_configured_volume:
           media_content_id: '{{ message }}'
         continue_on_error: true
     default:
-    - repeat:
-        for_each: "{{ output_targets | default([output_target]) }}"
-        sequence:
-        - action: notify.alexa_media
-          data:
-            target: "{{ repeat.item }}"
-            message: '{{ message }}'
-            data:
-              type: announce
-          continue_on_error: true
+    - action: notify.alexa_media
+      data:
+        target: '{{ announcement_targets }}'
+        message: '{{ message }}'
+        data:
+          type: announce
+      continue_on_error: true
   - delay:
       seconds: 10
   - if:
