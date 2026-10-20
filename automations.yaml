@@ -3782,6 +3782,11 @@
     from: 'off'
     to: 'on'
     id: sleep_mode_on
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    from: 'on'
+    to: 'off'
+    id: sleep_mode_off
   actions:
   - choose:
     - conditions:
@@ -3848,6 +3853,28 @@
           - media_player.badezimmer
         data:
           volume_level: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
+    - conditions:
+      - condition: trigger
+        id: sleep_mode_off
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: >-
+            {% set quiet_time = today_at(states('input_datetime.echo_volume_quiet_time')) %}
+            {% set fallback_time = today_at(states('input_datetime.echo_volume_fallback_time')) %}
+            {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
+            {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
+            {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
+            {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
+            {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
+            {{ day_volume if scheduled_day else night_volume }}
   mode: single
 - id: calendar_shifts_freischicht_dynamic_heating
   alias: Calendar - Shifts - Freischicht-Heizzeiten
