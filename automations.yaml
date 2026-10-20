@@ -3777,6 +3777,11 @@
   - trigger: time
     id: fallback_noon
     at: input_datetime.echo_volume_fallback_time
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    from: 'off'
+    to: 'on'
+    id: sleep_mode_on
   actions:
   - choose:
     - conditions:
@@ -3796,6 +3801,9 @@
     - conditions:
       - condition: trigger
         id: alexa_alarm
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
       sequence:
       - action: media_player.volume_set
         target:
@@ -3810,6 +3818,9 @@
     - conditions:
       - condition: trigger
         id: fallback_noon
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
       - condition: template
         value_template: '{% set next_alarm = states(''sensor.schlafzimmer_next_alarm'') | as_datetime(default=none) %} {{ next_alarm is none or next_alarm.date() != now().date() }}'
       sequence:
@@ -3823,6 +3834,20 @@
           - media_player.badezimmer
         data:
           volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+    - conditions:
+      - condition: trigger
+        id: sleep_mode_on
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
   mode: single
 - id: calendar_shifts_freischicht_dynamic_heating
   alias: Calendar - Shifts - Freischicht-Heizzeiten

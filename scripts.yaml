@@ -404,6 +404,8 @@ alexa_output_with_configured_volume:
         {% endfor %}
         {{ ns.values }}
       configured_volume: '{{ (states(''input_number.echo_announcement_volume'') | float(3)) / 10 }}'
+      night_volume: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
+      sleep_mode_active: "{{ is_state('input_boolean.sleep_mode_calendar', 'on') }}"
       announcement_targets: "{{ output_targets | default(volume_targets if output_target in ['media_player.uberall', 'media_player.uberall_2'] else [output_target]) }}"
   - if:
     - condition: template
@@ -416,7 +418,7 @@ alexa_output_with_configured_volume:
           target:
             entity_id: '{{ repeat.item }}'
           data:
-            volume_level: '{{ configured_volume }}'
+            volume_level: '{{ night_volume if sleep_mode_active | bool else configured_volume }}'
           continue_on_error: true
   - delay:
       seconds: 1
@@ -446,21 +448,37 @@ alexa_output_with_configured_volume:
     - condition: template
       value_template: "{{ output_type == 'announce' }}"
     then:
-    - repeat:
-        for_each: '{{ volume_targets }}'
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: input_boolean.sleep_mode_calendar
+          state: 'on'
         sequence:
-        - variables:
-            previous_volume: '{{ previous_volumes[repeat.index - 1] | default(none) }}'
-        - if:
-          - condition: template
-            value_template: '{{ previous_volume is not none }}'
-          then:
-          - action: media_player.volume_set
-            target:
-              entity_id: '{{ repeat.item }}'
-            data:
-              volume_level: '{{ previous_volume }}'
-            continue_on_error: true
+        - repeat:
+            for_each: '{{ volume_targets }}'
+            sequence:
+            - action: media_player.volume_set
+              target:
+                entity_id: '{{ repeat.item }}'
+              data:
+                volume_level: '{{ night_volume }}'
+              continue_on_error: true
+      default:
+      - repeat:
+          for_each: '{{ volume_targets }}'
+          sequence:
+          - variables:
+              previous_volume: '{{ previous_volumes[repeat.index - 1] | default(none) }}'
+          - if:
+            - condition: template
+              value_template: '{{ previous_volume is not none }}'
+            then:
+            - action: media_player.volume_set
+              target:
+                entity_id: '{{ repeat.item }}'
+              data:
+                volume_level: '{{ previous_volume }}'
+              continue_on_error: true
 master_dnd_override_on:
   alias: Master DND override ON
   sequence:
