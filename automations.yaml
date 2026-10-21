@@ -2696,6 +2696,9 @@
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
       sequence:
+      - action: script.calendar_shifts_verify_alexa_alarm
+        data:
+          bedtime_check: true
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: announce

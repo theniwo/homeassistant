@@ -18,3 +18,58 @@
         {% else %}
           {{ this.state | int(100) }}
         {% endif %}
+- sensor:
+    - name: Alexa Weckerstatus
+      default_entity_id: sensor.alexa_wecker_status
+      unique_id: alexa_alarm_status_for_calendar_schedule
+      icon: >-
+        {% if this.state.startswith('Aktiv') %}
+          mdi:alarm-check
+        {% elif this.state.startswith('Fehlt') %}
+          mdi:alarm-light-outline
+        {% elif this.state == 'Kein Wecker geplant' %}
+          mdi:alarm-off
+        {% else %}
+          mdi:alarm
+        {% endif %}
+      state: >-
+        {% set schedule_status = states('input_text.tomorrow_shift_status') | trim %}
+        {% set schedule_status_lower = schedule_status | lower %}
+        {% if schedule_status in ['', 'unknown', 'unavailable'] %}
+          Nicht geprüft
+        {% elif is_state('input_select.arbeitsmodus', 'Krank') or 'kein wecker' in schedule_status_lower %}
+          Kein Wecker geplant
+        {% elif 'Wecker ' not in schedule_status %}
+          Nicht geprüft
+        {% else %}
+          {% set expected_time = schedule_status.split('Wecker ')[-1].split(' ')[0] %}
+          {% set expected_parts = expected_time.split(':') %}
+          {% set alarm_setup_time = today_at(states('input_datetime.alarm_setup_time')) %}
+          {% set expected_day_offset = 1 if now() >= alarm_setup_time else 0 %}
+          {% set expected_hour = expected_parts[0] | int(0) %}
+          {% set expected_minute = expected_parts[1] | int(0) if expected_parts | length > 1 else 0 %}
+          {% set expected_alarm = today_at('00:00') + timedelta(days=expected_day_offset, hours=expected_hour, minutes=expected_minute) %}
+          {% if expected_alarm <= now() %}
+            Weckerzeit vorbei
+          {% else %}
+            {% set alarm_sensor = 'sensor.schlafzimmer_next_alarm' %}
+            {% set process_timestamp = state_attr(alarm_sensor, 'process_timestamp') | as_datetime(default=none) %}
+            {% if states(alarm_sensor) == 'unavailable' or process_timestamp is none %}
+              Alexa-Daten nicht verfügbar
+            {% else %}
+              {% set alarm_brief = state_attr(alarm_sensor, 'brief') %}
+              {% set active_alarms = alarm_brief.get('active', []) if alarm_brief is mapping else [] %}
+              {% set ns = namespace(found=false) %}
+              {% for alarm in active_alarms %}
+                {% set alarm_datetime = alarm.get('date_time') | as_datetime(default=none) %}
+                {% if alarm.get('status') in ['ON', 'SNOOZED'] and alarm_datetime is not none %}
+                  {% set alarm_local = alarm_datetime | as_local %}
+                  {% if alarm_local == expected_alarm and alarm_local.strftime('%H:%M') == expected_time %}
+                    {% set ns.found = true %}
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {{ 'Aktiv · ' ~ expected_time if ns.found else 'Fehlt · ' ~ expected_time }}
+            {% endif %}
+          {% endif %}
+        {% endif %}

@@ -796,3 +796,84 @@ calendar_shifts_announce_tomorrow_status:
           - media_player.wohnzimmer
           - media_player.badezimmer
         message: "{{ status_message }}"
+
+calendar_shifts_verify_alexa_alarm:
+  alias: Calendar - Shifts - Verify Alexa alarm
+  description: Checks the next scheduled work alarm reported by Alexa Media Player and warns when it is missing at bedtime.
+  mode: single
+  fields:
+    bedtime_check:
+      name: Bedtime check
+      required: false
+      selector:
+        boolean: null
+  sequence:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: sensor.schlafzimmer_next_alarm
+  - delay:
+      seconds: 2
+  - variables:
+      alarm_status: "{{ states('sensor.alexa_wecker_status') }}"
+      is_bedtime_check: "{{ bedtime_check | default(false) | bool }}"
+      expected_time: "{{ alarm_status.split('·')[-1] | trim if '·' in alarm_status else '' }}"
+      warning_needed: "{{ alarm_status.startswith('Fehlt') or alarm_status in ['Alexa-Daten nicht verfügbar', 'Nicht geprüft'] }}"
+      warning_message: >-
+        {% if alarm_status.startswith('Fehlt') %}
+          Warnung: Der Alexa-Wecker für {{ expected_time }} Uhr ist nicht aktiv. Bitte stelle ihn manuell in der Alexa-App.
+        {% else %}
+          Home Assistant kann den aktiven Alexa-Wecker gerade nicht bestätigen. Bitte prüfe ihn in der Alexa-App.
+        {% endif %}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ warning_needed | bool }}'
+      sequence:
+      - action: persistent_notification.create
+        data:
+          notification_id: calendar_shifts_alexa_alarm_warning
+          title: Alexa-Wecker prüfen
+          message: '{{ warning_message }}'
+      - action: notify.mobile_app_samsung_s25
+        data:
+          title: Alexa-Wecker prüfen
+          message: '{{ warning_message }}'
+      - if:
+        - condition: template
+          value_template: '{{ is_bedtime_check | bool }}'
+        then:
+        - action: script.alexa_output_with_configured_volume
+          data:
+            output_type: announce
+            output_target: media_player.schlafzimmer
+            output_targets:
+            - media_player.schlafzimmer
+            - media_player.arbeitszimmer
+            - media_player.kuche
+            - media_player.wohnzimmer
+            - media_player.badezimmer
+            volume_targets:
+            - media_player.schlafzimmer
+            - media_player.arbeitszimmer
+            - media_player.kuche
+            - media_player.wohnzimmer
+            - media_player.badezimmer
+            message: '{{ warning_message }}'
+    default:
+    - action: persistent_notification.dismiss
+      data:
+        notification_id: calendar_shifts_alexa_alarm_warning
+      continue_on_error: true
+    - if:
+      - condition: template
+        value_template: '{{ not (is_bedtime_check | bool) }}'
+      then:
+      - action: notify.mobile_app_samsung_s25
+        data:
+          title: Alexa-Weckerstatus
+          message: >-
+            {% if alarm_status.startswith('Aktiv') %}
+              Der Alexa-Wecker für {{ expected_time }} Uhr ist aktiv.
+            {% else %}
+              {{ alarm_status }}.
+            {% endif %}

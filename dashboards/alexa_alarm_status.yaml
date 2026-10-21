@@ -1,0 +1,25 @@
+- type: markdown
+  content: |-
+    {% set raw = states('input_text.tomorrow_shift_status') %}
+    {% set status = raw | regex_replace('[0-9]{2}[.][0-9]{2}[.] ', '') %}
+    {% set parts = status.split(' · ') %}
+    {% if parts | length >= 4 %}
+    🌅 **{{ parts[0] }}**<br>
+    🌗 **Runterfahren** · {{ parts[1].replace('Runterfahren ', '') }}<br>
+    🛌 **Schlafenszeit** · {{ parts[2].replace('Schlafenszeit ', '') }}<br>
+    ⏰ **Wecker** · {{ parts[3].replace('Wecker ', '') }}<br>
+    📡 **Alexa-Status** · {{ states('sensor.alexa_wecker_status') }}
+    {% else %}
+    📅 **{{ status }}**<br>
+    📡 **Alexa-Status** · {{ states('sensor.alexa_wecker_status') }}
+    {% endif %}
+- type: button
+  name: Wecker jetzt prüfen
+  icon: mdi:alarm-check
+  show_name: true
+  show_icon: true
+  tap_action:
+    action: call-service
+    service: script.turn_on
+    target:
+      entity_id: script.calendar_shifts_verify_alexa_alarm

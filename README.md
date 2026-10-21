@@ -11,3 +11,4 @@ Runtime state, `.storage`, backups, databases, logs, and `secrets.yaml` are inte
 - `configuration.yaml` loads the automation, template, script, and scene files.
 - `automations.yaml`, `scripts.yaml`, `templates.yaml`, and `scenes.yaml` contain the instance configuration.
 - `scripts/` contains local integration helpers used by `shell_command`.
+- `dashboards/` contains reviewed Lovelace card fragments applied to storage-mode dashboards; Home Assistant does not load these fragments automatically.

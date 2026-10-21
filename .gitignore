@@ -7,6 +7,8 @@
 !scripts.yaml
 !templates.yaml
 !scenes.yaml
+!dashboards/
+!dashboards/*.yaml
 !scripts/
 !scripts/*.py
 
