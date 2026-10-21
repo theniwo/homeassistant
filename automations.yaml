@@ -126,13 +126,6 @@
   action:
   - action: script.turn_on
     target:
-      entity_id: script.shelly_retry_office_radiator_target
-    data:
-      variables:
-        command_type: temperature
-        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
-  - action: script.turn_on
-    target:
       entity_id: script.retry_living_room_radiator_target
     data:
       variables:
@@ -1602,7 +1595,7 @@
   mode: single
 - id: '1736347060043'
   alias: Home Leave - All
-  description: Turns off all lights and room equipment on departure while keeping the PC and server powered.
+  description: Turns off lights and equipment outside the workspace on departure; workspace lighting, outlets, and heating remain under their own controls.
   trigger:
   - platform: zone
     entity_id: person.niwo
@@ -1620,18 +1613,36 @@
       media_content_type: routine
       media_content_id: Wohnzimmer aus
     continue_on_error: true
-  - delay:
-      seconds: 2
-  - service: media_player.play_media
-    target:
-      entity_id: media_player.arbeitszimmer
-    data:
-      media_content_type: routine
-      media_content_id: Arbeitszimmer aus
-    continue_on_error: true
+  - variables:
+      workspace_lights_to_preserve:
+      - light.wled
+      - light.wled_haupt
+      - light.wled_segment_1
+      - light.wled_segment_2
+      - light.wled_segment_3
+      - light.wled_segment_4
+      - light.rotes_licht
+      - light.rainbow
+      - light.rainbow_2
+      - light.bpm
+      - light.warmes_licht
+      - light.gelbes_licht
+      - light.weisses_licht
+      - light.weisses_licht_2
+      - light.kaltes_licht
+      - light.blaues_licht
+      - light.led
+      - light.schreibtisch_lampe
+      - light.schreibtischlampe_licht
+  - variables:
+      lights_to_turn_off: >-
+        {{ states.light
+           | rejectattr('entity_id', 'in', workspace_lights_to_preserve)
+           | map(attribute='entity_id')
+           | list }}
   - service: light.turn_off
     target:
-      entity_id: all
+      entity_id: '{{ lights_to_turn_off }}'
     continue_on_error: true
   - service: switch.turn_off
     target:
@@ -1641,14 +1652,6 @@
       - switch.deckenlicht_kuche_switch_0
       - switch.deckenlicht_kuche_switch_1
       - switch.shellyplus1pm_80646fc78098_switch_0
-      - switch.shellyplusplugs_e465b84153ec_switch_0
-      - switch.shellyplusplugs_d48afc569968_switch_0
-      - switch.shellyplus1pm_80646fc77f7c_switch_0
-      - switch.shellyplusplugs_e465b8426ca8_switch_0
-      - switch.shellyplusplugs_e465b8428700_switch_0
-      - switch.shellyplusplugs_a0a3b3e84e1c_switch_0
-      - switch.shellyplusplugs_a0a3b3e9bd44_switch_0
-      - switch.shellyplusplugs_e465b8417234_switch_0
     continue_on_error: true
   - choose:
     - conditions:
