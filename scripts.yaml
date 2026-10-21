@@ -651,11 +651,11 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         alarm_lead_minutes: "{{ (states('input_number.alarm_before_shift') | float(1) * 60) | int }}"
         sleep_minutes: "{{ (states('input_number.sleep_time') | float(9) * 60) | int }}"
         wind_down_minutes: "{{ (states('input_number.wind_down_lead_time') | float(2) * 60) | int }}"
-        pill_lead_minutes: "{{ states('input_number.pill_bedtime_lead_time') | int(30) }}"
+        pill_lead_minutes: "{{ ((states('input_number.pill_bedtime_lead_time') | float(0.5) * 60) | int) }}"
         alarm_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}"
         bedtime_raw_minutes: "{{ (alarm_raw_minutes | int) - (sleep_minutes | int) }}"
         wind_down_raw_minutes: "{{ (bedtime_raw_minutes | int) - (wind_down_minutes | int) }}"
-        dnd_lead_minutes: "{{ states('input_number.dnd_lead_time') | int(60) }}"
+        dnd_lead_minutes: "{{ ((states('input_number.dnd_lead_time') | float(1) * 60) | int) }}"
         dnd_raw_minutes: "{{ (bedtime_raw_minutes | int) - (dnd_lead_minutes | int) }}"
         dnd_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(dnd_raw_minutes | int)) }}"
         dnd_schedule_is_eligible: "{{ shift_label in ['Frühschicht', 'Spätschicht', 'Freischicht', 'Support Standby'] and (today_at('00:00') + timedelta(days=1)).weekday() < 5 }}"
@@ -773,9 +773,10 @@ calendar_shifts_announce_tomorrow_status:
         status_message: >-
           {% if 'Wecker ' in schedule_status and 'kein Wecker' not in schedule_status %}
             Kalenderabfrage für morgen abgeschlossen. {{ schedule_parts[0] }}.
-            Der Wecker wurde für {{ schedule_parts[3] | replace('Wecker ', '') }} Uhr gestellt.
-            Runterfahren um {{ schedule_parts[1] | replace('Runterfahren ', '') }},
-            Schlafenszeit um {{ schedule_parts[2] | replace('Schlafenszeit ', '') }}.
+            Nicht stören ab {{ schedule_parts[1] | replace('DND ', '') }}.
+            Runterfahren um {{ schedule_parts[2] | replace('Runterfahren ', '') }},
+            Schlafenszeit um {{ schedule_parts[3] | replace('Schlafenszeit ', '') }}.
+            Der Wecker wurde für {{ schedule_parts[4] | replace('Wecker ', '') }} Uhr gestellt.
           {% else %}
             Kalenderabfrage für morgen abgeschlossen. {{ schedule_status | replace(' · ', '. ') }}.
           {% endif %}
