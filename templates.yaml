@@ -73,3 +73,17 @@
             {% endif %}
           {% endif %}
         {% endif %}
+- sensor:
+    - name: Samsung S25 DND Status
+      default_entity_id: sensor.samsung_s25_dnd_status
+      unique_id: samsung_s25_dnd_status
+      icon: mdi:cellphone-lock
+      state: >-
+        {% set dnd_state = states('sensor.samsung_s25_do_not_disturb') %}
+        {% if dnd_state == 'off' %}
+          Aus
+        {% elif dnd_state in ['priority_only', 'total_silence', 'alarms_only'] %}
+          Ein
+        {% else %}
+          DND-Sensor in HA-App aktivieren
+        {% endif %}

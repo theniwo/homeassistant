@@ -407,10 +407,38 @@ alexa_output_with_configured_volume:
       night_volume: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
       sleep_mode_active: "{{ is_state('input_boolean.sleep_mode_calendar', 'on') }}"
       announcement_targets: "{{ output_targets | default(volume_targets if output_target in ['media_player.uberall', 'media_player.uberall_2'] else [output_target]) }}"
+      previous_dnd_switches: >-
+        {% set switch_by_player = {
+          'media_player.schlafzimmer': 'switch.schlafzimmer_do_not_disturb_switch',
+          'media_player.arbeitszimmer': 'switch.arbeitszimmer_do_not_disturb_switch',
+          'media_player.kuche': 'switch.kuche_do_not_disturb_switch',
+          'media_player.wohnzimmer': 'switch.wohnzimmer_do_not_disturb_switch',
+          'media_player.badezimmer': 'switch.badezimmer_do_not_disturb_switch'
+        } %}
+        {% set ns = namespace(values=[]) %}
+        {% for entity_id in announcement_targets %}
+          {% set switch_entity = switch_by_player.get(entity_id) %}
+          {% if switch_entity and is_state(switch_entity, 'on') %}
+            {% set ns.values = ns.values + [switch_entity] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.values }}
+      announcement_restore_delay: "{{ [((message | string | length / 15) | round(0, 'ceil') | int + 5), 90] | min }}"
   - if:
     - condition: template
       value_template: "{{ output_type == 'announce' }}"
     then:
+    - if:
+      - condition: template
+        value_template: "{{ previous_dnd_switches | length > 0 }}"
+      then:
+      - action: switch.turn_off
+        target:
+          entity_id: '{{ previous_dnd_switches }}'
+        continue_on_error: true
+      - wait_template: "{{ expand(previous_dnd_switches) | selectattr('state', 'eq', 'off') | list | count == previous_dnd_switches | count }}"
+        timeout: '00:00:05'
+        continue_on_timeout: true
     - repeat:
         for_each: '{{ volume_targets }}'
         sequence:
@@ -443,11 +471,19 @@ alexa_output_with_configured_volume:
           type: announce
       continue_on_error: true
   - delay:
-      seconds: 10
+      seconds: "{{ announcement_restore_delay if output_type == 'announce' else 10 }}"
   - if:
     - condition: template
       value_template: "{{ output_type == 'announce' }}"
     then:
+    - if:
+      - condition: template
+        value_template: "{{ previous_dnd_switches | length > 0 }}"
+      then:
+      - action: switch.turn_on
+        target:
+          entity_id: '{{ previous_dnd_switches }}'
+        continue_on_error: true
     - choose:
       - conditions:
         - condition: state
