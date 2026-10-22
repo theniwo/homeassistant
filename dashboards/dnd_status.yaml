@@ -1,23 +1,32 @@
-type: entities
-title: DND Status
-entities:
-  - entity: input_boolean.snom_dnd_status
-    name: Snom
-  - entity: input_boolean.gnome_dnd_status_niwo
-    name: GNOME (niwo)
-  - entity: input_boolean.gnome_dnd_status_work
-    name: GNOME (work)
-  - entity: sensor.samsung_s25_dnd_status
-    name: Samsung S25
-  - entity: switch.schlafzimmer_do_not_disturb_switch
-    name: Echo Schlafzimmer
-  - entity: switch.arbeitszimmer_do_not_disturb_switch
-    name: Echo Arbeitszimmer
-  - entity: switch.kuche_do_not_disturb_switch
-    name: Echo Küche
-  - entity: switch.wohnzimmer_do_not_disturb_switch
-    name: Echo Wohnzimmer
-  - entity: switch.badezimmer_do_not_disturb_switch
-    name: Echo Badezimmer
-show_header_toggle: false
-state_color: true
+type: grid
+columns: 2
+square: false
+cards:
+  - type: entities
+    title: Geräte
+    entities:
+      - entity: input_boolean.snom_dnd_status
+        name: Snom
+      - entity: input_boolean.gnome_dnd_status_niwo
+        name: GNOME (niwo)
+      - entity: input_boolean.gnome_dnd_status_work
+        name: GNOME (work)
+      - entity: sensor.samsung_s25_dnd_status
+        name: Samsung S25
+    show_header_toggle: false
+    state_color: true
+  - type: entities
+    title: Echo Dots
+    entities:
+      - entity: switch.schlafzimmer_do_not_disturb_switch
+        name: Schlafzimmer
+      - entity: switch.arbeitszimmer_do_not_disturb_switch
+        name: Arbeitszimmer
+      - entity: switch.kuche_do_not_disturb_switch
+        name: Küche
+      - entity: switch.wohnzimmer_do_not_disturb_switch
+        name: Wohnzimmer
+      - entity: switch.badezimmer_do_not_disturb_switch
+        name: Badezimmer
+    show_header_toggle: false
+    state_color: true

@@ -79,11 +79,15 @@
       unique_id: samsung_s25_dnd_status
       icon: mdi:cellphone-lock
       state: >-
-        {% set dnd_state = states('sensor.samsung_s25_do_not_disturb') %}
+        {% set dnd_state = states('sensor.samsung_s25_sm_s931b_do_not_disturb_sensor') %}
         {% if dnd_state == 'off' %}
           Aus
-        {% elif dnd_state in ['priority_only', 'total_silence', 'alarms_only'] %}
-          Ein
+        {% elif dnd_state == 'priority_only' %}
+          Ein · Prioritätsmodus
+        {% elif dnd_state == 'total_silence' %}
+          Ein · Vollständige Stille
+        {% elif dnd_state == 'alarms_only' %}
+          Ein · Nur Alarme
         {% else %}
-          DND-Sensor in HA-App aktivieren
+          Nicht verfügbar
         {% endif %}
