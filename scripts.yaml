@@ -706,22 +706,30 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         pill_is_overdue: "{{ schedule_is_supported | bool and (pill_datetime | as_datetime) <= now() }}"
         bedtime_is_overdue: "{{ schedule_is_supported | bool and (bedtime_datetime | as_datetime) <= now() }}"
         alarm_is_future: "{{ (alarm_datetime | as_datetime) > now() }}"
-        alarm_time_display: "{{ (alarm_datetime | as_datetime).strftime('%H:%M') }}"
-        wind_down_time_display: "{{ (wind_down_datetime | as_datetime).strftime('%H:%M') }}"
-        bedtime_time_display: "{{ (bedtime_datetime | as_datetime).strftime('%H:%M') }}"
-        pill_time_display: "{{ (pill_datetime | as_datetime).strftime('%H:%M') }}"
+        alarm_time_spoken: >-
+          {% set local_time = alarm_datetime | as_datetime | as_local %}
+          {{ local_time.hour }} Uhr{% if local_time.minute > 0 %} {{ local_time.minute }}{% endif %}
+        wind_down_time_spoken: >-
+          {% set local_time = wind_down_datetime | as_datetime | as_local %}
+          {{ local_time.hour }} Uhr{% if local_time.minute > 0 %} {{ local_time.minute }}{% endif %}
+        bedtime_time_spoken: >-
+          {% set local_time = bedtime_datetime | as_datetime | as_local %}
+          {{ local_time.hour }} Uhr{% if local_time.minute > 0 %} {{ local_time.minute }}{% endif %}
+        pill_time_spoken: >-
+          {% set local_time = pill_datetime | as_datetime | as_local %}
+          {{ local_time.hour }} Uhr{% if local_time.minute > 0 %} {{ local_time.minute }}{% endif %}
         bedtime_since: >-
-          {% if (bedtime_datetime | as_datetime).date() == now().date() %}heute um {{ bedtime_time_display }}
-          {% elif (bedtime_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ bedtime_time_display }}
-          {% else %}am {{ (bedtime_datetime | as_datetime).strftime('%d.%m. um %H:%M') }}{% endif %}
+          {% if (bedtime_datetime | as_datetime).date() == now().date() %}heute um {{ bedtime_time_spoken }}
+          {% elif (bedtime_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ bedtime_time_spoken }}
+          {% else %}am {{ (bedtime_datetime | as_datetime).strftime('%d.%m.') }} um {{ bedtime_time_spoken }}{% endif %}
         pill_since: >-
-          {% if (pill_datetime | as_datetime).date() == now().date() %}heute um {{ pill_time_display }}
-          {% elif (pill_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ pill_time_display }}
-          {% else %}am {{ (pill_datetime | as_datetime).strftime('%d.%m. um %H:%M') }}{% endif %}
+          {% if (pill_datetime | as_datetime).date() == now().date() %}heute um {{ pill_time_spoken }}
+          {% elif (pill_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ pill_time_spoken }}
+          {% else %}am {{ (pill_datetime | as_datetime).strftime('%d.%m.') }} um {{ pill_time_spoken }}{% endif %}
         wind_down_since: >-
-          {% if (wind_down_datetime | as_datetime).date() == now().date() %}heute um {{ wind_down_time_display }}
-          {% elif (wind_down_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ wind_down_time_display }}
-          {% else %}am {{ (wind_down_datetime | as_datetime).strftime('%d.%m. um %H:%M') }}{% endif %}
+          {% if (wind_down_datetime | as_datetime).date() == now().date() %}heute um {{ wind_down_time_spoken }}
+          {% elif (wind_down_datetime | as_datetime).date() == (now() - timedelta(days=1)).date() %}gestern um {{ wind_down_time_spoken }}
+          {% else %}am {{ (wind_down_datetime | as_datetime).strftime('%d.%m.') }} um {{ wind_down_time_spoken }}{% endif %}
         remaining_seconds: "{{ [(alarm_datetime | as_datetime - now()).total_seconds() | int, 0] | max }}"
         remaining_hours: "{{ (remaining_seconds | int) // 3600 }}"
         remaining_minutes: "{{ ((remaining_seconds | int) % 3600) // 60 }}"
@@ -790,12 +798,12 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
               {% if wind_down_is_overdue | bool %}Die Runterfahrzeit war {{ wind_down_since }}. {% endif %}
               {% if pill_is_overdue | bool %}Die Tablettenerinnerung war {{ pill_since }}. Bitte nimm deine Tabletten ein. {% endif %}
               {% if bedtime_is_overdue | bool %}Schlafenszeit ist seit {{ bedtime_since }} angesagt. {% endif %}
-              {% if not (bedtime_is_overdue | bool) and pill_is_overdue | bool %}Zubettgehzeit ist um {{ bedtime_time_display }}. {% endif %}
-              {% if alarm_is_future | bool %}Bis zum Wecker um {{ alarm_time_display }} bleiben noch
+              {% if not (bedtime_is_overdue | bool) and pill_is_overdue | bool %}Zubettgehzeit ist um {{ bedtime_time_spoken }}. {% endif %}
+              {% if alarm_is_future | bool %}Bis zum Wecker um {{ alarm_time_spoken }} bleiben noch
               {% if remaining_hours | int > 0 %}{{ remaining_hours }} Stunden{% endif %}
               {% if remaining_hours | int > 0 and remaining_minutes | int > 0 %} und {% endif %}
               {% if remaining_minutes | int > 0 or remaining_hours | int == 0 %}{{ remaining_minutes }} Minuten{% endif %}.
-              {% else %}Die Weckzeit um {{ alarm_time_display }} ist bereits vorbei.{% endif %}
+              {% else %}Die Weckzeit um {{ alarm_time_spoken }} ist bereits vorbei.{% endif %}
 
 
 calendar_shifts_announce_tomorrow_status:
@@ -806,13 +814,29 @@ calendar_shifts_announce_tomorrow_status:
     - variables:
         schedule_status: "{{ states('input_text.tomorrow_shift_status') }}"
         schedule_parts: "{{ schedule_status.split(' · ') }}"
+        dnd_time_value: "{{ (schedule_parts[1] if schedule_parts | length > 1 else '') | replace('DND ', '') }}"
+        wind_down_time_value: "{{ (schedule_parts[2] if schedule_parts | length > 2 else '') | replace('Runterfahren ', '') }}"
+        bedtime_time_value: "{{ (schedule_parts[3] if schedule_parts | length > 3 else '') | replace('Schlafenszeit ', '') }}"
+        alarm_time_value: "{{ (schedule_parts[4] if schedule_parts | length > 4 else '') | replace('Wecker ', '') }}"
+        dnd_time_spoken: >-
+          {% set time_parts = dnd_time_value.split(':') %}
+          {{ time_parts[0] | int }} Uhr{% if time_parts | length > 1 and time_parts[1] | int > 0 %} {{ time_parts[1] | int }}{% endif %}
+        wind_down_time_spoken: >-
+          {% set time_parts = wind_down_time_value.split(':') %}
+          {{ time_parts[0] | int }} Uhr{% if time_parts | length > 1 and time_parts[1] | int > 0 %} {{ time_parts[1] | int }}{% endif %}
+        bedtime_time_spoken: >-
+          {% set time_parts = bedtime_time_value.split(':') %}
+          {{ time_parts[0] | int }} Uhr{% if time_parts | length > 1 and time_parts[1] | int > 0 %} {{ time_parts[1] | int }}{% endif %}
+        alarm_time_spoken: >-
+          {% set time_parts = alarm_time_value.split(':') %}
+          {{ time_parts[0] | int }} Uhr{% if time_parts | length > 1 and time_parts[1] | int > 0 %} {{ time_parts[1] | int }}{% endif %}
         status_message: >-
           {% if 'Wecker ' in schedule_status and 'kein Wecker' not in schedule_status %}
             Kalenderabfrage für morgen abgeschlossen. {{ schedule_parts[0] }}.
-            Nicht stören ab {{ schedule_parts[1] | replace('DND ', '') }}.
-            Runterfahren um {{ schedule_parts[2] | replace('Runterfahren ', '') }},
-            Schlafenszeit um {{ schedule_parts[3] | replace('Schlafenszeit ', '') }}.
-            Der Wecker wurde für {{ schedule_parts[4] | replace('Wecker ', '') }} Uhr gestellt.
+            Nicht stören ab {{ dnd_time_spoken }}.
+            Runterfahren um {{ wind_down_time_spoken }},
+            Schlafenszeit um {{ bedtime_time_spoken }}.
+            Der Wecker wurde für morgen um {{ alarm_time_spoken }} gestellt.
           {% else %}
             Kalenderabfrage für morgen abgeschlossen. {{ schedule_status | replace(' · ', '. ') }}.
           {% endif %}
