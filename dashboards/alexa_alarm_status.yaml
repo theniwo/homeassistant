@@ -3,21 +3,34 @@
     {% set raw = states('input_text.tomorrow_shift_status') %}
     {% set status = raw | regex_replace('[0-9]{2}[.][0-9]{2}[.] ', '') %}
     {% set parts = status.split(' · ') %}
+    {% set shift_name = parts[0].split(' · ')[0] | trim %}
+    {% if shift_name == 'Frühschicht' %}
+    {% set shift_display = shift_name ~ ' · ' ~ states('input_datetime.early_shift_start')[:5] ~ '–' ~ states('input_datetime.early_shift_end')[:5] %}
+    {% elif shift_name == 'Spätschicht' %}
+    {% set shift_display = shift_name ~ ' · ' ~ states('input_datetime.late_shift_start')[:5] ~ '–' ~ states('input_datetime.late_shift_end')[:5] %}
+    {% else %}
+    {% set shift_display = parts[0] %}
+    {% endif %}
     {% if parts | length >= 5 %}
-    🌅 **{{ parts[0] }}**<br>
+    🌅 **{{ shift_display }}**<br>
     🔕 **DND** · {{ parts[1].replace('DND ', '') }}<br>
     🌗 **Runterfahren** · {{ parts[2].replace('Runterfahren ', '') }}<br>
     🛌 **Schlafenszeit** · {{ parts[3].replace('Schlafenszeit ', '') }}<br>
     ⏰ **Wecker** · {{ parts[4].replace('Wecker ', '') }}<br>
     📡 **Alexa-Status** · {{ states('sensor.alexa_wecker_status') }}
     {% elif parts | length >= 4 %}
-    🌅 **{{ parts[0] }}**<br>
+    🌅 **{{ shift_display }}**<br>
     🌗 **Runterfahren** · {{ parts[1].replace('Runterfahren ', '') }}<br>
     🛌 **Schlafenszeit** · {{ parts[2].replace('Schlafenszeit ', '') }}<br>
     ⏰ **Wecker** · {{ parts[3].replace('Wecker ', '') }}<br>
     📡 **Alexa-Status** · {{ states('sensor.alexa_wecker_status') }}
     {% else %}
+    {% if shift_name in ['Frühschicht', 'Spätschicht'] %}
+    🌅 **{{ shift_display }}**<br>
+    {% if parts | length > 1 %}{{ parts[1:] | join(' · ') }}<br>{% endif %}
+    {% else %}
     📅 **{{ status }}**<br>
+    {% endif %}
     📡 **Alexa-Status** · {{ states('sensor.alexa_wecker_status') }}
     {% endif %}
 - type: button
