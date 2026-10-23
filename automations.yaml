@@ -4138,11 +4138,11 @@
   mode: single
 - id: calendar_shifts_sick_pill_reminder_20261014
   alias: Calendar - Shifts - Sick pill reminder
-  description: Announces the morning pill reminder during sick mode, offset from the late-shift reminder time.
+  description: Announces the sick-mode pill reminder at the late-shift start plus the configured sick offset.
   triggers:
   - trigger: template
     id: sick_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_lead_time'') | float(0.25) * 60) | int) %} {% set sick_offset_minutes = (states(''input_number.krank_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes + sick_offset_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set sick_offset_minutes = (states(''input_number.krank_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes + sick_offset_minutes) % 1440 }}'
   conditions:
   - condition: state
     entity_id: input_select.arbeitsmodus
@@ -4150,7 +4150,6 @@
   actions:
   - variables:
       sick_offset_hours: '{{ states(''input_number.krank_offset_tablettenerinnerung'') | float(2) }}'
-      pill_lead_minutes: '{{ ((states(''input_number.pill_morning_lead_time'') | float(0.25) * 60) | int) }}'
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -4161,7 +4160,7 @@
       - media_player.kuche
       - media_player.wohnzimmer
       - media_player.badezimmer
-      message: "{% if sick_offset_hours | float == 0 and pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Es ist jetzt Zeit.\n{% elif sick_offset_hours | float == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Spätschicht-Erinnerung liegt {{ pill_lead_minutes }} Minuten vor der üblichen Zeit.\n{% else %}\n  Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung ist um {{ sick_offset_hours }} Stunden verschoben.\n{% endif %}"
+      message: "{% if sick_offset_hours | float == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Spätschicht beginnt jetzt.\n{% else %}\n  Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung ist {{ sick_offset_hours }} Stunden nach dem üblichen Spätschichtbeginn.\n{% endif %}"
   mode: single
 - id: motion_hall_lighting_hold_20261015
   alias: Motion - Flur Vorne Lichtsteuerung
