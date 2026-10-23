@@ -1664,7 +1664,7 @@
           entity_id: media_player.schlafzimmer
         data:
           media_content_type: custom
-          media_content_id: Turn on Mückenlampe
+          media_content_id: Mückenlampe einschalten
         continue_on_error: true
   mode: single
 - id: '1740797479983'
@@ -4354,7 +4354,7 @@
           entity_id: media_player.schlafzimmer
         data:
           media_content_type: custom
-          media_content_id: Turn off Mückenlampe
+          media_content_id: Mückenlampe ausschalten
         continue_on_error: true
     - conditions:
       - condition: state
@@ -4366,7 +4366,7 @@
           entity_id: media_player.schlafzimmer
         data:
           media_content_type: custom
-          media_content_id: Turn on Mückenlampe
+          media_content_id: Mückenlampe einschalten
         continue_on_error: true
   mode: restart
 - id: sleep_mode_enforce_rooms
