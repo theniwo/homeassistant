@@ -552,7 +552,7 @@ sleep_mode_now:
   - condition: state
     entity_id: input_boolean.sleep_mode_calendar
     state: 'off'
-  - action: notify.mobile_app_samsung_s25
+  - action: notify.mobile_app_sm_s931b
     data:
       message: command_activity
       data:
@@ -612,7 +612,7 @@ sleep_mode_end_now:
   - condition: state
     entity_id: input_boolean.sleep_mode_calendar
     state: 'on'
-  - action: notify.mobile_app_samsung_s25
+  - action: notify.mobile_app_sm_s931b
     data:
       message: command_activity
       data:
@@ -769,7 +769,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
                 - action: input_boolean.turn_on
                   target:
                     entity_id: input_boolean.fritz_box_answering_machines_calendar
-        - action: notify.mobile_app_samsung_s25
+        - action: notify.mobile_app_sm_s931b
           data:
             message: command_dnd
             data:
@@ -895,7 +895,7 @@ calendar_shifts_verify_alexa_alarm:
           notification_id: calendar_shifts_alexa_alarm_warning
           title: Alexa-Wecker prüfen
           message: '{{ warning_message }}'
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           title: Alexa-Wecker prüfen
           message: '{{ warning_message }}'
@@ -929,7 +929,7 @@ calendar_shifts_verify_alexa_alarm:
       - condition: template
         value_template: '{{ not (is_bedtime_check | bool) }}'
       then:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           title: Alexa-Weckerstatus
           message: >-

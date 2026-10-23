@@ -209,7 +209,7 @@
       entity_id: fb1abe95addf288a9f069055178b0f86
       domain: binary_sensor
   action:
-  - service: notify.mobile_app_samsung_s25
+  - service: notify.mobile_app_sm_s931b
     data:
       message: Du hast ein Fenster aufgelassen.
       title: Fensterwarnung!
@@ -2392,7 +2392,7 @@
         entity_id: input_boolean.work_mode_calendar
         state: 'off'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -2422,7 +2422,7 @@
         entity_id: input_boolean.work_mode_calendar
         state: 'off'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -2474,7 +2474,7 @@
         entity_id: input_boolean.work_mode_calendar
         state: 'on'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -2494,7 +2494,7 @@
         entity_id: input_boolean.work_mode_calendar
         state: 'on'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -2648,7 +2648,7 @@
         entity_id: input_boolean.master_dnd_override
         state: 'off'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_dnd
           data:
@@ -2660,7 +2660,7 @@
         entity_id: input_boolean.sleep_mode_calendar
         state: 'off'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -2683,7 +2683,7 @@
       - condition: template
         value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
       sequence:
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_activity
           data:
@@ -3564,7 +3564,7 @@
         - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.fritz_box_answering_machines_calendar
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_dnd
           data:
@@ -3596,7 +3596,7 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.fritz_box_answering_machines_calendar
-      - action: notify.mobile_app_samsung_s25
+      - action: notify.mobile_app_sm_s931b
         data:
           message: command_dnd
           data:
