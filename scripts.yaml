@@ -628,6 +628,9 @@ sleep_mode_end_now:
       - condition: template
         value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and is_state(''input_boolean.master_dnd_override'',
           ''off'') and is_state(''input_boolean.snom_dnd_calendar'', ''on'') }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'off'
       sequence:
       - action: shell_command.snom_dnd_set
         data:

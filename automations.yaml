@@ -2509,6 +2509,67 @@
   conditions:
   - condition: template
     value_template: '{{ now().weekday() < 5 }}'
+- id: calendar_shifts_snom_dnd_work_mode
+  alias: Calendar - Shifts - Snom DND during Work mode
+  description: Keeps Snom DND enabled while the calendar Work mode helper is active and releases it when Work ends unless another DND mode still needs it.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.work_mode_calendar
+    to: 'on'
+    id: work_on
+  - trigger: state
+    entity_id: input_boolean.work_mode_calendar
+    to: 'off'
+    id: work_off
+  - trigger: state
+    entity_id: input_boolean.snom_dnd_status
+    to: 'off'
+    id: snom_dnd_off
+  - trigger: time_pattern
+    minutes: /1
+    id: work_dnd_check
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'on'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'on'
+        response_variable: snom_work_result
+      - if: '{{ snom_work_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+    - conditions:
+      - condition: trigger
+        id: work_off
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.master_dnd_override
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.snom_dnd_calendar
+        state: 'on'
+      sequence:
+      - action: shell_command.snom_dnd_set
+        data:
+          desired: 'off'
+        response_variable: snom_work_result
+      - if: '{{ snom_work_result[''returncode''] == 0 }}'
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.snom_dnd_calendar
+  mode: single
 - id: '1791356584531'
   alias: Calendar - Shifts - Samsung Sleep mode
   description: Coordinates Samsung Sleep mode and Snom DND with calendar shifts, checking actual phone DND state to avoid toggling manual choices.
@@ -2589,6 +2650,9 @@
         state: 'off'
       - condition: template
         value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'off'
       sequence:
       - action: shell_command.snom_dnd_set
         data:
@@ -3574,17 +3638,25 @@
       - condition: template
         value_template: '{{ trigger.id == ''disable'' }}'
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'off'
-        response_variable: snom_master_result
       - if:
-          condition: template
-          value_template: '{{ snom_master_result[''returncode''] == 0 }}'
+        - condition: state
+          entity_id: input_boolean.work_mode_calendar
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.sleep_mode_calendar
+          state: 'off'
         then:
-        - action: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.snom_dnd_calendar
+        - action: shell_command.snom_dnd_set
+          data:
+            desired: 'off'
+          response_variable: snom_master_result
+        - if:
+            condition: template
+            value_template: '{{ snom_master_result[''returncode''] == 0 }}'
+          then:
+          - action: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.snom_dnd_calendar
       - action: shell_command.fritzbox_tam_set
         data:
           enabled: 'off'
