@@ -543,6 +543,32 @@ sleep_mode_toggle:
       - action: script.sleep_mode_end_now
     default:
     - action: script.sleep_mode_now
+work_mode_toggle:
+  alias: Work Mode umschalten
+  description: Toggles Samsung Work mode and keeps its Home Assistant state helper synchronized.
+  mode: single
+  sequence:
+  - action: notify.mobile_app_sm_s931b
+    data:
+      message: command_activity
+      data:
+        intent_action: android.intent.action.MAIN
+        intent_package_name: com.samsung.android.app.routines
+        intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
+        intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.work_mode_calendar
+        state: 'on'
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.work_mode_calendar
+    default:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.work_mode_calendar
 sleep_mode_now:
   alias: Sleep Mode jetzt
   description: Activates Samsung Sleep mode, Snom DND, FRITZ!Box answering machines, sleep heating, bedtime announcements,

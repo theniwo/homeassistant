@@ -1,0 +1,12 @@
+- type: button
+  entity: input_boolean.work_mode_calendar
+  name: Work Mode
+  icon: mdi:briefcase
+  show_name: true
+  show_icon: true
+  show_state: false
+  tap_action:
+    action: call-service
+    service: script.turn_on
+    target:
+      entity_id: script.work_mode_toggle
