@@ -3683,7 +3683,7 @@
         data:
           message: command_dnd
           data:
-            command: false
+            command: 'off'
         continue_on_error: true
   mode: single
 - id: calendar_shifts_wind_down_reminder
