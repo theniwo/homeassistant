@@ -43,3 +43,8 @@
     service: script.turn_on
     target:
       entity_id: script.calendar_shifts_verify_alexa_alarm
+  visibility:
+    - condition: template
+      value_template: >-
+        {% set status = states('sensor.alexa_wecker_status') %}
+        {{ status.startswith('Fehlt') or status in ['Nicht geprüft', 'Alexa-Daten nicht verfügbar', 'unknown', 'unavailable'] }}
