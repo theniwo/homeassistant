@@ -107,7 +107,7 @@ retry_office_radiator_target:
           seconds: 60
       - variables:
           report_confirmed: '{{ states[''climate.shellytrv_8cf681e113d0''].last_reported_timestamp | float(0)  >
-            (report_timestamp_before | float(0)) }}}}'
+            (report_timestamp_before | float(0)) }}'
           command_confirmed: "{% if requested_command == 'temperature' %}\n  {{ (report_confirmed | bool)\n\
             \     and is_state('climate.shellytrv_8cf681e113d0', 'heat')\n     and ((state_attr('climate.shellytrv_8cf681e113d0',\
             \ 'temperature') | float(-1000)\n           - (requested_temperature | float)) | abs < 0.1)\
@@ -220,7 +220,7 @@ retry_living_room_radiator_target:
           seconds: 60
       - variables:
           report_confirmed: '{{ states[''climate.shellytrv_8cf68118891f''].last_reported_timestamp | float(0)  >
-            (report_timestamp_before | float(0)) }}}}'
+            (report_timestamp_before | float(0)) }}'
           command_confirmed: "{% if requested_command == 'temperature' %}\n  {{ (report_confirmed | bool)\n\
             \     and is_state('climate.shellytrv_8cf68118891f', 'heat')\n     and ((state_attr('climate.shellytrv_8cf68118891f',\
             \ 'temperature') | float(-1000)\n           - (requested_temperature | float)) | abs < 0.1)\
@@ -333,7 +333,7 @@ retry_bedroom_radiator_target:
           seconds: 60
       - variables:
           report_confirmed: '{{ states[''climate.shellytrv_842e14ffcba2''].last_reported_timestamp | float(0)  >
-            (report_timestamp_before | float(0)) }}}}'
+            (report_timestamp_before | float(0)) }}'
           command_confirmed: "{% if requested_command == 'temperature' %}\n  {{ (report_confirmed | bool)\n\
             \     and is_state('climate.shellytrv_842e14ffcba2', 'heat')\n     and ((state_attr('climate.shellytrv_842e14ffcba2',\
             \ 'temperature') | float(-1000)\n           - (requested_temperature | float)) | abs < 0.1)\
