@@ -1654,51 +1654,9 @@
       title: ZHA Event Debug
       message: '{{ trigger.event.data }}'
   mode: restart
-- id: '1740839238007'
-  alias: Licht Ein/Aus - Nachttisch
-  description: ''
-  trigger:
-  - device_id: f6800626e7ce2d89f297417e20fd1fb4
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-    id: turn_on
-  - device_id: f6800626e7ce2d89f297417e20fd1fb4
-    domain: zha
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_off
-    id: turn_off
-  condition: []
-  action:
-  - choose:
-    - conditions:
-      - condition: trigger
-        id: turn_on
-      sequence:
-      - service: light.turn_on
-        target:
-          device_id: 4001b11c81ef15b3ad55a9cc4a938abc
-        data:
-          kelvin: 2000
-          brightness: 50
-    - conditions:
-      - condition: trigger
-        id: turn_off
-      sequence:
-      - service: light.turn_off
-        data: {}
-        target:
-          area_id: bedroom
-      - service: switch.turn_off
-        data: {}
-        target:
-          area_id: bedroom
-  mode: single
 - id: '1740839783206'
   alias: Licht Dim Up & Down - Schlafzimmer
-  description: ''
+  description: Hold the bedroom RODRET buttons to dim only the bedside and standing lamps.
   trigger:
   - platform: event
     event_type: zha_event
@@ -1722,7 +1680,9 @@
                 brightness_step: 10
                 transition: 0
               target:
-                area_id: bedroom
+                entity_id:
+                - light.nachttischlampe_licht
+                - light.stehlampe_schlafzimmer_licht
             - delay:
                 milliseconds: 0
         - wait_for_trigger:
@@ -1746,7 +1706,9 @@
                 brightness_step: -10
                 transition: 0
               target:
-                area_id: bedroom
+                entity_id:
+                - light.nachttischlampe_licht
+                - light.stehlampe_schlafzimmer_licht
             - delay:
                 milliseconds: 0
         - wait_for_trigger:
@@ -1908,7 +1870,7 @@
   mode: single
 - id: '1741472366856'
   alias: Licht Ein/Aus - Schlafzimmer
-  description: ''
+  description: Short press turns the bedside and standing lamps on or off without affecting other bedroom lights.
   trigger:
   - device_id: f6800626e7ce2d89f297417e20fd1fb4
     domain: zha
@@ -1931,10 +1893,9 @@
       sequence:
       - service: light.turn_on
         target:
-          device_id: 4001b11c81ef15b3ad55a9cc4a938abc
-        data:
-          kelvin: 2000
-          brightness: 50
+          entity_id:
+          - light.nachttischlampe_licht
+          - light.stehlampe_schlafzimmer_licht
     - conditions:
       - condition: trigger
         id: turn_off
@@ -1942,13 +1903,9 @@
       - service: light.turn_off
         data: {}
         target:
-          area_id:
-          - bedroom
-          - flur
-      - service: switch.turn_off
-        data: {}
-        target:
-          area_id: bedroom
+          entity_id:
+          - light.nachttischlampe_licht
+          - light.stehlampe_schlafzimmer_licht
   mode: single
 - id: '1761790107591'
   alias: Licht Ein/Aus - Flur
