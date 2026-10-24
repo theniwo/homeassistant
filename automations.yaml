@@ -1,6 +1,6 @@
 - id: '1701558603052'
   alias: Fenster Arbeitszimmer auf
-  description: ''
+  description: Sets the office radiator to the configured no-heating target while either office window is open.
   trigger:
   - type: opened
     platform: device
@@ -21,48 +21,18 @@
       minutes: 0
       seconds: 0
   condition:
-  - condition: or
-    conditions:
-    - condition: and
-      conditions:
-      - type: is_open
-        condition: device
-        device_id: 4f24d1515f49e74f8d489d82edeab448
-        entity_id: 32802619e7e99def1dd8eb6f46832b52
-        domain: binary_sensor
-      - type: is_value
-        condition: device
-        device_id: 4f24d1515f49e74f8d489d82edeab448
-        entity_id: 51c0052f493d75937093b6b5adeff6f1
-        domain: sensor
-        below: 7
-    - condition: and
-      conditions:
-      - type: is_open
-        condition: device
-        device_id: 62101cf63c7a4d92239cfa5f3b086c93
-        entity_id: b26faf2245e7c7f1570aeab004438d5a
-        domain: binary_sensor
-      - type: is_value
-        condition: device
-        device_id: 62101cf63c7a4d92239cfa5f3b086c93
-        entity_id: 256cdbac50064e2ae7b42bbbbaafc20e
-        domain: sensor
-        below: 7
+  - condition: template
+    value_template: "{{ is_state('binary_sensor.shellydw2_aa9da4_door', 'on') or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
   action:
-  - if:
-    - condition: device
-      device_id: 0aca52e23e232dc8c092b3fb7a97e86f
-      domain: climate
-      entity_id: e5abdf495a69fef76a5976744db49081
-      type: is_hvac_mode
-      hvac_mode: heat
-    then:
-    - device_id: 0aca52e23e232dc8c092b3fb7a97e86f
-      domain: climate
-      entity_id: e5abdf495a69fef76a5976744db49081
-      type: set_hvac_mode
-      hvac_mode: 'off'
+  - variables:
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_office_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ window_open_off_temperature }}'
   mode: single
 - id: '1701558640150'
   initial_state: false
@@ -124,20 +94,22 @@
       entity_id: device_tracker.samsung_s25
       zone: zone.home
   action:
+  - variables:
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.retry_living_room_radiator_target
     data:
       variables:
         command_type: temperature
-        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') else states('input_number.heizung_mindesttemperatur') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.shelly_retry_bedroom_radiator_target
     data:
       variables:
         command_type: temperature
-        target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') else states('input_number.heizung_mindesttemperatur') | float(4) }}"
   mode: single
 - id: '1701618433298'
   alias: Fenster Überall offen
@@ -220,7 +192,7 @@
   mode: single
 - id: '1702215033034'
   alias: Fenster Wohnzimmer auf
-  description: ''
+  description: Stores the current living room target and uses the configured no-heating target while either window is open.
   trigger:
   - type: opened
     platform: device
@@ -241,48 +213,27 @@
       minutes: 0
       seconds: 10
   condition:
-  - condition: or
-    conditions:
-    - condition: and
-      conditions:
-      - type: is_open
-        condition: device
-        device_id: f9798d86f248c6fb1c8ad0050218b685
-        entity_id: f2451cebf7baa596a319d15aebd97a1b
-        domain: binary_sensor
-      - type: is_value
-        condition: device
-        device_id: f9798d86f248c6fb1c8ad0050218b685
-        entity_id: 4c7c1d4501b83c81e481002bc5d4645e
-        domain: sensor
-        below: 5
-    - type: is_open
-      condition: device
-      device_id: 273da5061f9510e795e103c425d2fbd6
-      entity_id: fb1abe95addf288a9f069055178b0f86
-      domain: binary_sensor
+  - condition: template
+    value_template: "{{ is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
   action:
+  - variables:
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
   - if:
-    - condition: device
-      device_id: b639ddd69f920446b2e72073910c4825
-      domain: climate
-      entity_id: 0b2825a29464f3924c7c07b3bc884a4c
-      type: is_hvac_mode
-      hvac_mode: heat
+    - condition: template
+      value_template: "{{ states('climate.shellytrv_8cf68118891f') == 'heat' and (state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(0)) > window_open_off_temperature }}"
     then:
     - service: input_number.set_value
       data_template:
         value: '{{ state_attr(''climate.shellytrv_8cf68118891f'',''temperature'') }}'
         entity_id: input_number.heizung_wohnzimmer
       enabled: true
-    - action: script.turn_on
-      target:
-        entity_id: script.retry_living_room_radiator_target
-      data:
-        variables:
-          command_type: hvac_mode
-          target_hvac_mode: 'off'
-    enabled: true
+  - action: script.turn_on
+    target:
+      entity_id: script.retry_living_room_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ window_open_off_temperature }}'
   mode: parallel
   max: 10
 - id: '1702215128268'
@@ -453,7 +404,7 @@
   mode: single
 - id: '1705144183106'
   alias: Fenster Schlafzimmer auf
-  description: ''
+  description: Sets the bedroom radiator to the configured no-heating target while its window is open.
   trigger:
   - type: opened
     platform: device
@@ -465,35 +416,19 @@
       minutes: 0
       seconds: 10
   condition:
-  - condition: and
-    conditions:
-    - type: is_open
-      condition: device
-      device_id: d6f6d019647371ae3aedca8009437a96
-      entity_id: fea938cd0420bd2d4063f38350def3ba
-      domain: binary_sensor
-    - type: is_value
-      condition: device
-      device_id: d6f6d019647371ae3aedca8009437a96
-      entity_id: 00eee2d55839bea5df8900f91a212e82
-      domain: sensor
-      below: 5
-      enabled: false
+  - condition: state
+    entity_id: binary_sensor.shellydw2_08f9e051afef_door
+    state: 'on'
   action:
-  - if:
-    - condition: device
-      device_id: ed36891291e99d9c9fc7a720a1ce8d6a
-      domain: climate
-      entity_id: cd63c37e0e33e0ba93a12d38699adee4
-      type: is_hvac_mode
-      hvac_mode: heat
-      enabled: false
-    then:
-    - device_id: ed36891291e99d9c9fc7a720a1ce8d6a
-      domain: climate
-      entity_id: cd63c37e0e33e0ba93a12d38699adee4
-      type: set_hvac_mode
-      hvac_mode: 'off'
+  - variables:
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+  - action: script.turn_on
+    target:
+      entity_id: script.shelly_retry_bedroom_radiator_target
+    data:
+      variables:
+        command_type: temperature
+        target_temperature: '{{ window_open_off_temperature }}'
   mode: single
 - id: '1705144258186'
   initial_state: false
@@ -3382,6 +3317,10 @@
       mode_is_free_shift: '{{ is_state(''input_select.arbeitsmodus'', ''Freischicht'') }}'
       sick_offset: '{{ states(''input_number.krank_offset'') | float(2) if mode_is_sick | bool else 0 }}'
       minimum_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      living_window_open: "{{ is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
+      office_window_open: "{{ is_state('binary_sensor.shellydw2_aa9da4_door', 'on') or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
+      bedroom_window_open: "{{ is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') }}"
       weekday: '{{ now().weekday() < 5 }}'
       holiday_found: '{% set bavaria = holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) %}{% set regional = regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list %}{{ bavaria | length > 0 or regional | length > 0 }}'
       shift_work_active: '{{ (early_shift_found | bool or late_shift_found | bool) and not (mode_is_sick | bool) and not (mode_is_free_shift | bool) and (weekday | bool) }}'
@@ -3432,6 +3371,18 @@
   - choose:
     - conditions:
       - condition: template
+        value_template: '{{ living_window_open | bool }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ window_open_off_temperature }}'
+  - choose:
+    - conditions:
+      - condition: template
         value_template: '{{ should_heat_office | bool }}'
       - condition: state
         entity_id: person.niwo
@@ -3448,6 +3399,18 @@
           variables:
             command_type: temperature
             target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.heizung_arbeitszimmer'') | float(21) + (sick_offset | float(0))] | max }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ office_window_open | bool }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_office_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ window_open_off_temperature }}'
   - choose:
     - conditions:
       - condition: template
@@ -3468,7 +3431,19 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ (not (should_heat_living | bool) and not (living_sleep_profile_warmup | bool))\n   or is_state('binary_sensor.shellydw2_07a36f_door', 'on')\n   or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
+        value_template: '{{ bedroom_window_open | bool }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.shelly_retry_bedroom_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ window_open_off_temperature }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ not (should_heat_living | bool) and not (living_sleep_profile_warmup | bool) and not (living_window_open | bool) }}'
       sequence:
       - action: script.turn_on
         target:
@@ -3481,7 +3456,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ not (should_heat_office | bool)\n   or is_state('binary_sensor.shellydw2_aa9da4_door', 'on')\n   or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
+        value_template: '{{ not (should_heat_office | bool) and not (office_window_open | bool) }}'
       sequence:
       - action: script.turn_on
         target:
@@ -3494,7 +3469,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ bedroom_target | float(4) <= (minimum_temperature | float(4)) or is_state(''binary_sensor.shellydw2_08f9e051afef_door'', ''on'') }}'
+        value_template: '{{ bedroom_target | float(4) <= (minimum_temperature | float(4)) and not (bedroom_window_open | bool) }}'
       sequence:
       - action: script.turn_on
         target:
@@ -4592,7 +4567,19 @@
       matching_calendar_shift: "{{ (effective_profile == 'Frühschicht' and (early_shift_found | bool))\n   or (effective_profile == 'Spätschicht' and (late_shift_found | bool))\n   or (effective_profile == 'Freischicht' and (free_shift_found | bool)) }}"
       profile_shift_has_started: '{{ (matching_calendar_shift | bool) and (current_minute | int >= profile_start_minutes | int) }}'
       windows_closed: "{{ not is_state('binary_sensor.shellydw2_07a36f_door', 'on')\n   and not is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
+      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
   - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ not (windows_closed | bool) }}'
+      sequence:
+      - action: script.turn_on
+        target:
+          entity_id: script.retry_living_room_radiator_target
+        data:
+          variables:
+            command_type: temperature
+            target_temperature: '{{ window_open_off_temperature }}'
     - conditions:
       - condition: template
         value_template: '{{ effective_profile == ''Deaktiviert'' }}'
@@ -4628,7 +4615,7 @@
             target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
     - conditions:
       - condition: template
-        value_template: '{{ trigger.id in [''state_refresh'', ''ha_start''] or not is_state(''person.niwo'', ''home'') or not (windows_closed | bool) }}'
+        value_template: '{{ trigger.id in [''state_refresh'', ''ha_start''] or not is_state(''person.niwo'', ''home'') }}'
       sequence:
       - action: script.turn_on
         target:
