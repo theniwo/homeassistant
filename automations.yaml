@@ -3793,19 +3793,10 @@
   - trigger: template
     id: free_wake
     value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
-  - trigger: template
-    id: early_bedtime
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
-  - trigger: template
-    id: late_bedtime
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
-  - trigger: template
-    id: free_bedtime
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
   actions:
   - variables:
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.freischicht_arbeitsbeginn'') }}'
-      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ 1 if trigger.id.endswith(''_bedtime'') and start - alarm - sleep < 0 else 0 }}'
+      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ 1 if start - alarm < 0 else 0 }}'
   - action: calendar.get_events
     target:
       entity_id: calendar.shifts
@@ -3834,14 +3825,19 @@
       titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
       work_shift_found: '{% set event_titles = shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in event_titles or ''sv früh'' in event_titles or ''svv früh'' in event_titles }}{% elif trigger.id.startswith(''late_'') %}{{ ''spätschicht'' in event_titles or ''sv spät'' in event_titles or ''svv spät'' in event_titles }}{% else %}{{ (''freischicht'' in event_titles or ''support standby'' in event_titles) and ''4tw-frei'' not in event_titles and ''urlaub'' not in event_titles }}{% endif %}'
   - condition: template
-    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and (not is_state(''input_select.arbeitsmodus'', ''Krank'') or trigger.id.endswith(''_bedtime'')) }}'
-  - action: media_player.play_media
-    target:
-      entity_id: media_player.schlafzimmer
-    data:
-      media_content_type: custom
-      media_content_id: '{{ ''show clock'' if trigger.id.endswith(''_wake'') else ''turn off display'' }}'
-    continue_on_error: true
+    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+  - if:
+    - condition: state
+      entity_id: input_boolean.sleep_mode_calendar
+      state: 'off'
+    then:
+    - action: media_player.play_media
+      target:
+        entity_id: media_player.schlafzimmer
+      data:
+        media_content_type: custom
+        media_content_id: show clock
+      continue_on_error: true
   - if:
     - condition: template
       value_template: '{{ trigger.id.endswith(''_wake'') }}'
@@ -3853,6 +3849,48 @@
         - light.stehlampe_schlafzimmer_licht
       continue_on_error: true
   mode: single
+- id: calendar_shifts_echo_display_sleep_state
+  alias: Calendar - Shifts - Echo display follows Sleep Mode
+  description: Turns off the bedroom Echo display while Sleep Mode is active and shows the clock when Sleep Mode ends.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'on'
+    id: sleep_mode_on
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_calendar
+    to: 'off'
+    id: sleep_mode_off
+  - trigger: homeassistant
+    event: start
+    id: homeassistant_start
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'on'
+      sequence:
+      - action: media_player.play_media
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          media_content_type: custom
+          media_content_id: turn off display
+        continue_on_error: true
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.sleep_mode_calendar
+        state: 'off'
+      sequence:
+      - action: media_player.play_media
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          media_content_type: custom
+          media_content_id: show clock
+        continue_on_error: true
+  mode: restart
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
   description: Lowers all Echo volumes at 22:00, raises them when the bedroom Alexa alarm rings, and uses noon when no alarm is scheduled for today.
