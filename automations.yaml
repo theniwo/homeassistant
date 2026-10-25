@@ -3878,7 +3878,7 @@
         entity_id: media_player.schlafzimmer
       data:
         media_content_type: custom
-        media_content_id: show clock
+        media_content_id: turn display on
       continue_on_error: true
   - if:
     - condition: template
@@ -3891,48 +3891,6 @@
         - light.stehlampe_schlafzimmer_licht
       continue_on_error: true
   mode: single
-- id: calendar_shifts_echo_display_sleep_state
-  alias: Calendar - Shifts - Echo display follows Sleep Mode
-  description: Turns off the bedroom Echo display while Sleep Mode is active and shows the clock when Sleep Mode ends.
-  triggers:
-  - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
-    to: 'on'
-    id: sleep_mode_on
-  - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
-    to: 'off'
-    id: sleep_mode_off
-  - trigger: homeassistant
-    event: start
-    id: homeassistant_start
-  actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
-        state: 'on'
-      sequence:
-      - action: media_player.play_media
-        target:
-          entity_id: media_player.schlafzimmer
-        data:
-          media_content_type: custom
-          media_content_id: turn off display
-        continue_on_error: true
-    - conditions:
-      - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
-        state: 'off'
-      sequence:
-      - action: media_player.play_media
-        target:
-          entity_id: media_player.schlafzimmer
-        data:
-          media_content_type: custom
-          media_content_id: show clock
-        continue_on_error: true
-  mode: restart
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
   description: Lowers all Echo volumes at 22:00, raises them when the bedroom Alexa alarm rings, and uses noon when no alarm is scheduled for today.
@@ -4418,8 +4376,8 @@
           entity_id: input_boolean.snom_dnd_status
   mode: single
 - id: sleep_mode_mueckenlampe_alexa
-  alias: Sleep Mode - Mückenlampe via Alexa
-  description: Keeps the Popotan plug on outside Sleep Mode and turns it off while Sleep Mode is active using Alexa Media Player commands.
+  alias: Sleep Mode - Bedroom Echo controls
+  description: Controls the Popotan plug and Echo Dot display in sequence on Sleep Mode changes.
   triggers:
   - trigger: state
     entity_id: input_boolean.sleep_mode_calendar
@@ -4439,26 +4397,41 @@
         entity_id: input_boolean.sleep_mode_calendar
         state: 'on'
       sequence:
-      - action: media_player.play_media
-        target:
-          entity_id: media_player.schlafzimmer
+      - action: script.alexa_output_with_configured_volume
         data:
-          media_content_type: custom
-          media_content_id: Mückenlampe ausschalten
-        continue_on_error: true
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: Mückenlampe ausschalten
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: turn display off
     - conditions:
       - condition: state
         entity_id: input_boolean.sleep_mode_calendar
         state: 'off'
       sequence:
-      - action: media_player.play_media
-        target:
-          entity_id: media_player.schlafzimmer
+      - action: script.alexa_output_with_configured_volume
         data:
-          media_content_type: custom
-          media_content_id: Mückenlampe einschalten
-        continue_on_error: true
-  mode: restart
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: Mückenlampe einschalten
+      - action: script.alexa_output_with_configured_volume
+        data:
+          output_type: custom
+          output_target: media_player.schlafzimmer
+          volume_targets:
+          - media_player.schlafzimmer
+          message: turn display on
+  mode: queued
+  max: 4
 - id: sleep_mode_enforce_rooms
   alias: Sleep Mode - Enforce room shutdown
   description: Runs the living and work room Alexa off routines, turns off other lights, and leaves the hallway lit while Sleep Mode is active and Enforce Sleep is enabled.
