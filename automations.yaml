@@ -25,7 +25,7 @@
     value_template: "{{ is_state('binary_sensor.shellydw2_aa9da4_door', 'on') or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
   action:
   - variables:
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.shelly_retry_office_radiator_target
@@ -95,21 +95,21 @@
       zone: zone.home
   action:
   - variables:
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.retry_living_room_radiator_target
     data:
       variables:
         command_type: temperature
-        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') else states('input_number.heizung_mindesttemperatur') | float(4) }}"
+        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') else states('input_number.heating_min_temp') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.shelly_retry_bedroom_radiator_target
     data:
       variables:
         command_type: temperature
-        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') else states('input_number.heizung_mindesttemperatur') | float(4) }}"
+        target_temperature: "{{ window_open_off_temperature if is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') else states('input_number.heating_min_temp') | float(4) }}"
   mode: single
 - id: '1701618433298'
   alias: Fenster Überall offen
@@ -217,7 +217,7 @@
     value_template: "{{ is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
   action:
   - variables:
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
   - if:
     - condition: template
       value_template: "{{ states('climate.shellytrv_8cf68118891f') == 'heat' and (state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(0)) > window_open_off_temperature }}"
@@ -225,7 +225,7 @@
     - service: input_number.set_value
       data_template:
         value: '{{ state_attr(''climate.shellytrv_8cf68118891f'',''temperature'') }}'
-        entity_id: input_number.heizung_wohnzimmer
+        entity_id: input_number.whz_target_temp
       enabled: true
   - action: script.turn_on
     target:
@@ -272,7 +272,7 @@
     data:
       variables:
         command_type: temperature
-        target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') }}'
+        target_temperature: '{{ states(''input_number.whz_target_temp'') }}'
   - if:
     - condition: device
       device_id: b639ddd69f920446b2e72073910c4825
@@ -375,7 +375,7 @@
   - platform: state
     entity_id:
     - climate.shellytrv_8cf68118891f
-    - input_number.heizung_mindesttemperatur
+    - input_number.heating_min_temp
     - switch.shellyplusplugs_e465b8416794_switch_0
   - platform: homeassistant
     event: start
@@ -387,7 +387,7 @@
         value_template: >-
           {{ is_state('climate.shellytrv_8cf68118891f', 'heat')
              and (state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(-1000))
-               > (states('input_number.heizung_mindesttemperatur') | float(1000)) }}
+               > (states('input_number.heating_min_temp') | float(1000)) }}
       sequence:
       - service: switch.turn_on
         target:
@@ -416,7 +416,7 @@
     state: 'on'
   action:
   - variables:
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
   - action: script.turn_on
     target:
       entity_id: script.shelly_retry_bedroom_radiator_target
@@ -1586,7 +1586,7 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       sequence:
       - service: media_player.play_media
@@ -2180,7 +2180,7 @@
     at: input_datetime.alarm_setup_time
   actions:
   - condition: template
-    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+    value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
   - action: homeassistant.update_entity
     target:
       entity_id: calendar.shifts
@@ -2202,13 +2202,13 @@
   - variables:
       shift_events: '{{ shifts.get(''calendar.shifts'', {}).get(''events'', []) }}'
       shift_titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | join('' | '') }}'
-      early_alarm_time: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
-      late_alarm_time: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
-      free_alarm_time: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+      early_alarm_time: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+      late_alarm_time: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
+      free_alarm_time: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ ''früh'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') == ''Automatisch'' }}'
+        value_template: '{{ ''früh'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') == ''Automatisch'' }}'
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2219,7 +2219,7 @@
           message: Stell den Wecker für morgen früh um {{ early_alarm_time }} Uhr mit meinen Lieblingssongs
     - conditions:
       - condition: template
-        value_template: '{{ ''spät'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') == ''Automatisch'' }}'
+        value_template: '{{ ''spät'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') == ''Automatisch'' }}'
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2230,7 +2230,7 @@
           message: Stell den Wecker für morgen früh um {{ late_alarm_time }} Uhr mit meinen Lieblingssongs
     - conditions:
       - condition: template
-        value_template: '{{ (''freischicht'' in shift_titles or ''support standby'' in shift_titles) and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.arbeitsmodus'') != ''Krank'' }}'
+        value_template: '{{ (''freischicht'' in shift_titles or ''support standby'' in shift_titles) and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') != ''Krank'' }}'
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2276,7 +2276,7 @@
       - condition: template
         value_template: '{{ ''frühschicht'' in shift_titles }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'off'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2289,9 +2289,9 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
       - delay:
-          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+          minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2306,7 +2306,7 @@
       - condition: template
         value_template: '{{ ''spätschicht'' in shift_titles }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'off'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2319,7 +2319,7 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
     - conditions:
       - condition: trigger
         id: phone_handover
@@ -2327,7 +2327,7 @@
         value_template: '{{ ''frühschicht'' in shift_titles }}'
       sequence:
       - delay:
-          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+          minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2343,7 +2343,7 @@
         value_template: '{{ ''spätschicht'' in shift_titles }}'
       sequence:
       - delay:
-          minutes: '{{ states(''input_number.phone_handover_delay'') | int(5) }}'
+          minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2358,7 +2358,7 @@
       - condition: template
         value_template: '{{ ''frühschicht'' in shift_titles }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'on'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2371,14 +2371,14 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
       - action: input_boolean.turn_off
         target:
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
     - conditions:
       - condition: trigger
         id: late_end
       - condition: template
         value_template: '{{ ''spätschicht'' in shift_titles }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'on'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2391,7 +2391,7 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_work_mode_id') | trim }}:long
       - action: input_boolean.turn_off
         target:
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
   mode: single
   conditions:
   - condition: template
@@ -2401,11 +2401,11 @@
   description: Keeps Snom DND enabled while the calendar Work mode helper is active and releases it when Work ends unless another DND mode still needs it.
   triggers:
   - trigger: state
-    entity_id: input_boolean.work_mode_calendar
+    entity_id: input_boolean.work_mode_state
     to: 'on'
     id: work_on
   - trigger: state
-    entity_id: input_boolean.work_mode_calendar
+    entity_id: input_boolean.work_mode_state
     to: 'off'
     id: work_off
   - trigger: state
@@ -2422,7 +2422,7 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'on'
       sequence:
       - action: shell_command.snom_dnd_set
@@ -2433,18 +2433,18 @@
         then:
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
     - conditions:
       - condition: trigger
         id: work_off
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       - condition: state
-        entity_id: input_boolean.snom_dnd_calendar
+        entity_id: input_boolean.snom_dnd_state
         state: 'on'
       sequence:
       - action: shell_command.snom_dnd_set
@@ -2455,7 +2455,7 @@
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
   mode: single
 - id: '1791356584531'
   alias: Calendar - Shifts - Samsung Sleep mode
@@ -2463,36 +2463,36 @@
   triggers:
   - trigger: template
     id: early_sleep_on
-    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_time') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_duration') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
   - trigger: template
     id: late_sleep_on
-    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_time') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set sleep_lead =\n  ((states('input_number.sleep_duration') | float(8)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead - sleep_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
   - trigger: template
     id: early_dnd_on
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %} {% set dnd_lead = ((states(''input_number.dnd_lead_time'') | float(1) * 60) | int) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_offset'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_duration'') | float(8)) * 60) | int %} {% set dnd_lead = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
   - trigger: template
     id: late_dnd_on
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %} {% set dnd_lead = ((states(''input_number.dnd_lead_time'') | float(1) * 60) | int) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_offset'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_duration'') | float(8)) * 60) | int %} {% set dnd_lead = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
   - trigger: template
     id: early_sleep_off
-    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
   - trigger: template
     id: late_sleep_off
-    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_before_shift') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
+    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
   - trigger: template
     id: free_sleep_on
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_time'') | float(8) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_duration'') | float(8) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
   - trigger: template
     id: free_dnd_on
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_time'') | float(8) * 60) | int %}{% set dnd = ((states(''input_number.dnd_lead_time'') | float(1) * 60) | int) %}{{ now().hour * 60 + now().minute == (start - alarm - sleep - dnd) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_duration'') | float(8) * 60) | int %}{% set dnd = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %}{{ now().hour * 60 + now().minute == (start - alarm - sleep - dnd) % 1440 }}'
   - trigger: template
     id: free_sleep_off
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm) % 1440 }}'
   actions:
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else (''Spätschicht'' if trigger.id.startswith(''late_'') else ''Freischicht'') }}'
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.freischicht_arbeitsbeginn'') }}'
-      total_lead_minutes: '{% set alarm_lead = ((states(''input_number.alarm_before_shift'') | float(1)) * 60) | int %}{% set sleep_lead = ((states(''input_number.sleep_time'') | float(8)) * 60) | int %}{% set dnd_lead = ((states(''input_number.dnd_lead_time'') | float(1) * 60) | int) %}{% if trigger.id.endswith(''_dnd_on'') %}{{ alarm_lead + sleep_lead + dnd_lead }}{% elif trigger.id.endswith(''_sleep_on'') %}{{ alarm_lead + sleep_lead }}{% else %}{{ alarm_lead }}{% endif %}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.free_shift_start'') }}'
+      total_lead_minutes: '{% set alarm_lead = ((states(''input_number.alarm_offset'') | float(1)) * 60) | int %}{% set sleep_lead = ((states(''input_number.sleep_duration'') | float(8)) * 60) | int %}{% set dnd_lead = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %}{% if trigger.id.endswith(''_dnd_on'') %}{{ alarm_lead + sleep_lead + dnd_lead }}{% elif trigger.id.endswith(''_sleep_on'') %}{{ alarm_lead + sleep_lead }}{% else %}{{ alarm_lead }}{% endif %}'
   - variables:
       calendar_day_offset: "{% set t = states(shift_start_entity).split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{\n  1\n  if shift_minutes - (total_lead_minutes | int) < 0\n  else 0\n}}"
       calendar_query_start: "{{\n  (now() + timedelta(days=calendar_day_offset | int))\n  .replace(hour=0, minute=0, second=0, microsecond=0)\n  .isoformat()\n}}"
@@ -2511,10 +2511,10 @@
       - condition: template
         value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.snom_dnd_calendar
+        entity_id: input_boolean.snom_dnd_state
         state: 'off'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       sequence:
       - action: shell_command.snom_dnd_set
@@ -2525,20 +2525,20 @@
         then:
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.snom_dnd_calendar
+        entity_id: input_boolean.snom_dnd_state
         state: 'on'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       - condition: template
-        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'off'
       sequence:
       - action: shell_command.snom_dnd_set
@@ -2549,16 +2549,16 @@
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
   - choose:
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.fritz_box_answering_machines_calendar
+        entity_id: input_boolean.fritz_ab_state
         state: 'off'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       sequence:
       - action: shell_command.fritzbox_tam_set
@@ -2569,18 +2569,18 @@
         then:
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.fritz_box_answering_machines_calendar
+            entity_id: input_boolean.fritz_ab_state
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.fritz_box_answering_machines_calendar
+        entity_id: input_boolean.fritz_ab_state
         state: 'on'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       - condition: template
-        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
       sequence:
       - action: shell_command.fritzbox_tam_set
         data:
@@ -2590,13 +2590,13 @@
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.fritz_box_answering_machines_calendar
+            entity_id: input_boolean.fritz_ab_state
   - choose:
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_dnd_on'', ''late_dnd_on'', ''free_dnd_on''] and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.master_dnd_override
+        entity_id: input_boolean.dnd_override
         state: 'off'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2608,7 +2608,7 @@
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       sequence:
       - action: notify.mobile_app_sm_s931b
@@ -2621,7 +2621,7 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
       - action: input_boolean.turn_on
         target:
-          entity_id: input_boolean.sleep_mode_calendar
+          entity_id: input_boolean.sleep_mode_state
     - conditions:
       - condition: template
         value_template: "{{
@@ -2629,10 +2629,10 @@
   and (shift_found | bool)
 }}"
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'on'
       - condition: template
-        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
       sequence:
       - action: notify.mobile_app_sm_s931b
         data:
@@ -2644,7 +2644,7 @@
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
       - action: input_boolean.turn_off
         target:
-          entity_id: input_boolean.sleep_mode_calendar
+          entity_id: input_boolean.sleep_mode_state
   - choose:
     - conditions:
       - condition: template
@@ -2675,14 +2675,14 @@
     id: second_tick
   conditions:
   - condition: template
-    value_template: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set current_key = now().strftime(''%Y-%m-%d %H:%M:%S'') %} {% set early_today = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set late_today = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set candidates = [early_today.strftime(''%Y-%m-%d %H:%M:%S''), (early_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S''), late_today.strftime(''%Y-%m-%d %H:%M:%S''), (late_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S'')] %} {{ current_key in candidates }}'
+    value_template: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set current_key = now().strftime(''%Y-%m-%d %H:%M:%S'') %} {% set early_today = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set late_today = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set candidates = [early_today.strftime(''%Y-%m-%d %H:%M:%S''), (early_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S''), late_today.strftime(''%Y-%m-%d %H:%M:%S''), (late_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S'')] %} {{ current_key in candidates }}'
   actions:
   - variables:
       current_time_key: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      early_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      early_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      late_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      late_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
   - variables:
       early_match_today: '{{ current_time_key == early_today_key }}'
       early_match_tomorrow: '{{ current_time_key == early_tomorrow_key }}'
@@ -2691,7 +2691,7 @@
   - variables:
       shift_name: '{{ ''Frühschicht'' if (early_match_today | bool) or (early_match_tomorrow | bool) else ''Spätschicht'' }}'
       shift_day_offset: '{{ 1 if (early_match_tomorrow | bool) or (late_match_tomorrow | bool) else 0 }}'
-      bluetooth_lead_seconds: '{{ states(''input_number.bluetooth_disconnect_lead_seconds'') | int(60) }}'
+      bluetooth_lead_seconds: '{{ states(''input_number.bt_disconnect_offset'') | int(60) }}'
       previous_mute_state: '{{ state_attr(''media_player.schlafzimmer'', ''is_volume_muted'') | default(false) | bool }}'
   - variables:
       calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
@@ -2779,46 +2779,46 @@
   triggers:
   - trigger: template
     id: early_living_morning
-    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: late_living_morning
-    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_morning'' != ''office_end'' and ''living_morning'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: early_office_start
-    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: late_office_start
-    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''office_start'' != ''office_end'' and ''office_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: early_living_shift_start
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: late_living_shift_start
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: early_office_end
-    value_template: '{% set t = states(''input_datetime.early_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.early_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: late_office_end
-    value_template: '{% set t = states(''input_datetime.late_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.late_shift_end'').split('':'') %} {% set end = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (end - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: early_living_end
-    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_end'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_end'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: late_living_end
-    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_end'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''living_end'' != ''office_end'' and ''living_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_end'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_end'').split('':'')[1] | int)) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: early_bedroom_start
-    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - ((states(''input_number.sleep_time'') | float(8) * 60) | int) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int) - ((states(''input_number.sleep_duration'') | float(8) * 60) | int) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: late_bedroom_start
-    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int) - ((states(''input_number.sleep_time'') | float(8) * 60) | int) - (((states(''input_number.heating_preheat_time'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_start'' != ''office_end'' and ''bedroom_start'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int) - ((states(''input_number.sleep_duration'') | float(8) * 60) | int) - (((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int))) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: early_bedroom_end
-    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.early_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.early_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.early_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.early_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: template
     id: late_bedroom_end
-    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_before_shift'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
+    value_template: '{% set shift_time = states(''input_datetime.late_shift_start'').split('':'') if ''bedroom_end'' != ''office_end'' and ''bedroom_end'' != ''living_end'' else states(''input_datetime.late_shift_end'').split('':'') %} {% set shift_minutes = (shift_time[0] | int) * 60 + (shift_time[1] | int) %} {% set target_minutes = (((states(''input_datetime.late_shift_start'').split('':'')[0] | int) * 60 + (states(''input_datetime.late_shift_start'').split('':'')[1] | int)) - ((states(''input_number.alarm_offset'') | float(1) * 60) | int)) %} {{ now().hour * 60 + now().minute == target_minutes % 1440 }}'
   - trigger: time
     at: '22:00:00'
     id: early_living_night_off_2200
@@ -2832,7 +2832,7 @@
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else ''Spätschicht'' }}'
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else ''input_datetime.late_shift_start'' }}'
-      shift_day_offset: "{% set start = states(shift_start_entity).split(':') %} {% set start_minutes = (start[0] | int) * 60 + (start[1] | int) %} {% set alarm_lead = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set sleep_lead = (states('input_number.sleep_time') | float(8) * 60) | int %} {% set bedroom_lead = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {% set living_lead = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {% set shift_lead = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {% if 'living_morning' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - living_lead < 0 else 0 }}\n{% elif 'bedroom_start' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - sleep_lead - bedroom_lead < 0 else 0 }}\n{% elif 'bedroom_end' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead < 0 else 0 }}\n{% elif 'office_start' in trigger.id %}\n  {{ 1 if start_minutes - (((states('input_number.heating_preheat_time') | float(0) * 60) | int)) < 0 else\
+      shift_day_offset: "{% set start = states(shift_start_entity).split(':') %} {% set start_minutes = (start[0] | int) * 60 + (start[1] | int) %} {% set alarm_lead = (states('input_number.alarm_offset') | float(1) * 60) | int %} {% set sleep_lead = (states('input_number.sleep_duration') | float(8) * 60) | int %} {% set bedroom_lead = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {% set living_lead = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {% set shift_lead = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {% if 'living_morning' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - living_lead < 0 else 0 }}\n{% elif 'bedroom_start' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead - sleep_lead - bedroom_lead < 0 else 0 }}\n{% elif 'bedroom_end' in trigger.id %}\n  {{ 1 if start_minutes - alarm_lead < 0 else 0 }}\n{% elif 'office_start' in trigger.id %}\n  {{ 1 if start_minutes - (((states('input_number.heating_preheat_offset') | float(0) * 60) | int)) < 0 else\
         \ 0 }}\n{% elif 'office_end' in trigger.id or 'living_end' in trigger.id %}\n  {{ 1 if (states('input_datetime.' ~ ('early_shift_end' if trigger.id.startswith('early_') else 'late_shift_end')).split(':')[0] | int) * 60 + (states('input_datetime.' ~ ('early_shift_end' if trigger.id.startswith('early_') else 'late_shift_end')).split(':')[1] | int) - shift_lead < 0 else 0 }}\n{% else %}\n  0\n{% endif %}"
       query_start: "{{ (now() + timedelta(days=shift_day_offset | int))\n   .replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
       query_end: "{{ (now() + timedelta(days=(shift_day_offset | int) + 1))\n   .replace(hour=0, minute=0, second=0, microsecond=0).isoformat() }}"
@@ -2870,7 +2870,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+            target_temperature: '{{ states(''input_number.whz_target_temp'') | float(22) }}'
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''living_shift_start'') }}'
@@ -2899,7 +2899,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_arbeitszimmer'') | float(21) }}'
+            target_temperature: '{{ states(''input_number.az_target_temp'') | float(21) }}'
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''office_end'') }}'
@@ -2942,7 +2942,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_schlafzimmer'') | float(18) }}'
+            target_temperature: '{{ states(''input_number.sz_target_temp'') | float(18) }}'
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''bedroom_end'') }}'
@@ -3168,9 +3168,9 @@
     value_template: >-
       {% set early = states('input_datetime.early_shift_start').split(':') %}
       {% set late = states('input_datetime.late_shift_start').split(':') %}
-      {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %}
-      {% set alarm = (states('input_number.alarm_before_shift') | float(1) * 60) | int %}
-      {% set lead = (states('input_number.heating_preheat_time') | float(1) * 60) | int %}
+      {% set free = states('input_datetime.free_shift_start').split(':') %}
+      {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
+      {% set lead = (states('input_number.heating_preheat_offset') | float(1) * 60) | int %}
       {% set starts = [
         (early[0] | int) * 60 + (early[1] | int),
         (late[0] | int) * 60 + (late[1] | int),
@@ -3180,14 +3180,14 @@
       {{ minute in [(starts[0] - alarm - lead) % 1440, (starts[1] - alarm - lead) % 1440, (starts[2] - alarm - lead) % 1440] }}
   - trigger: template
     id: sick_living_preheat
-    value_template: "{% set minute = now().hour * 60 + now().minute %} {% set alarm_lead = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set preheat = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {{ is_state('input_select.arbeitsmodus', 'Krank') and minute in [\n  (early_start - alarm_lead - preheat) % 1440,\n  (late_start - alarm_lead - preheat) % 1440,\n  (free_start - alarm_lead - preheat) % 1440\n] }}"
+    value_template: "{% set minute = now().hour * 60 + now().minute %} {% set alarm_lead = (states('input_number.alarm_offset') | float(1) * 60) | int %} {% set preheat = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.free_shift_start').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {{ is_state('input_select.work_schedule_mode', 'Krank') and minute in [\n  (early_start - alarm_lead - preheat) % 1440,\n  (late_start - alarm_lead - preheat) % 1440,\n  (free_start - alarm_lead - preheat) % 1440\n] }}"
   - trigger: template
     id: homeoffice_office_preheat
     value_template: >-
       {% set early = states('input_datetime.early_shift_start').split(':') %}
       {% set late = states('input_datetime.late_shift_start').split(':') %}
-      {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %}
-      {% set lead = (states('input_number.heating_preheat_time') | float(1) * 60) | int %}
+      {% set free = states('input_datetime.free_shift_start').split(':') %}
+      {% set lead = (states('input_number.heating_preheat_offset') | float(1) * 60) | int %}
       {% set starts = [
         (early[0] | int) * 60 + (early[1] | int),
         (late[0] | int) * 60 + (late[1] | int),
@@ -3197,20 +3197,20 @@
       {{ minute in [(starts[0] - lead) % 1440, (starts[1] - lead) % 1440, (starts[2] - lead) % 1440] }}
   - trigger: template
     id: free_day_preheat
-    value_template: "{% set wake = states('input_datetime.vacation_wake_time').split(':') %} {% set wake_minutes = (wake[0] | int) * 60 + (wake[1] | int) %} {% set lead = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (wake_minutes - lead) % 1440 and not is_state('input_boolean.sleep_mode_calendar', 'on') }}"
+    value_template: "{% set wake = states('input_datetime.vacation_wake_time').split(':') %} {% set wake_minutes = (wake[0] | int) * 60 + (wake[1] | int) %} {% set lead = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (wake_minutes - lead) % 1440 and not is_state('input_boolean.sleep_mode_state', 'on') }}"
   - trigger: template
     id: homeoffice_evening_preheat
     value_template: >-
       {% set early_end = states('input_datetime.early_shift_end').split(':') %}
       {% set late_start = states('input_datetime.late_shift_start').split(':') %}
       {% set late_end = states('input_datetime.late_shift_end').split(':') %}
-      {% set free_start = states('input_datetime.freischicht_arbeitsbeginn').split(':') %}
+      {% set free_start = states('input_datetime.free_shift_start').split(':') %}
       {% set early_end_minutes = (early_end[0] | int) * 60 + (early_end[1] | int) %}
       {% set late_start_minutes = (late_start[0] | int) * 60 + (late_start[1] | int) %}
       {% set late_end_minutes = (late_end[0] | int) * 60 + (late_end[1] | int) %}
       {% set free_start_minutes = (free_start[0] | int) * 60 + (free_start[1] | int) %}
       {% set free_end_minutes = free_start_minutes + late_end_minutes - late_start_minutes %}
-      {% set lead = (states('input_number.heating_preheat_time') | float(1) * 60) | int %}
+      {% set lead = (states('input_number.heating_preheat_offset') | float(1) * 60) | int %}
       {% set ends = [early_end_minutes, late_end_minutes, free_end_minutes] %}
       {% set minute = now().hour * 60 + now().minute %}
       {{ minute in [(ends[0] - lead) % 1440, (ends[1] - lead) % 1440, (ends[2] - lead) % 1440] }}
@@ -3219,7 +3219,7 @@
     value_template: >-
       {% set early = states('input_datetime.early_shift_start').split(':') %}
       {% set late = states('input_datetime.late_shift_start').split(':') %}
-      {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %}
+      {% set free = states('input_datetime.free_shift_start').split(':') %}
       {% set starts = [
         (early[0] | int) * 60 + (early[1] | int),
         (late[0] | int) * 60 + (late[1] | int),
@@ -3233,13 +3233,13 @@
       {% set early_end = states('input_datetime.early_shift_end').split(':') %}
       {% set late_start = states('input_datetime.late_shift_start').split(':') %}
       {% set late_end = states('input_datetime.late_shift_end').split(':') %}
-      {% set free_start = states('input_datetime.freischicht_arbeitsbeginn').split(':') %}
+      {% set free_start = states('input_datetime.free_shift_start').split(':') %}
       {% set early_end_minutes = (early_end[0] | int) * 60 + (early_end[1] | int) %}
       {% set late_start_minutes = (late_start[0] | int) * 60 + (late_start[1] | int) %}
       {% set late_end_minutes = (late_end[0] | int) * 60 + (late_end[1] | int) %}
       {% set free_start_minutes = (free_start[0] | int) * 60 + (free_start[1] | int) %}
       {% set free_end_minutes = free_start_minutes + late_end_minutes - late_start_minutes %}
-      {% set cooldown = (states('input_number.heizungs_cooldown') | float(0.5) * 60) | int %}
+      {% set cooldown = (states('input_number.heating_cooldown_offset') | float(0.5) * 60) | int %}
       {% set ends = [early_end_minutes, late_end_minutes, free_end_minutes] %}
       {% set minute = now().hour * 60 + now().minute %}
       {{ minute in [(ends[0] - cooldown) % 1440, (ends[1] - cooldown) % 1440, (ends[2] - cooldown) % 1440] }}
@@ -3248,24 +3248,24 @@
     id: daily_schedule_refresh
   - trigger: state
     entity_id:
-    - input_boolean.sleep_mode_calendar
+    - input_boolean.sleep_mode_state
     - input_datetime.vacation_wake_time
-    - input_select.living_room_sleep_profile
-    - input_number.heizung_wohnzimmer
-    - input_number.heizung_arbeitszimmer
-    - input_number.heizung_schlafzimmer
-    - input_number.heating_preheat_time
-    - input_number.sleep_time
-    - input_number.alarm_before_shift
+    - input_select.whz_sleep_profile
+    - input_number.whz_target_temp
+    - input_number.az_target_temp
+    - input_number.sz_target_temp
+    - input_number.heating_preheat_offset
+    - input_number.sleep_duration
+    - input_number.alarm_offset
     - input_datetime.early_shift_start
     - input_datetime.early_shift_end
     - input_datetime.late_shift_start
     - input_datetime.late_shift_end
-    - input_datetime.freischicht_arbeitsbeginn
-    - input_select.arbeitsmodus
-    - input_number.krank_offset
-    - input_number.heizung_mindesttemperatur
-    - input_number.heizungs_cooldown
+    - input_datetime.free_shift_start
+    - input_select.work_schedule_mode
+    - input_number.sick_temp_offset
+    - input_number.heating_min_temp
+    - input_number.heating_cooldown_offset
   - trigger: state
     entity_id: binary_sensor.shellydw2_07a36f_door
     id: window_close_living
@@ -3317,20 +3317,20 @@
       current_weekday: '{{ now().weekday() }}'
       shift_start_minutes: '{% set entity = ''input_datetime.early_shift_start'' if early_shift_found | bool else ''input_datetime.late_shift_start'' %} {% set value = states(entity).split('':'') %} {{ (value[0] | int) * 60 + (value[1] | int) }}'
       shift_end_minutes: '{% set entity = ''input_datetime.early_shift_end'' if early_shift_found | bool else ''input_datetime.late_shift_end'' %} {% set value = states(entity).split('':'') %} {{ (value[0] | int) * 60 + (value[1] | int) }}'
-      shift_lead_minutes: '{{ ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) }}'
-      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
-      bedroom_lead_minutes: '{{ ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) }}'
-      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
-      living_lead_minutes: '{{ ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) }}'
+      shift_lead_minutes: '{{ ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_offset'') | float(1) * 60) | int }}'
+      bedroom_lead_minutes: '{{ ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_duration'') | float(8) * 60) | int }}'
+      living_lead_minutes: '{{ ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) }}'
       alarm_minutes: '{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}'
       sleep_on_minutes: '{{ (alarm_minutes | int) - (sleep_lead_minutes | int) }}'
       morning_living_minutes: '{{ (alarm_minutes | int) - (living_lead_minutes | int) }}'
       free_shift_event_found: '{% set ns = namespace(found=false) %}{% for title in shift_titles %}{% if ''freischicht'' in title or ''support standby'' in title %}{% set ns.found = true %}{% endif %}{% endfor %}{{ ns.found }}'
-      mode_is_sick: '{{ is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
-      mode_is_free_shift: '{{ is_state(''input_select.arbeitsmodus'', ''Freischicht'') }}'
-      sick_offset: '{{ states(''input_number.krank_offset'') | float(2) if mode_is_sick | bool else 0 }}'
-      minimum_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      mode_is_sick: '{{ is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
+      mode_is_free_shift: '{{ is_state(''input_select.work_schedule_mode'', ''Freischicht'') }}'
+      sick_offset: '{{ states(''input_number.sick_temp_offset'') | float(2) if mode_is_sick | bool else 0 }}'
+      minimum_temperature: '{{ states(''input_number.heating_min_temp'') | float(4) }}'
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
       living_window_open: "{{ is_state('binary_sensor.shellydw2_07a36f_door', 'on') or is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
       office_window_open: "{{ is_state('binary_sensor.shellydw2_aa9da4_door', 'on') or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
       bedroom_window_open: "{{ is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') }}"
@@ -3339,7 +3339,7 @@
       shift_work_active: '{{ (early_shift_found | bool or late_shift_found | bool) and not (mode_is_sick | bool) and not (mode_is_free_shift | bool) and (weekday | bool) }}'
       free_shift_active: '{{ (weekday | bool) and not (free_home_day_found | bool) and not (mode_is_sick | bool) and (mode_is_free_shift | bool or free_shift_event_found | bool or ((shift_titles | length == 0) and not (holiday_found | bool))) }}'
       free_day_active: '{{ (free_home_day_found | bool) or not (weekday | bool) or ((holiday_found | bool) and not (early_shift_found | bool or late_shift_found | bool or free_shift_event_found | bool)) or (mode_is_sick | bool) or not (shift_work_active | bool) and not (free_shift_active | bool) }}'
-      free_shift_start_minutes: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %}{{ (t[0] | int) * 60 + (t[1] | int) }}'
+      free_shift_start_minutes: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{{ (t[0] | int) * 60 + (t[1] | int) }}'
       shift_duration_minutes: '{{ (shift_end_minutes | int) - (shift_start_minutes | int) }}'
       free_shift_end_minutes: '{{ (free_shift_start_minutes | int) + (shift_duration_minutes | int) }}'
       schedule_start_minutes: '{{ shift_start_minutes | int if shift_work_active | bool else free_shift_start_minutes | int }}'
@@ -3349,16 +3349,16 @@
       sick_start_minutes: '{{ shift_start_minutes | int if early_shift_found | bool or late_shift_found | bool else free_shift_start_minutes | int }}'
       sick_wake_minutes: '{{ (sick_start_minutes | int) - (alarm_lead_minutes | int) }}'
       sick_living_preheat_start: '{{ (sick_wake_minutes | int) - (living_lead_minutes | int) }}'
-      cooldown_minutes: '{{ ((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int) }}'
+      cooldown_minutes: '{{ ((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int) }}'
       free_office_start: '{{ (free_shift_start_minutes | int) - (shift_lead_minutes | int) }}'
       free_office_end: '{{ (free_shift_end_minutes | int) - (cooldown_minutes | int) }}'
       home_day_start_minutes: "{% set entity = 'input_datetime.early_shift_start' if mode_is_sick | bool else 'input_datetime.vacation_wake_time' %} {% set t = states(entity).split(':') %}{{ (t[0] | int) * 60 + (t[1] | int) }}"
       vacation_wake_minutes: "{% set t = states('input_datetime.vacation_wake_time').split(':') %}{{ (t[0] | int) * 60 + (t[1] | int) }}"
       vacation_preheat_start_minutes: '{{ ((vacation_wake_minutes | int) - (living_lead_minutes | int)) % 1440 }}'
-      living_profile_uses_vacation: "{{ not (mode_is_sick | bool) and (is_state('input_select.living_room_sleep_profile', 'Urlaub') or (is_state('input_select.living_room_sleep_profile', 'Automatisch') and (not (weekday | bool) or (free_home_day_found | bool)))) }}"
+      living_profile_uses_vacation: "{{ not (mode_is_sick | bool) and (is_state('input_select.whz_sleep_profile', 'Urlaub') or (is_state('input_select.whz_sleep_profile', 'Automatisch') and (not (weekday | bool) or (free_home_day_found | bool)))) }}"
       in_vacation_preheat_window: "{% set minute = current_minute | int %} {% set start = (vacation_preheat_start_minutes | int) %} {% set wake = vacation_wake_minutes | int %} {{ (start < wake and start <= minute < wake) or (start > wake and (minute >= start or minute < wake)) }}"
       living_windows_closed: "{{ not is_state('binary_sensor.shellydw2_07a36f_door', 'on') and not is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
-      living_sleep_profile_warmup: "{{ is_state('input_boolean.sleep_mode_calendar', 'on') and (living_profile_uses_vacation | bool) and (in_vacation_preheat_window | bool) and is_state('person.niwo', 'home') and (living_windows_closed | bool) }}"
+      living_sleep_profile_warmup: "{{ is_state('input_boolean.sleep_mode_state', 'on') and (living_profile_uses_vacation | bool) and (in_vacation_preheat_window | bool) and is_state('person.niwo', 'home') and (living_windows_closed | bool) }}"
       should_heat_living: >-
         {% set minute = current_minute | int %}
         {% set day_start = ((home_day_start_minutes | int) - (living_lead_minutes | int)) % 1440 %}
@@ -3379,7 +3379,7 @@
         {% endif %}
         {% if mode_is_sick | bool %}
           {{ minute >= day_start }}
-        {% elif is_state('input_boolean.sleep_mode_calendar', 'on') %}
+        {% elif is_state('input_boolean.sleep_mode_state', 'on') %}
           false
         {% elif shift_work_active | bool %}
           {{ in_shift_morning_window or minute >= evening_start }}
@@ -3402,7 +3402,7 @@
           {% set start = ((home_day_start_minutes | int) - (shift_lead_minutes | int)) % 1440 %}
           {% set end = start %}
         {% endif %}
-        {% if is_state('input_boolean.sleep_mode_calendar', 'on') %}
+        {% if is_state('input_boolean.sleep_mode_state', 'on') %}
           false
         {% elif free_day_active | bool and not (shift_work_active | bool) and not (free_shift_active | bool) %}
           {{ minute >= start }}
@@ -3413,7 +3413,7 @@
         {% else %}
           false
         {% endif %}
-      bedroom_target: '{% set minute = current_minute | int %}{% set minimum = minimum_temperature | float(4) %}{% set target = [minimum_temperature | float(4), (states(''input_number.heizung_schlafzimmer'') | float(18)) + (sick_offset | float(0))] | max %}{% set preheat_start = ((schedule_sleep_on_minutes | int) - (bedroom_lead_minutes | int)) % 1440 %}{% set alarm_minute = schedule_alarm_minutes | int %}{% if is_state(''input_boolean.sleep_mode_calendar'', ''on'') %}{{ target }}{% elif (shift_work_active | bool or (free_shift_active | bool and (free_shift_event_found | bool or mode_is_free_shift | bool))) and not (mode_is_sick | bool) and ((preheat_start <= minute < alarm_minute) if preheat_start < alarm_minute else (minute >= preheat_start or minute < alarm_minute)) %}{{ target }}{% else %}{{ minimum }}{% endif %}'
+      bedroom_target: '{% set minute = current_minute | int %}{% set minimum = minimum_temperature | float(4) %}{% set target = [minimum_temperature | float(4), (states(''input_number.sz_target_temp'') | float(18)) + (sick_offset | float(0))] | max %}{% set preheat_start = ((schedule_sleep_on_minutes | int) - (bedroom_lead_minutes | int)) % 1440 %}{% set alarm_minute = schedule_alarm_minutes | int %}{% if is_state(''input_boolean.sleep_mode_state'', ''on'') %}{{ target }}{% elif (shift_work_active | bool or (free_shift_active | bool and (free_shift_event_found | bool or mode_is_free_shift | bool))) and not (mode_is_sick | bool) and ((preheat_start <= minute < alarm_minute) if preheat_start < alarm_minute else (minute >= preheat_start or minute < alarm_minute)) %}{{ target }}{% else %}{{ minimum }}{% endif %}'
   - choose:
     - conditions:
       - condition: template
@@ -3432,7 +3432,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.heizung_wohnzimmer'') | float(22) + (sick_offset | float(0))] | max }}'
+            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.whz_target_temp'') | float(22) + (sick_offset | float(0))] | max }}'
   - choose:
     - conditions:
       - condition: template
@@ -3463,7 +3463,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.heizung_arbeitszimmer'') | float(21) + (sick_offset | float(0))] | max }}'
+            target_temperature: '{{ [minimum_temperature | float(4), states(''input_number.az_target_temp'') | float(21) + (sick_offset | float(0))] | max }}'
   - choose:
     - conditions:
       - condition: template
@@ -3508,7 +3508,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ not (should_heat_living | bool) and not (living_sleep_profile_warmup | bool) and not (living_window_open | bool) and (not is_state('input_boolean.sleep_mode_calendar', 'on') or (mode_is_sick | bool)) }}"
+        value_template: "{{ not (should_heat_living | bool) and not (living_sleep_profile_warmup | bool) and not (living_window_open | bool) and (not is_state('input_boolean.sleep_mode_state', 'on') or (mode_is_sick | bool)) }}"
       sequence:
       - action: script.turn_on
         target:
@@ -3549,19 +3549,19 @@
   triggers:
   - trigger: template
     id: early_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_lead_time'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
   - trigger: template
     id: late_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_lead_time'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
   actions:
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_pill_reminder'' else ''Spätschicht'' }}'
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
-      pill_lead_minutes: '{{ ((states(''input_number.pill_morning_lead_time'') | float(0.25) * 60) | int) }}'
+      pill_lead_minutes: '{{ ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) }}'
   - variables:
       calendar_day_offset: '{% set shift_start = states(shift_start_entity).split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {{ 1 if shift_minutes - (pill_lead_minutes | int) < 0 else 0 }}'
   - condition: template
-    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
+    value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
   - variables:
       calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).isoformat() }}'
       calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}'
@@ -3593,21 +3593,21 @@
   triggers:
   - trigger: template
     id: early_bedtime_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_lead_time'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
   - trigger: template
     id: late_bedtime_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_lead_time'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
   actions:
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_bedtime_pill_reminder'' else ''Spätschicht'' }}'
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_bedtime_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
-      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
-      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
-      pill_lead_minutes: '{{ ((states(''input_number.pill_bedtime_lead_time'') | float(0.5) * 60) | int) }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_offset'') | float(1) * 60) | int }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_duration'') | float(8) * 60) | int }}'
+      pill_lead_minutes: '{{ ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) }}'
   - variables:
       calendar_day_offset: '{% set shift_start = states(shift_start_entity).split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {{ 1 if shift_minutes - (alarm_lead_minutes | int) - (sleep_lead_minutes | int) - (pill_lead_minutes | int) < 0 else 0 }}'
   - condition: template
-    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
+    value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).weekday() < 5 }}'
   - variables:
       calendar_query_start: '{{ (today_at(''00:00'') + timedelta(days=calendar_day_offset | int)).isoformat() }}'
       calendar_query_end: '{{ (today_at(''00:00'') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}'
@@ -3638,11 +3638,11 @@
   description: Manually enables or disables Snom DND, both FRITZ!Box answering machines, Samsung Android DND, and GNOME DND without changing Samsung Sleep mode.
   triggers:
   - trigger: state
-    entity_id: input_boolean.master_dnd_override
+    entity_id: input_boolean.dnd_override
     to: 'on'
     id: enable
   - trigger: state
-    entity_id: input_boolean.master_dnd_override
+    entity_id: input_boolean.dnd_override
     to: 'off'
     id: disable
   - trigger: homeassistant
@@ -3652,7 +3652,7 @@
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ trigger.id in [''enable'', ''startup''] and is_state(''input_boolean.master_dnd_override'', ''on'') }}'
+        value_template: '{{ trigger.id in [''enable'', ''startup''] and is_state(''input_boolean.dnd_override'', ''on'') }}'
       sequence:
       - action: shell_command.snom_dnd_set
         data:
@@ -3664,7 +3664,7 @@
         then:
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
       - action: shell_command.fritzbox_tam_set
         data:
           enabled: 'on'
@@ -3675,7 +3675,7 @@
         then:
         - action: input_boolean.turn_on
           target:
-            entity_id: input_boolean.fritz_box_answering_machines_calendar
+            entity_id: input_boolean.fritz_ab_state
       - action: notify.mobile_app_sm_s931b
         data:
           message: command_dnd
@@ -3688,10 +3688,10 @@
       sequence:
       - if:
         - condition: state
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
           state: 'off'
         - condition: state
-          entity_id: input_boolean.sleep_mode_calendar
+          entity_id: input_boolean.sleep_mode_state
           state: 'off'
         then:
         - action: shell_command.snom_dnd_set
@@ -3704,7 +3704,7 @@
           then:
           - action: input_boolean.turn_off
             target:
-              entity_id: input_boolean.snom_dnd_calendar
+              entity_id: input_boolean.snom_dnd_state
       - action: shell_command.fritzbox_tam_set
         data:
           enabled: 'off'
@@ -3715,7 +3715,7 @@
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.fritz_box_answering_machines_calendar
+            entity_id: input_boolean.fritz_ab_state
       - action: notify.mobile_app_sm_s931b
         data:
           message: command_dnd
@@ -3729,18 +3729,18 @@
   triggers:
   - trigger: template
     id: early_wind_down
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_offset'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
   - trigger: template
     id: late_wind_down
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_time'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_offset'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
   actions:
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_wind_down'' else ''Spätschicht'' }}'
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_wind_down'' else ''input_datetime.late_shift_start'' }}'
-      alarm_lead_minutes: '{{ (states(''input_number.alarm_before_shift'') | float(1) * 60) | int }}'
-      sleep_lead_minutes: '{{ (states(''input_number.sleep_time'') | float(8) * 60) | int }}'
-      wind_down_lead_hours: '{{ states(''input_number.wind_down_lead_time'') | float(2) }}'
-      wind_down_lead_minutes: '{{ (states(''input_number.wind_down_lead_time'') | float(2) * 60) | int }}'
+      alarm_lead_minutes: '{{ (states(''input_number.alarm_offset'') | float(1) * 60) | int }}'
+      sleep_lead_minutes: '{{ (states(''input_number.sleep_duration'') | float(8) * 60) | int }}'
+      wind_down_lead_hours: '{{ states(''input_number.wind_down_offset'') | float(2) }}'
+      wind_down_lead_minutes: '{{ (states(''input_number.wind_down_offset'') | float(2) * 60) | int }}'
   - variables:
       calendar_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ 1 if shift_minutes - (alarm_lead_minutes | int) - (sleep_lead_minutes | int) - (wind_down_lead_minutes | int) < 0 else 0 }}'
   - variables:
@@ -3823,17 +3823,17 @@
   triggers:
   - trigger: template
     id: early_wake
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
   - trigger: template
     id: late_wake
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
   - trigger: template
     id: free_wake
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
   actions:
   - variables:
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.freischicht_arbeitsbeginn'') }}'
-      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(0) * 60) | int %} {{ 1 if start - alarm < 0 else 0 }}'
+      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.free_shift_start'') }}'
+      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ 1 if start - alarm < 0 else 0 }}'
   - action: calendar.get_events
     target:
       entity_id: calendar.shifts
@@ -3862,10 +3862,10 @@
       titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
       work_shift_found: '{% set event_titles = shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in event_titles or ''sv früh'' in event_titles or ''svv früh'' in event_titles }}{% elif trigger.id.startswith(''late_'') %}{{ ''spätschicht'' in event_titles or ''sv spät'' in event_titles or ''svv spät'' in event_titles }}{% else %}{{ (''freischicht'' in event_titles or ''support standby'' in event_titles) and ''4tw-frei'' not in event_titles and ''urlaub'' not in event_titles }}{% endif %}'
   - condition: template
-    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
   - if:
     - condition: state
-      entity_id: input_boolean.sleep_mode_calendar
+      entity_id: input_boolean.sleep_mode_state
       state: 'off'
     then:
     - action: media_player.play_media
@@ -3892,20 +3892,20 @@
   triggers:
   - trigger: time
     id: quiet_22
-    at: input_datetime.echo_volume_quiet_time
+    at: input_datetime.echo_quiet_time
   - trigger: time
     id: alexa_alarm
     at: sensor.schlafzimmer_next_alarm
   - trigger: time
     id: fallback_noon
-    at: input_datetime.echo_volume_fallback_time
+    at: input_datetime.echo_fallback_time
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     from: 'off'
     to: 'on'
     id: sleep_mode_on
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     from: 'on'
     to: 'off'
     id: sleep_mode_off
@@ -3929,7 +3929,7 @@
       - condition: trigger
         id: alexa_alarm
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       sequence:
       - action: media_player.volume_set
@@ -3946,7 +3946,7 @@
       - condition: trigger
         id: fallback_noon
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       - condition: template
         value_template: '{% set next_alarm = states(''sensor.schlafzimmer_next_alarm'') | as_datetime(default=none) %} {{ next_alarm is none or next_alarm.date() != now().date() }}'
@@ -3989,8 +3989,8 @@
           - media_player.badezimmer
         data:
           volume_level: >-
-            {% set quiet_time = today_at(states('input_datetime.echo_volume_quiet_time')) %}
-            {% set fallback_time = today_at(states('input_datetime.echo_volume_fallback_time')) %}
+            {% set quiet_time = today_at(states('input_datetime.echo_quiet_time')) %}
+            {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
             {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
             {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
             {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
@@ -4005,25 +4005,25 @@
   triggers:
   - trigger: template
     id: free_living_morning_on
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set preheat = ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (start - alarm - preheat) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set preheat = ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (start - alarm - preheat) % 1440 }}'
   - trigger: template
     id: free_living_work_start
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: free_office_start
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (start - preheat) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) %} {{ now().hour * 60 + now().minute == (start - preheat) % 1440 }}'
   - trigger: template
     id: free_office_end
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - (((states(''input_number.heizungs_cooldown'') | float(0.5) * 60) | int))) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - (((states(''input_number.heating_cooldown_offset'') | float(0.5) * 60) | int))) % 1440 }}'
   - trigger: template
     id: free_living_return_on
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - preheat) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set preheat = ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) %} {% set regular_start = states(''input_datetime.early_shift_start'').split('':'') %} {% set regular_end = states(''input_datetime.early_shift_end'').split('':'') %} {% set duration = ((regular_end[0] | int) * 60 + (regular_end[1] | int)) - ((regular_start[0] | int) * 60 + (regular_start[1] | int)) %} {{ now().hour * 60 + now().minute == (start + duration - preheat) % 1440 }}'
   - trigger: template
     id: free_living_night_off
-    value_template: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_duration'') | float(9) * 60) | int %} {{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
   actions:
   - variables:
-      event_day_offset: '{% set t = states(''input_datetime.freischicht_arbeitsbeginn'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_time'') | float(9) * 60) | int %} {{ 0 }}'
+      event_day_offset: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep = (states(''input_number.sleep_duration'') | float(9) * 60) | int %} {{ 0 }}'
   - action: calendar.get_events
     target:
       entity_id: calendar.shifts
@@ -4069,7 +4069,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+            target_temperature: '{{ states(''input_number.whz_target_temp'') | float(22) }}'
     - conditions:
       - condition: trigger
         id: free_living_work_start
@@ -4093,7 +4093,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_arbeitszimmer'') | float(21) }}'
+            target_temperature: '{{ states(''input_number.az_target_temp'') | float(21) }}'
     - conditions:
       - condition: trigger
         id: free_office_end
@@ -4117,7 +4117,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+            target_temperature: '{{ states(''input_number.whz_target_temp'') | float(22) }}'
     - conditions:
       - condition: trigger
         id: free_living_night_off
@@ -4136,7 +4136,7 @@
   description: Cancels every active Alexa alarm on the Echo devices when the work mode changes to sick.
   triggers:
   - trigger: state
-    entity_id: input_select.arbeitsmodus
+    entity_id: input_select.work_schedule_mode
     to: Krank
   actions:
   - delay: 00:00:02
@@ -4175,14 +4175,14 @@
   triggers:
   - trigger: template
     id: sick_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set sick_offset_minutes = (states(''input_number.krank_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes + sick_offset_minutes) % 1440 }}'
+    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set sick_offset_minutes = (states(''input_number.sick_temp_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes + sick_offset_minutes) % 1440 }}'
   conditions:
   - condition: state
-    entity_id: input_select.arbeitsmodus
+    entity_id: input_select.work_schedule_mode
     state: Krank
   actions:
   - variables:
-      sick_offset_hours: '{{ states(''input_number.krank_offset_tablettenerinnerung'') | float(2) }}'
+      sick_offset_hours: '{{ states(''input_number.sick_temp_offset_tablettenerinnerung'') | float(2) }}'
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -4225,7 +4225,7 @@
         state: 'off'
       sequence:
       - delay:
-          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+          minutes: '{{ states(''input_number.motion_off_delay'') | int(5) }}'
       - condition: state
         entity_id: binary_sensor.shellymotion2_8cf6811ca4ff_motion
         state: 'off'
@@ -4281,7 +4281,7 @@
         state: 'off'
       sequence:
       - delay:
-          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+          minutes: '{{ states(''input_number.motion_off_delay'') | int(5) }}'
       - condition: state
         entity_id: binary_sensor.shellymotion2_8cf68108d3e3_motion
         state: 'off'
@@ -4323,7 +4323,7 @@
         state: 'off'
       sequence:
       - delay:
-          minutes: '{{ states(''input_number.licht_bewegungs_nachlauf'') | int(5) }}'
+          minutes: '{{ states(''input_number.motion_off_delay'') | int(5) }}'
       - condition: state
         entity_id: binary_sensor.shellymotion2_8cf681088e35_motion
         state: 'off'
@@ -4375,11 +4375,11 @@
   description: Controls the Popotan plug and Echo Dot display in sequence on Sleep Mode changes.
   triggers:
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     to: 'on'
     id: sleep_on
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     to: 'off'
     id: sleep_off
   - trigger: homeassistant
@@ -4389,7 +4389,7 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'on'
       sequence:
       - action: script.alexa_output_with_configured_volume
@@ -4408,7 +4408,7 @@
           message: turn display off
     - conditions:
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'off'
       sequence:
       - action: script.alexa_output_with_configured_volume
@@ -4432,7 +4432,7 @@
   description: Runs the living and work room Alexa off routines, turns off other lights, and leaves the hallway lit while Sleep Mode is active and Enforce Sleep is enabled.
   triggers:
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     to: 'on'
     id: sleep_enabled
   - trigger: state
@@ -4441,7 +4441,7 @@
     id: enforcement_enabled
   conditions:
   - condition: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     state: 'on'
   - condition: state
     entity_id: input_boolean.enforce_sleep
@@ -4493,7 +4493,7 @@
   description: Applies the selected Enforce Sleep reset mode when Sleep Mode ends.
   triggers:
   - trigger: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     to: 'off'
   actions:
   - choose:
@@ -4523,19 +4523,19 @@
     id: ha_start
   - trigger: state
     entity_id:
-    - input_boolean.sleep_mode_calendar
-    - input_select.living_room_sleep_profile
-    - input_select.arbeitsmodus
+    - input_boolean.sleep_mode_state
+    - input_select.whz_sleep_profile
+    - input_select.work_schedule_mode
     - input_datetime.early_shift_start
     - input_datetime.early_shift_end
     - input_datetime.late_shift_start
     - input_datetime.late_shift_end
-    - input_datetime.freischicht_arbeitsbeginn
+    - input_datetime.free_shift_start
     - input_datetime.vacation_wake_time
-    - input_number.alarm_before_shift
-    - input_number.heating_preheat_time
-    - input_number.heizung_wohnzimmer
-    - input_number.heizung_mindesttemperatur
+    - input_number.alarm_offset
+    - input_number.heating_preheat_offset
+    - input_number.whz_target_temp
+    - input_number.heating_min_temp
     - calendar.shifts
     - calendar.deutschland_by
     - calendar.feiertage_in_deutschland
@@ -4545,17 +4545,17 @@
     id: state_refresh
   - trigger: template
     id: profile_preheat
-    value_template: "{% set selected = states('input_select.living_room_sleep_profile') %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set vacation = states('input_datetime.vacation_wake_time').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {% set vacation_start = (vacation[0] | int) * 60 + (vacation[1] | int) %} {% set alarm = (states('input_number.alarm_before_shift') | float(1) * 60) | int %} {% set lead = ((states('input_number.heating_preheat_time') | float(1) * 60) | int) %} {% set current = now().hour * 60 + now().minute %} {% set candidates = [\n  (early_start - alarm - lead) % 1440,\n  (free_start - alarm - lead) % 1440,\n  (late_start - alarm - lead) % 1440,\n  (vacation_start\
+    value_template: "{% set selected = states('input_select.whz_sleep_profile') %} {% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.free_shift_start').split(':') %} {% set vacation = states('input_datetime.vacation_wake_time').split(':') %} {% set early_start = (early[0] | int) * 60 + (early[1] | int) %} {% set late_start = (late[0] | int) * 60 + (late[1] | int) %} {% set free_start = (free[0] | int) * 60 + (free[1] | int) %} {% set vacation_start = (vacation[0] | int) * 60 + (vacation[1] | int) %} {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %} {% set lead = ((states('input_number.heating_preheat_offset') | float(1) * 60) | int) %} {% set current = now().hour * 60 + now().minute %} {% set candidates = [\n  (early_start - alarm - lead) % 1440,\n  (free_start - alarm - lead) % 1440,\n  (late_start - alarm - lead) % 1440,\n  (vacation_start\
       \ - lead) % 1440\n] %} {% if selected == 'Frühschicht' %}\n  {{ current == candidates[0] }}\n{% elif selected == 'Freischicht' %}\n  {{ current == candidates[1] }}\n{% elif selected == 'Spätschicht' %}\n  {{ current == candidates[2] }}\n{% elif selected == 'Urlaub' %}\n  {{ current == candidates[3] }}\n{% elif selected == 'Automatisch' %}\n  {{ current in candidates }}\n{% else %}false{% endif %}"
   - trigger: template
     id: profile_shift_start
-    value_template: "{% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.freischicht_arbeitsbeginn').split(':') %} {% set starts = [\n  (early[0] | int) * 60 + (early[1] | int),\n  (late[0] | int) * 60 + (late[1] | int),\n  (free[0] | int) * 60 + (free[1] | int)\n] %} {{ now().hour * 60 + now().minute in starts }}"
+    value_template: "{% set early = states('input_datetime.early_shift_start').split(':') %} {% set late = states('input_datetime.late_shift_start').split(':') %} {% set free = states('input_datetime.free_shift_start').split(':') %} {% set starts = [\n  (early[0] | int) * 60 + (early[1] | int),\n  (late[0] | int) * 60 + (late[1] | int),\n  (free[0] | int) * 60 + (free[1] | int)\n] %} {{ now().hour * 60 + now().minute in starts }}"
   conditions:
   - condition: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     state: 'on'
   - condition: template
-    value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') }}'
+    value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
   actions:
   - action: homeassistant.update_entity
     target:
@@ -4584,7 +4584,7 @@
       end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
     response_variable: bavarian_holiday_calendar
   - variables:
-      selected_profile: '{{ states(''input_select.living_room_sleep_profile'') }}'
+      selected_profile: '{{ states(''input_select.whz_sleep_profile'') }}'
       event_titles: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
       early_shift_found: '{{ event_titles | select(''in'', [''frühschicht'', ''sv früh'', ''svv früh'']) | list | length > 0 }}'
       late_shift_found: '{{ event_titles | select(''in'', [''spätschicht'', ''sv spät'', ''svv spät'']) | list | length > 0 }}'
@@ -4592,18 +4592,18 @@
       free_day_found: '{{ event_titles | select(''search'', ''(4tw-frei|urlaub)'') | list | length > 0 }}'
       weekday: '{{ now().weekday() < 5 }}'
       holiday_found: "{% set bavaria = holiday_calendar.get('calendar.deutschland_by', {}).get('events', []) %} {% set regional = bavarian_holiday_calendar.get('calendar.feiertage_in_deutschland', {}).get('events', [])\n  | map(attribute='summary') | map('lower') | select('search', 'mariä himmelfahrt') | list %}\n{{ bavaria | length > 0 or regional | length > 0 }}"
-      automatic_profile: "{% if not (weekday | bool) or (free_day_found | bool) %}Urlaub {% elif is_state('input_select.arbeitsmodus', 'Freischicht') %}Freischicht {% elif early_shift_found | bool %}Frühschicht {% elif late_shift_found | bool %}Spätschicht {% elif free_shift_found | bool or (event_titles | length == 0 and not (holiday_found | bool)) %}Freischicht\n{% else %}Deaktiviert{% endif %}"
+      automatic_profile: "{% if not (weekday | bool) or (free_day_found | bool) %}Urlaub {% elif is_state('input_select.work_schedule_mode', 'Freischicht') %}Freischicht {% elif early_shift_found | bool %}Frühschicht {% elif late_shift_found | bool %}Spätschicht {% elif free_shift_found | bool or (event_titles | length == 0 and not (holiday_found | bool)) %}Freischicht\n{% else %}Deaktiviert{% endif %}"
       effective_profile: '{{ automatic_profile if selected_profile == ''Automatisch'' else selected_profile }}'
-      profile_start_entity: '{% if effective_profile == ''Frühschicht'' %}input_datetime.early_shift_start {% elif effective_profile == ''Spätschicht'' %}input_datetime.late_shift_start {% elif effective_profile == ''Freischicht'' %}input_datetime.freischicht_arbeitsbeginn {% elif effective_profile == ''Urlaub'' %}input_datetime.vacation_wake_time {% else %}input_datetime.early_shift_start{% endif %}'
+      profile_start_entity: '{% if effective_profile == ''Frühschicht'' %}input_datetime.early_shift_start {% elif effective_profile == ''Spätschicht'' %}input_datetime.late_shift_start {% elif effective_profile == ''Freischicht'' %}input_datetime.free_shift_start {% elif effective_profile == ''Urlaub'' %}input_datetime.vacation_wake_time {% else %}input_datetime.early_shift_start{% endif %}'
       profile_start_minutes: '{% set parts = states(profile_start_entity).split('':'') %} {{ (parts[0] | int) * 60 + (parts[1] | int) }}'
-      profile_preheat_start: '{% set lead = ((states(''input_number.heating_preheat_time'') | float(1) * 60) | int) %} {% set alarm = 0 if effective_profile == ''Urlaub'' else (states(''input_number.alarm_before_shift'') | float(1) * 60) | int %} {{ ((profile_start_minutes | int) - alarm - lead) % 1440 }}'
+      profile_preheat_start: '{% set lead = ((states(''input_number.heating_preheat_offset'') | float(1) * 60) | int) %} {% set alarm = 0 if effective_profile == ''Urlaub'' else (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {{ ((profile_start_minutes | int) - alarm - lead) % 1440 }}'
       current_minute: '{{ now().hour * 60 + now().minute }}'
       in_profile_warmup: '{% set minute = current_minute | int %} {% set start = profile_start_minutes | int %} {% set preheat = profile_preheat_start | int %} {% if preheat < start %}{{ preheat <= minute < start }} {% elif preheat > start %}{{ minute >= preheat or minute < start }} {% else %}false{% endif %}'
       matching_calendar_shift: "{{ (effective_profile == 'Frühschicht' and (early_shift_found | bool))\n   or (effective_profile == 'Spätschicht' and (late_shift_found | bool))\n   or (effective_profile == 'Freischicht' and (free_shift_found | bool)) }}"
       profile_shift_schedule_active: "{{ (matching_calendar_shift | bool) or effective_profile == 'Freischicht' }}"
       profile_shift_has_started: '{{ (profile_shift_schedule_active | bool) and (current_minute | int >= profile_start_minutes | int) }}'
       windows_closed: "{{ not is_state('binary_sensor.shellydw2_07a36f_door', 'on')\n   and not is_state('binary_sensor.shellydw2_a4cf12f4307a_door', 'on') }}"
-      window_open_off_temperature: "{{ states('input_number.heating_window_open_off_temperature') | float(4) }}"
+      window_open_off_temperature: "{{ states('input_number.window_open_temp') | float(4) }}"
   - choose:
     - conditions:
       - condition: template
@@ -4626,7 +4626,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+            target_temperature: '{{ states(''input_number.heating_min_temp'') | float(4) }}'
     - conditions:
       - condition: template
         value_template: '{{ (profile_shift_has_started | bool) or (trigger.id == ''profile_shift_start'' and (profile_shift_schedule_active | bool)) }}'
@@ -4637,7 +4637,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+            target_temperature: '{{ states(''input_number.heating_min_temp'') | float(4) }}'
     - conditions:
       - condition: template
         value_template: '{{ (in_profile_warmup | bool) and is_state(''person.niwo'', ''home'') and (windows_closed | bool) }}'
@@ -4648,7 +4648,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_wohnzimmer'') | float(22) }}'
+            target_temperature: '{{ states(''input_number.whz_target_temp'') | float(22) }}'
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''state_refresh'', ''ha_start''] or not is_state(''person.niwo'', ''home'') }}'
@@ -4659,7 +4659,7 @@
         data:
           variables:
             command_type: temperature
-            target_temperature: '{{ states(''input_number.heizung_mindesttemperatur'') | float(4) }}'
+            target_temperature: '{{ states(''input_number.heating_min_temp'') | float(4) }}'
   mode: queued
   max: 10
 
@@ -4696,12 +4696,12 @@
     entity_id:
     - input_datetime.early_shift_start
     - input_datetime.late_shift_start
-    - input_datetime.freischicht_arbeitsbeginn
-    - input_number.alarm_before_shift
-    - input_number.sleep_time
-    - input_number.wind_down_lead_time
-    - input_number.dnd_lead_time
-    - input_select.arbeitsmodus
+    - input_datetime.free_shift_start
+    - input_number.alarm_offset
+    - input_number.sleep_duration
+    - input_number.wind_down_offset
+    - input_number.dnd_offset
+    - input_select.work_schedule_mode
     id: schedule_changed
   actions:
   - action: homeassistant.update_entity
@@ -4727,20 +4727,20 @@
       late_shift_found: "{{ shift_titles | select('search', 'spät') | list | length > 0 }}"
       free_shift_found: "{{ shift_titles | select('search', '(freischicht|support standby)') | list | length > 0 }}"
       free_day_found: "{{ shift_titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 }}"
-      mode_is_sick: "{{ is_state('input_select.arbeitsmodus', 'Krank') }}"
-      shift_start_entity: "{% if shift_titles | select('search', 'früh') | list | length > 0 %}input_datetime.early_shift_start{% elif shift_titles | select('search', 'spät') | list | length > 0 %}input_datetime.late_shift_start{% else %}input_datetime.freischicht_arbeitsbeginn{% endif %}"
+      mode_is_sick: "{{ is_state('input_select.work_schedule_mode', 'Krank') }}"
+      shift_start_entity: "{% if shift_titles | select('search', 'früh') | list | length > 0 %}input_datetime.early_shift_start{% elif shift_titles | select('search', 'spät') | list | length > 0 %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
       shift_label: "{% if shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei{% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub{% elif shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht{% elif shift_titles | select('search', 'spät') | list | length > 0 %}Spätschicht{% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby{% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht{% else %}Kein Schichteintrag{% endif %}"
   - variables:
       shift_start_minutes: "{% set t = states(shift_start_entity).split(':') %}{{ (t[0] | int) * 60 + (t[1] | int) }}"
-      alarm_lead_minutes: "{{ (states('input_number.alarm_before_shift') | float(1) * 60) | int }}"
-      sleep_minutes: "{{ (states('input_number.sleep_time') | float(9) * 60) | int }}"
-      wind_down_minutes: "{{ (states('input_number.wind_down_lead_time') | float(2) * 60) | int }}"
-      dnd_lead_minutes: "{{ ((states('input_number.dnd_lead_time') | float(1) * 60) | int) }}"
+      alarm_lead_minutes: "{{ (states('input_number.alarm_offset') | float(1) * 60) | int }}"
+      sleep_minutes: "{{ (states('input_number.sleep_duration') | float(9) * 60) | int }}"
+      wind_down_minutes: "{{ (states('input_number.wind_down_offset') | float(2) * 60) | int }}"
+      dnd_lead_minutes: "{{ ((states('input_number.dnd_offset') | float(1) * 60) | int) }}"
       alarm_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}"
       bedtime_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) }}"
       wind_down_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) - (wind_down_minutes | int) }}"
       dnd_raw_minutes: "{{ (bedtime_raw_minutes | int) - (dnd_lead_minutes | int) }}"
-      alarm_is_planned: "{{ (tomorrow_weekday | int < 5) and not (free_day_found | bool) and not (mode_is_sick | bool) and (((early_shift_found | bool or late_shift_found | bool) and is_state('input_select.arbeitsmodus', 'Automatisch')) or (free_shift_found | bool)) }}"
+      alarm_is_planned: "{{ (tomorrow_weekday | int < 5) and not (free_day_found | bool) and not (mode_is_sick | bool) and (((early_shift_found | bool or late_shift_found | bool) and is_state('input_select.work_schedule_mode', 'Automatisch')) or (free_shift_found | bool)) }}"
       alarm_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(alarm_raw_minutes | int))).strftime('%H:%M') }}"
       bedtime_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int))).strftime('%H:%M') }}"
       wind_down_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(wind_down_raw_minutes | int))).strftime('%H:%M') }}"
@@ -4759,7 +4759,7 @@
         {% elif shift_label == 'Kein Schichteintrag' %}
           Kein Schichteintrag · kein Wecker
         {% elif not (alarm_is_planned | bool) %}
-          {{ shift_label }} · kein Wecker (Arbeitsmodus {{ states('input_select.arbeitsmodus') }})
+          {{ shift_label }} · kein Wecker (Arbeitsmodus {{ states('input_select.work_schedule_mode') }})
         {% else %}
           {{ shift_label }} · DND {{ dnd_display }} · Runterfahren {{ wind_down_display }} · Schlafenszeit {{ bedtime_display }} · Wecker {{ alarm_display }}
         {% endif %}

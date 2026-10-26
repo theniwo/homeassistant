@@ -1,5 +1,5 @@
 - type: button
-  entity: input_boolean.work_mode_calendar
+  entity: input_boolean.work_mode_state
   name: Work Mode
   icon: mdi:briefcase
   show_name: true

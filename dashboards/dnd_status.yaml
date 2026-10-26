@@ -3,9 +3,9 @@ title: DND Status
 entities:
   - entity: input_boolean.snom_dnd_status
     name: Snom
-  - entity: input_boolean.gnome_dnd_status_niwo
+  - entity: input_boolean.gnome_dnd_niwo
     name: GNOME (niwo)
-  - entity: input_boolean.gnome_dnd_status_work
+  - entity: input_boolean.gnome_dnd_work
     name: GNOME (work)
   - entity: sensor.samsung_s25_dnd_status
     name: Samsung S25

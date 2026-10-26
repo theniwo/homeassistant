@@ -37,7 +37,7 @@
         {% set schedule_status_lower = schedule_status | lower %}
         {% if schedule_status in ['', 'unknown', 'unavailable'] %}
           Nicht geprüft
-        {% elif is_state('input_select.arbeitsmodus', 'Krank') or 'kein wecker' in schedule_status_lower %}
+        {% elif is_state('input_select.work_schedule_mode', 'Krank') or 'kein wecker' in schedule_status_lower %}
           Kein Wecker geplant
         {% elif 'Wecker ' not in schedule_status %}
           Nicht geprüft

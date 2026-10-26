@@ -390,8 +390,8 @@ alexa_output_with_configured_volume:
   - variables:
       previous_volumes: >-
         {% set ns = namespace(values=[]) %}
-        {% set quiet_time = today_at(states('input_datetime.echo_volume_quiet_time')) %}
-        {% set fallback_time = today_at(states('input_datetime.echo_volume_fallback_time')) %}
+        {% set quiet_time = today_at(states('input_datetime.echo_quiet_time')) %}
+        {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
         {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
         {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
         {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
@@ -405,7 +405,7 @@ alexa_output_with_configured_volume:
         {{ ns.values }}
       configured_volume: '{{ (states(''input_number.echo_announcement_volume'') | float(3)) / 10 }}'
       night_volume: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
-      sleep_mode_active: "{{ is_state('input_boolean.sleep_mode_calendar', 'on') }}"
+      sleep_mode_active: "{{ is_state('input_boolean.sleep_mode_state', 'on') }}"
       announcement_targets: "{{ output_targets | default(volume_targets if output_target in ['media_player.uberall', 'media_player.uberall_2'] else [output_target]) }}"
       previous_dnd_switches: >-
         {% set switch_by_player = {
@@ -487,7 +487,7 @@ alexa_output_with_configured_volume:
     - choose:
       - conditions:
         - condition: state
-          entity_id: input_boolean.sleep_mode_calendar
+          entity_id: input_boolean.sleep_mode_state
           state: 'on'
         sequence:
         - repeat:
@@ -520,14 +520,14 @@ master_dnd_override_on:
   sequence:
   - action: input_boolean.turn_on
     target:
-      entity_id: input_boolean.master_dnd_override
+      entity_id: input_boolean.dnd_override
   mode: single
 master_dnd_override_off:
   alias: Master DND override OFF
   sequence:
   - action: input_boolean.turn_off
     target:
-      entity_id: input_boolean.master_dnd_override
+      entity_id: input_boolean.dnd_override
   mode: single
 sleep_mode_toggle:
   alias: Sleep Mode umschalten
@@ -537,7 +537,7 @@ sleep_mode_toggle:
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.sleep_mode_calendar
+        entity_id: input_boolean.sleep_mode_state
         state: 'on'
       sequence:
       - action: script.sleep_mode_end_now
@@ -559,16 +559,16 @@ work_mode_toggle:
   - choose:
     - conditions:
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'on'
       sequence:
       - action: input_boolean.turn_off
         target:
-          entity_id: input_boolean.work_mode_calendar
+          entity_id: input_boolean.work_mode_state
     default:
     - action: input_boolean.turn_on
       target:
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
 sleep_mode_now:
   alias: Sleep Mode jetzt
   description: Activates Samsung Sleep mode, Snom DND, FRITZ!Box answering machines, sleep heating, bedtime announcements,
@@ -576,7 +576,7 @@ sleep_mode_now:
   mode: single
   sequence:
   - condition: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     state: 'off'
   - action: notify.mobile_app_sm_s931b
     data:
@@ -588,7 +588,7 @@ sleep_mode_now:
         intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
   - action: input_boolean.turn_on
     target:
-      entity_id: input_boolean.sleep_mode_calendar
+      entity_id: input_boolean.sleep_mode_state
   - action: shell_command.snom_dnd_set
     data:
       desired: 'on'
@@ -599,7 +599,7 @@ sleep_mode_now:
     then:
     - action: input_boolean.turn_on
       target:
-        entity_id: input_boolean.snom_dnd_calendar
+        entity_id: input_boolean.snom_dnd_state
   - action: shell_command.fritzbox_tam_set
     data:
       enabled: 'on'
@@ -610,7 +610,7 @@ sleep_mode_now:
     then:
     - action: input_boolean.turn_on
       target:
-        entity_id: input_boolean.fritz_box_answering_machines_calendar
+        entity_id: input_boolean.fritz_ab_state
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -629,7 +629,7 @@ sleep_mode_end_now:
   mode: single
   sequence:
   - condition: state
-    entity_id: input_boolean.sleep_mode_calendar
+    entity_id: input_boolean.sleep_mode_state
     state: 'on'
   - action: notify.mobile_app_sm_s931b
     data:
@@ -641,14 +641,14 @@ sleep_mode_end_now:
         intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
   - action: input_boolean.turn_off
     target:
-      entity_id: input_boolean.sleep_mode_calendar
+      entity_id: input_boolean.sleep_mode_state
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and is_state(''input_boolean.master_dnd_override'',
-          ''off'') and is_state(''input_boolean.snom_dnd_calendar'', ''on'') }}'
+        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and is_state(''input_boolean.dnd_override'',
+          ''off'') and is_state(''input_boolean.snom_dnd_state'', ''on'') }}'
       - condition: state
-        entity_id: input_boolean.work_mode_calendar
+        entity_id: input_boolean.work_mode_state
         state: 'off'
       sequence:
       - action: shell_command.snom_dnd_set
@@ -661,11 +661,11 @@ sleep_mode_end_now:
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.snom_dnd_calendar
+            entity_id: input_boolean.snom_dnd_state
     - conditions:
       - condition: template
-        value_template: '{{ not is_state(''input_select.arbeitsmodus'', ''Krank'') and is_state(''input_boolean.master_dnd_override'',
-          ''off'') and is_state(''input_boolean.fritz_box_answering_machines_calendar'', ''on'') }}'
+        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and is_state(''input_boolean.dnd_override'',
+          ''off'') and is_state(''input_boolean.fritz_ab_state'', ''on'') }}'
       sequence:
       - action: shell_command.fritzbox_tam_set
         data:
@@ -677,7 +677,7 @@ sleep_mode_end_now:
         then:
         - action: input_boolean.turn_off
           target:
-            entity_id: input_boolean.fritz_box_answering_machines_calendar
+            entity_id: input_boolean.fritz_ab_state
 
 
 calendar_shifts_refresh_tomorrow_and_set_alarm:
@@ -702,18 +702,18 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         shift_start_entity: >-
           {% if shift_label == 'Frühschicht' %}input_datetime.early_shift_start
           {% elif shift_label == 'Spätschicht' %}input_datetime.late_shift_start
-          {% else %}input_datetime.freischicht_arbeitsbeginn{% endif %}
+          {% else %}input_datetime.free_shift_start{% endif %}
         shift_start_minutes: >-
           {% set t = states(shift_start_entity).split(':') %}
           {{ (t[0] | int) * 60 + (t[1] | int) }}
-        alarm_lead_minutes: "{{ (states('input_number.alarm_before_shift') | float(1) * 60) | int }}"
-        sleep_minutes: "{{ (states('input_number.sleep_time') | float(9) * 60) | int }}"
-        wind_down_minutes: "{{ (states('input_number.wind_down_lead_time') | float(2) * 60) | int }}"
-        pill_lead_minutes: "{{ ((states('input_number.pill_bedtime_lead_time') | float(0.5) * 60) | int) }}"
+        alarm_lead_minutes: "{{ (states('input_number.alarm_offset') | float(1) * 60) | int }}"
+        sleep_minutes: "{{ (states('input_number.sleep_duration') | float(9) * 60) | int }}"
+        wind_down_minutes: "{{ (states('input_number.wind_down_offset') | float(2) * 60) | int }}"
+        pill_lead_minutes: "{{ ((states('input_number.pill_bedtime_offset') | float(0.5) * 60) | int) }}"
         alarm_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}"
         bedtime_raw_minutes: "{{ (alarm_raw_minutes | int) - (sleep_minutes | int) }}"
         wind_down_raw_minutes: "{{ (bedtime_raw_minutes | int) - (wind_down_minutes | int) }}"
-        dnd_lead_minutes: "{{ ((states('input_number.dnd_lead_time') | float(1) * 60) | int) }}"
+        dnd_lead_minutes: "{{ ((states('input_number.dnd_offset') | float(1) * 60) | int) }}"
         dnd_raw_minutes: "{{ (bedtime_raw_minutes | int) - (dnd_lead_minutes | int) }}"
         dnd_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(dnd_raw_minutes | int)) }}"
         dnd_schedule_is_eligible: "{{ shift_label in ['Frühschicht', 'Spätschicht', 'Freischicht', 'Support Standby'] and (today_at('00:00') + timedelta(days=1)).weekday() < 5 }}"
@@ -723,7 +723,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         bedtime_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int)) }}"
         wind_down_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(wind_down_raw_minutes | int)) }}"
         pill_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(pill_raw_minutes | int)) }}"
-        schedule_is_supported: "{{ shift_label in ['Frühschicht', 'Spätschicht'] and 'Runterfahren' in shift_status and (today_at('00:00') + timedelta(days=1)).weekday() < 5 and not is_state('input_select.arbeitsmodus', 'Krank') }}"
+        schedule_is_supported: "{{ shift_label in ['Frühschicht', 'Spätschicht'] and 'Runterfahren' in shift_status and (today_at('00:00') + timedelta(days=1)).weekday() < 5 and not is_state('input_select.work_schedule_mode', 'Krank') }}"
         wind_down_is_overdue: "{{ schedule_is_supported | bool and (wind_down_datetime | as_datetime) <= now() }}"
         pill_is_overdue: "{{ schedule_is_supported | bool and (pill_datetime | as_datetime) <= now() }}"
         bedtime_is_overdue: "{{ schedule_is_supported | bool and (bedtime_datetime | as_datetime) <= now() }}"
@@ -757,11 +757,11 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         remaining_minutes: "{{ ((remaining_seconds | int) % 3600) // 60 }}"
     - if:
         - condition: template
-          value_template: "{{ dnd_is_due | bool and is_state('input_boolean.master_dnd_override', 'off') }}"
+          value_template: "{{ dnd_is_due | bool and is_state('input_boolean.dnd_override', 'off') }}"
       then:
         - if:
             - condition: state
-              entity_id: input_boolean.snom_dnd_calendar
+              entity_id: input_boolean.snom_dnd_state
               state: 'off'
           then:
             - action: shell_command.snom_dnd_set
@@ -774,10 +774,10 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
               then:
                 - action: input_boolean.turn_on
                   target:
-                    entity_id: input_boolean.snom_dnd_calendar
+                    entity_id: input_boolean.snom_dnd_state
         - if:
             - condition: state
-              entity_id: input_boolean.fritz_box_answering_machines_calendar
+              entity_id: input_boolean.fritz_ab_state
               state: 'off'
           then:
             - action: shell_command.fritzbox_tam_set
@@ -790,7 +790,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
               then:
                 - action: input_boolean.turn_on
                   target:
-                    entity_id: input_boolean.fritz_box_answering_machines_calendar
+                    entity_id: input_boolean.fritz_ab_state
         - action: notify.mobile_app_sm_s931b
           data:
             message: command_dnd
