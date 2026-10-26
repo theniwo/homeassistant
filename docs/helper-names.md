@@ -73,4 +73,5 @@ GUI helper names use concise English labels. `WHZ`, `AZ`, and `SZ` mean living r
 | Entity ID | GUI name | Purpose / unit |
 | --- | --- | --- |
 | `input_number.motion_off_delay` | Motion off delay | Minutes to wait before switching lights off |
+| `input_number.hallway_light_max_on` | Hall light max on | Maximum continuous on time for hallway lights, fail-safe, minutes; default 10 |
 | `input_text.tomorrow_shift_status` | Tomorrow shift status | Text summary used by the dashboard |

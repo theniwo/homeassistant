@@ -4341,6 +4341,30 @@
           target:
             entity_id: light.flur_mitte_licht_2
   mode: restart
+- id: hallway_light_max_on_failsafe_20261026
+  alias: Light - Hallway maximum on time
+  description: Turn each hallway light off after its configured maximum continuous on time, independent of motion sensor state.
+  triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+  actions:
+  - repeat:
+      for_each:
+      - light.flur_vorne_licht
+      - light.flur_mitte_licht_2
+      - light.flur_hinten_licht_2
+      sequence:
+      - if:
+        - condition: template
+          value_template: >-
+            {{ is_state(repeat.item, 'on')
+               and (as_timestamp(now()) - as_timestamp(states[repeat.item].last_changed, 0))
+                   >= (states('input_number.hallway_light_max_on') | float(10) * 60) }}
+        then:
+        - action: light.turn_off
+          target:
+            entity_id: "{{ repeat.item }}"
+  mode: single
 - id: calendar_shifts_snom_dnd_status
   alias: Calendar - Shifts - Snom DND status
   description: Read the actual Snom DND state, including manual changes made on the phone.
