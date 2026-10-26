@@ -369,39 +369,34 @@
       hvac_mode: heat
   mode: single
 - id: '1704669783034'
-  alias: Heizungsverstärker an
-  description: ''
+  alias: Heating booster - target temperature
+  description: Turns the living room radiator booster on only when its target temperature is above the configured minimum.
   trigger:
-  - platform: device
-    device_id: b639ddd69f920446b2e72073910c4825
-    domain: climate
-    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
-    type: hvac_mode_changed
-    to: heat
+  - platform: state
+    entity_id:
+    - climate.shellytrv_8cf68118891f
+    - input_number.heizung_mindesttemperatur
+    - switch.shellyplusplugs_e465b8416794_switch_0
+  - platform: homeassistant
+    event: start
   condition: []
   action:
-  - type: turn_on
-    device_id: 455a0b2fbaf95ecaa4af6c365b7742e8
-    entity_id: 5e13c8386a84c338ac6ae8931af27ef7
-    domain: switch
-  mode: single
-- id: '1704669817060'
-  alias: Heizungsverstärker aus
-  description: ''
-  trigger:
-  - platform: device
-    device_id: b639ddd69f920446b2e72073910c4825
-    domain: climate
-    entity_id: 0b2825a29464f3924c7c07b3bc884a4c
-    type: hvac_mode_changed
-    to: 'off'
-  condition: []
-  action:
-  - type: turn_off
-    device_id: 455a0b2fbaf95ecaa4af6c365b7742e8
-    entity_id: 5e13c8386a84c338ac6ae8931af27ef7
-    domain: switch
-  mode: single
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: >-
+          {{ is_state('climate.shellytrv_8cf68118891f', 'heat')
+             and (state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(-1000))
+               > (states('input_number.heizung_mindesttemperatur') | float(1000)) }}
+      sequence:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.shellyplusplugs_e465b8416794_switch_0
+    default:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.shellyplusplugs_e465b8416794_switch_0
+  mode: restart
 - id: '1705144183106'
   alias: Fenster Schlafzimmer auf
   description: Sets the bedroom radiator to the configured no-heating target while its window is open.
