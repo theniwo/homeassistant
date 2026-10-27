@@ -77,4 +77,5 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | --- | --- | --- |
 | `input_number.motion_off_delay` | Motion off delay | Minutes to wait before switching lights off |
 | `input_number.hallway_light_max_on` | Hall light max on | Maximum continuous on time for hallway lights, fail-safe, minutes; default 10 |
+| `input_number.wake_light_delay` | Wake light delay | Delay after the scheduled wake time before bedroom lights turn on, minutes; default 1, range 0–10, step 1 |
 | `input_text.tomorrow_shift_status` | Tomorrow shift status | Text summary used by the dashboard |

@@ -15,6 +15,10 @@ This repository contains the Home Assistant configuration for calendar-based wor
 
 Credentials, databases, backups, logs, and `.storage` are intentionally excluded from Git. Keep credentials in Home Assistant's local `secrets.yaml`.
 
+## A respectful nod to Hacker Scripts
+
+With affectionate admiration for [NARKOZ/hacker-scripts](https://github.com/NARKOZ/hacker-scripts), this project brings that automation-first spirit home: the calendar plans the morning, Echo gives the cue, the TRVs warm the right rooms, and a bedside lamp waits one minute before making its dramatic entrance. A very polite cron job, with considerably more radiators.
+
 ## How the schedule works
 
 `calendar.shifts` is the source of truth for scheduled shifts. Calendar events may be all-day or span multiple days, so the automations query the relevant date with `calendar.get_events` instead of relying only on the current calendar state.
@@ -32,6 +36,7 @@ morning pills    = shift start - morning pill offset
 bedtime pills    = bedtime - bedtime pill offset
 BT disconnect    = alarm time - BT disconnect offset
 BT connection    = bedtime + BT connect offset
+wake lights      = alarm time + wake light delay
 ```
 
 The BT connection selects the paired phone as the bedroom Echo's source. It does not disable Bluetooth on the phone. The scheduled connection happens after bedtime; manual Sleep Mode activation also requests a connection as a fallback.
@@ -41,6 +46,7 @@ flowchart LR
     C[Shift calendar] --> S[Shift start helper]
     S --> A[Alarm = start - alarm offset]
     A --> B[Bedtime = alarm - sleep duration]
+    A --> L[Wake lights = alarm + wake light delay]
     B --> W[Wind-down = bedtime - wind-down offset]
     B --> D[DND = bedtime - DND offset]
     B --> BC[BT connect = bedtime + connect offset]
@@ -102,6 +108,7 @@ An offset of zero for a pill reminder means “announce now” at the scheduled 
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0.5 | Daytime volume for all Echo devices |
 | `input_number.echo_night_volume` | 3 / 10 | 0–10 / 0.5 | Quiet-hours volume for all Echo devices |
 | `input_number.echo_wake_delay` | 15 s | 0–120 s / 5 s | Delay before the bedroom Echo display turns on after alarm dismissal |
+| `input_number.wake_light_delay` | 1 min | 0–10 min / 1 min | Delay after calculated wake time before bedside and standing lights turn on |
 | `input_number.motion_off_delay` | 2 min | 1–15 min / 1 min | Motion-light off delay |
 | `input_number.hallway_light_max_on` | 10 min | 5–120 min / 5 min | Hallway light fail-safe maximum on time |
 
@@ -134,10 +141,13 @@ These examples use the live values above. Wind-down and DND start on the previou
 | Bedtime pill reminder | 21:30 | 23:00 | 22:30 |
 | Phone connects to bedroom Echo | 22:05 | 23:35 | 23:05 |
 | Bluetooth disconnects before alarm | 06:59:41 | 08:29:41 | 07:59:41 |
+| Bedroom wake lights | 07:01 | 08:31 | 08:01 |
 | Morning pill reminder | 07:45 | 09:15 | 08:45 |
 | Shift-start announcement | 07:55 | 09:25 | 08:55 |
+| Phone morning check | 08:05 (early only) | — | — |
+| Phone handover check | 13:05 | 13:05 | — |
 
-The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone reminder follows five minutes later; there is no equivalent phone reminder at the late-shift start. Phone handover is announced at 13:05 for either shift.
+The wake-light delay is one minute by default; setting it to zero turns the lamps on at the calculated alarm time. The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone morning check follows five minutes later; there is no equivalent phone check at the late-shift start. Phone handover is announced at 13:05 for either shift.
 
 ### Gantt example: early shift
 
@@ -149,18 +159,32 @@ gantt
     section Previous evening
     Calendar check and Alexa alarm request :milestone, 2026-10-27 18:00, 0m
     Wind-down and DND start :milestone, 2026-10-27 19:00, 0m
+    BED preheat starts :active, 2026-10-27 21:00, 600m
     Bedtime pill reminder :milestone, 2026-10-27 21:30, 0m
-    Bedtime and Sleep Mode :milestone, 2026-10-27 22:00, 0m
+    Sleep Mode and Echo quiet hours :milestone, 2026-10-27 22:00, 0m
+    Alarm verification and bedtime announcement :milestone, 2026-10-27 22:00, 0m
+    Enforce Sleep shutdown (if enabled) :milestone, 2026-10-27 22:00, 0m
+    Mückenlampe off and bedroom Echo display off :milestone, 2026-10-27 22:00, 0m
     Phone connects to bedroom Echo :milestone, 2026-10-27 22:05, 0m
-    section Shift day
+    section Morning
+    WHZ morning preheat :active, 2026-10-28 06:00, 120m
     Echo Bluetooth disconnects (19 s before alarm) :milestone, 2026-10-28 06:59, 0m
-    Alarm and wake lights :milestone, 2026-10-28 07:00, 0m
+    WRK preheat starts :active, 2026-10-28 07:00, 540m
+    Alexa alarm and day volume :milestone, 2026-10-28 07:00, 0m
+    Bedroom wake lights (1 min delay) :milestone, 2026-10-28 07:01, 0m
     Morning pill reminder :milestone, 2026-10-28 07:45, 0m
     Shift-start announcement :milestone, 2026-10-28 07:55, 0m
-    Work Mode starts :milestone, 2026-10-28 08:00, 0m
+    Work Mode and shift start; WHZ morning window ends :milestone, 2026-10-28 08:00, 0m
+    Phone morning check (phone transfer and call forwarding) :milestone, 2026-10-28 08:05, 0m
+    section Workday and evening transition
+    Work shift :active, 2026-10-28 08:00, 510m
     Phone handover reminder :milestone, 2026-10-28 13:05, 0m
+    WHZ preheat for Feierabend :active, 2026-10-28 15:30, 390m
+    WRK cooldown starts :milestone, 2026-10-28 16:00, 0m
     Work Mode ends :milestone, 2026-10-28 16:30, 0m
 ```
+
+Heating bars assume you are home and the relevant windows are closed. The WRK comfort window is 07:00–16:00; WHZ warms 06:00–08:00 and again from 15:30 until Sleep Mode starts at 22:00. BED preheats from 21:00 to the 07:00 alarm. After the alarm is dismissed, the Echo display turns on after its separate 15-second `echo_wake_delay`.
 
 ## Heating and device behavior
 
@@ -173,7 +197,7 @@ gantt
 - Motion lighting keeps the kitchen and separate front/rear hallway zones on while motion is detected. A two-minute off delay is supplemented by the ten-minute hallway fail-safe.
 - `Home Leave - All` switches off the configured lights and non-workspace equipment while keeping PC/server and the protected workspace controls out of the away shutdown.
 - Echo volume drops at 22:00. It rises at the Alexa alarm; if no alarm is scheduled for that day, noon is the fallback. Sleep Mode keeps the night-volume behavior. Announcements use the configured announcement volume.
-- The bedroom bedside and standing lights are part of the wake-light automation. The bedroom Echo display turns on 15 seconds after alarm dismissal.
+- The bedroom bedside and standing lights turn on after `wake_light_delay` (currently one minute after the calculated alarm time). Separately, the bedroom Echo display turns on 15 seconds after alarm dismissal.
 - Sleep Mode asks the office Echo to switch off the Popotan “Mückenlampe”; outside Sleep Mode it asks the same Echo to switch it on. The plug is controlled through Alexa custom commands rather than a native Home Assistant switch entity. The bedroom Echo display is switched off/on through Alexa commands around Sleep Mode and Home Assistant startup.
 - Backup failures are reported through Telegram.
 

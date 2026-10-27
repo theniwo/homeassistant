@@ -15,6 +15,10 @@ Dieses Repository enthält die Home-Assistant-Konfiguration für kalendergesteue
 
 Zugangsdaten, Datenbanken, Backups, Logs und `.storage` sind absichtlich von Git ausgeschlossen. Zugangsdaten gehören in die lokale `secrets.yaml` von Home Assistant.
 
+## Verbeugung vor Hacker Scripts
+
+Mit liebevoller Hochachtung vor [NARKOZ/hacker-scripts](https://github.com/NARKOZ/hacker-scripts) übernimmt dieses Projekt den Automatisierungsgeist fürs Zuhause: Der Kalender plant den Morgen, Echo gibt das Signal, die Heizkörper wärmen die passenden Räume und eine Nachttischlampe wartet genau eine Minute auf ihren dramatischen Auftritt. Ein sehr höflicher Cronjob, nur mit deutlich mehr Heizkörpern.
+
 ## Ablauf der Schichtsteuerung
 
 `calendar.shifts` ist die Quelle für geplante Schichten. Einträge können ganztägig sein und sich über mehrere Tage erstrecken. Deshalb fragen die Automationen den konkreten Tag mit `calendar.get_events` ab, statt sich nur auf den aktuellen Kalenderzustand zu verlassen.
@@ -32,6 +36,7 @@ Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Offset
 Abend-Tabletten = Schlafenszeit - Zubettgeh-Tabletten-Offset
 BT trennen       = Wecker - BT-Trenn-Offset
 BT verbinden     = Schlafenszeit + BT-Verbindungs-Offset
+Aufwachlicht     = Wecker + Wake-light-Delay
 ```
 
 Die Bluetooth-Verbindung wählt das gekoppelte Smartphone als Quelle des Schlafzimmer-Echos aus. Bluetooth am Smartphone wird nicht ausgeschaltet. Die geplante Verbindung erfolgt nach der Schlafenszeit; bei manuellem Einschalten des Sleep Mode gibt es ebenfalls einen Verbindungsversuch als Rückfall.
@@ -41,6 +46,7 @@ flowchart LR
     C[Schichtkalender] --> S[Helper Schichtbeginn]
     S --> A[Wecker = Beginn - Wecker-Offset]
     A --> B[Schlafenszeit = Wecker - Schlafdauer]
+    A --> L[Aufwachlicht = Wecker + Wake-light-Delay]
     B --> W[Runterfahren = Schlafenszeit - Runterfahr-Offset]
     B --> D[DND = Schlafenszeit - DND-Offset]
     B --> BC[BT verbinden = Schlafenszeit + BT-Offset]
@@ -102,6 +108,7 @@ Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn 
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0,5 | Tageslautstärke aller Echo-Geräte |
 | `input_number.echo_night_volume` | 3 / 10 | 0–10 / 0,5 | Lautstärke aller Echos während der Ruhezeit |
 | `input_number.echo_wake_delay` | 15 s | 0–120 s / 5 s | Verzögerung bis zum Einschalten des Schlafzimmer-Echo-Displays nach Weckerende |
+| `input_number.wake_light_delay` | 1 min | 0–10 min / 1 min | Verzögerung nach der berechneten Weckerzeit bis Nachttisch- und Stehlampe angehen |
 | `input_number.motion_off_delay` | 2 min | 1–15 min / 1 min | Nachlauf der Bewegungsbeleuchtung |
 | `input_number.hallway_light_max_on` | 10 min | 5–120 min / 5 min | Maximale Einschaltdauer als Flurlicht-Sicherheitsabschaltung |
 
@@ -134,10 +141,13 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 | Tablettenerinnerung vor dem Zubettgehen | 21:30 | 23:00 | 22:30 |
 | Handy verbindet sich mit Schlafzimmer-Echo | 22:05 | 23:35 | 23:05 |
 | Bluetooth trennt vor dem Wecker | 06:59:41 | 08:29:41 | 07:59:41 |
+| Schlafzimmer-Aufwachlicht | 07:01 | 08:31 | 08:01 |
 | Morgen-Tablettenerinnerung | 07:45 | 09:15 | 08:45 |
 | Ansage zum Schichtbeginn | 07:55 | 09:25 | 08:55 |
+| Telefoncheck am Morgen | 08:05 (nur Frühschicht) | — | — |
+| Telefonübergabe-Check | 13:05 | 13:05 | — |
 
-Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt die Telefonansage fünf Minuten nach Schichtbeginn; bei der Spätschicht gibt es keine zusätzliche Telefonansage um 09:35. Die Telefonübergabe wird bei beiden Schichten um 13:05 angesagt.
+Die Verzögerung für das Aufwachlicht beträgt standardmäßig eine Minute; bei null gehen die Lampen direkt zur berechneten Weckerzeit an. Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt der morgendliche Telefoncheck fünf Minuten später; bei der Spätschicht gibt es keinen vergleichbaren Check um 09:35. Die Telefonübergabe wird bei beiden Schichten um 13:05 angesagt.
 
 ### Gantt-Beispiel: Frühschicht
 
@@ -149,18 +159,32 @@ gantt
     section Vorabend
     Kalenderprüfung und Alexa-Wecker :milestone, 2026-10-27 18:00, 0m
     Runterfahren und DND starten :milestone, 2026-10-27 19:00, 0m
+    BED Vorheizen beginnt :active, 2026-10-27 21:00, 600m
     Tablettenerinnerung vor dem Schlafen :milestone, 2026-10-27 21:30, 0m
-    Schlafenszeit und Sleep Mode :milestone, 2026-10-27 22:00, 0m
+    Sleep Mode und Echo-Ruhezeit :milestone, 2026-10-27 22:00, 0m
+    Weckerprüfung und Schlafenszeit-Ansage :milestone, 2026-10-27 22:00, 0m
+    Enforce-Sleep-Abschaltung (wenn aktiv) :milestone, 2026-10-27 22:00, 0m
+    Mückenlampe und Schlafzimmer-Echo-Display aus :milestone, 2026-10-27 22:00, 0m
     Handy verbindet mit Schlafzimmer-Echo :milestone, 2026-10-27 22:05, 0m
-    section Schichttag
+    section Morgen
+    WHZ morgens vorheizen :active, 2026-10-28 06:00, 120m
     Echo-Bluetooth trennt (19 s vor Wecker) :milestone, 2026-10-28 06:59, 0m
-    Wecker und Aufwachlicht :milestone, 2026-10-28 07:00, 0m
+    WRK Vorheizen beginnt :active, 2026-10-28 07:00, 540m
+    Alexa-Wecker und Tageslautstärke :milestone, 2026-10-28 07:00, 0m
+    Schlafzimmer-Aufwachlicht (1 min Verzögerung) :milestone, 2026-10-28 07:01, 0m
     Morgen-Tablettenerinnerung :milestone, 2026-10-28 07:45, 0m
     Ansage zum Schichtbeginn :milestone, 2026-10-28 07:55, 0m
-    Work Mode startet :milestone, 2026-10-28 08:00, 0m
+    Work Mode und Schichtbeginn; WHZ-Morgenfenster endet :milestone, 2026-10-28 08:00, 0m
+    Telefoncheck am Morgen (Telefon und Rufumleitung) :milestone, 2026-10-28 08:05, 0m
+    section Arbeitstag und Feierabend-Übergang
+    Schicht :active, 2026-10-28 08:00, 510m
     Telefonübergabe-Ansage :milestone, 2026-10-28 13:05, 0m
+    WHZ für Feierabend vorheizen :active, 2026-10-28 15:30, 390m
+    WRK-Abkühlphase beginnt :milestone, 2026-10-28 16:00, 0m
     Work Mode endet :milestone, 2026-10-28 16:30, 0m
 ```
+
+Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster geschlossen sind. WRK heizt von 07:00 bis 16:00; WHZ heizt morgens von 06:00 bis 08:00 und ab 15:30 bis zum Sleep Mode um 22:00. BED wird von 21:00 bis zum Wecker um 07:00 vorgeheizt. Nach dem Beenden des Weckers schaltet das Schlafzimmer-Echo-Display mit seinem separaten `echo_wake_delay` nach 15 Sekunden ein.
 
 ## Heizungen und Geräte
 
@@ -173,7 +197,7 @@ gantt
 - Bewegungslicht hält Küche sowie vorderen und hinteren Flur getrennt eingeschaltet, solange Bewegung erkannt wird. Zum zweiminütigen Nachlauf kommt eine zehnminütige Flur-Sicherheitsabschaltung.
 - `Home Leave - All` schaltet konfigurierte Lampen und Geräte außerhalb der geschützten Arbeitsumgebung ab. PC, Server und die separat gesteuerten Arbeitszimmer-Kreise sind von dieser Abwesenheitsabschaltung ausgenommen.
 - Die Echo-Lautstärke sinkt um 22:00. Beim Alexa-Wecker steigt sie wieder; ohne Wecker für den Tag greift mittags die Fallback-Zeit. Sleep Mode hält das Nachtlautstärkeverhalten aktiv. Ansagen verwenden die eingestellte Ansagelautstärke.
-- Nach dem Wecker werden Nachttisch- und Stehlampe als Aufwachlicht verwendet. Das Schlafzimmer-Echo-Display schaltet sich 15 Sekunden nach dem Beenden des Weckers ein.
+- Nachttisch- und Stehlampe schalten sich mit `wake_light_delay` ein (aktuell eine Minute nach der berechneten Weckerzeit). Separat davon schaltet sich das Schlafzimmer-Echo-Display 15 Sekunden nach dem Beenden des Weckers ein.
 - Sleep Mode bittet das Echo im Arbeitszimmer, die Popotan-Steckdose „Mückenlampe“ auszuschalten. Außerhalb von Sleep Mode sendet dasselbe Echo den Einschaltbefehl. Die Steckdose wird über Alexa-Custom-Befehle und nicht über einen nativen Home-Assistant-Schalter gesteuert. Das Display des Schlafzimmer-Echos wird rund um Sleep Mode und beim Home-Assistant-Start ebenfalls per Alexa-Befehl geschaltet.
 - Fehlgeschlagene Backups melden sich über Telegram.
 

@@ -8,6 +8,10 @@ entities:
   - entity: input_datetime.echo_fallback_time
   - entity: input_number.motion_off_delay
   - type: section
+    label: Wake lights
+  - entity: input_number.wake_light_delay
+    name: Wake light delay
+  - type: section
     label: Bluetooth
   - entity: input_number.bt_connect_offset
     name: BT connect offset
