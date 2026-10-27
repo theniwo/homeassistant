@@ -4839,7 +4839,7 @@
 
 - id: calendar_shifts_alexa_bluetooth_connect
   alias: Calendar - Shifts - Alexa Bluetooth connect
-  description: Connects the configured phone to the bedroom Echo before scheduled Sleep Mode, or when Sleep Mode is enabled manually.
+  description: Connects the configured phone to the bedroom Echo after scheduled Sleep Mode, or shortly after Sleep Mode is enabled manually.
   triggers:
     - trigger: template
       id: early_connect
@@ -4848,8 +4848,8 @@
         {% set start = (t[0] | int) * 60 + (t[1] | int) %}
         {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
         {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
-        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
-        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+        {% set offset = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep + offset) % 1440 }}
     - trigger: template
       id: late_connect
       value_template: >-
@@ -4857,8 +4857,8 @@
         {% set start = (t[0] | int) * 60 + (t[1] | int) %}
         {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
         {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
-        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
-        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+        {% set offset = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep + offset) % 1440 }}
     - trigger: template
       id: free_connect
       value_template: >-
@@ -4866,8 +4866,8 @@
         {% set start = (t[0] | int) * 60 + (t[1] | int) %}
         {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
         {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
-        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
-        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+        {% set offset = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep + offset) % 1440 }}
     - trigger: state
       entity_id: input_boolean.sleep_mode_state
       to: 'on'
@@ -4898,13 +4898,13 @@
                 shift_start_parts: "{{ states(shift_start_entity).split(':') }}"
                 alarm_lead_minutes: "{{ (states('input_number.alarm_offset') | float(1) * 60) | int }}"
                 sleep_lead_minutes: "{{ (states('input_number.sleep_duration') | float(9) * 60) | int }}"
-                bluetooth_lead_minutes: "{{ states('input_number.bt_connect_offset') | int(5) }}"
+                bluetooth_connect_offset_minutes: "{{ states('input_number.bt_connect_offset') | int(5) }}"
             - variables:
                 shift_start_minutes: "{{ (shift_start_parts[0] | int) * 60 + (shift_start_parts[1] | int) }}"
-                total_lead_minutes: "{{ (alarm_lead_minutes | int) + (sleep_lead_minutes | int) + (bluetooth_lead_minutes | int) }}"
+                connection_lead_minutes: "{{ (alarm_lead_minutes | int) + (sleep_lead_minutes | int) - (bluetooth_connect_offset_minutes | int) }}"
             - variables:
                 calendar_day_offset: >-
-                  {{ [0, (((total_lead_minutes | int) - (shift_start_minutes | int) + 1439) // 1440)] | max }}
+                  {{ [0, (((connection_lead_minutes | int) - (shift_start_minutes | int) + 1439) // 1440)] | max }}
                 calendar_query_start: >-
                   {{ (today_at('00:00') + timedelta(days=calendar_day_offset | int)).isoformat() }}
                 calendar_query_end: >-
