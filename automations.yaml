@@ -3818,8 +3818,8 @@
       message: In fünf Minuten beginnt deine {{ shift_name }}.
   mode: single
 - id: calendar_shifts_echo_clock_display
-  alias: Calendar - Shifts - Echo display and bedroom wake lights
-  description: Shows the bedroom Echo clock and turns on the bedside and standing lamps during the calculated wake window for shifts and eligible free weekdays.
+  alias: Calendar - Shifts - Bedroom wake lights
+  description: Turns on the bedside and standing lamps during the calculated wake window for shifts and eligible free weekdays.
   triggers:
   - trigger: template
     id: early_wake
@@ -3864,18 +3864,6 @@
   - condition: template
     value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
   - if:
-    - condition: state
-      entity_id: input_boolean.sleep_mode_state
-      state: 'off'
-    then:
-    - action: media_player.play_media
-      target:
-        entity_id: media_player.schlafzimmer
-      data:
-        media_content_type: custom
-        media_content_id: turn display on
-      continue_on_error: true
-  - if:
     - condition: template
       value_template: '{{ trigger.id.endswith(''_wake'') }}'
     then:
@@ -3885,6 +3873,35 @@
         - light.nachttischlampe_licht
         - light.stehlampe_schlafzimmer_licht
       continue_on_error: true
+  mode: single
+- id: calendar_shifts_echo_display_after_alarm_dismissal
+  alias: Calendar - Shifts - Echo display after alarm dismissal
+  description: Turns on the bedroom Echo clock after its alarm is dismissed and a configurable delay has elapsed.
+  triggers:
+  - trigger: event
+    event_type: alexa_media_alarm_dismissal_event
+  actions:
+  - variables:
+      bedroom_serial: "{{ device_attr(device_id('media_player.schlafzimmer'), 'serial_number') }}"
+      dismissed_serial: "{{ trigger.event.data.get('device', {}).get('id', '') }}"
+  - condition: template
+    value_template: >-
+      {% set alarm_event = trigger.event.data.get('event', {}) %}
+      {{ bedroom_serial not in [none, '', 'unknown']
+         and dismissed_serial == bedroom_serial
+         and alarm_event.get('snoozedToTime') is none }}
+  - delay:
+      seconds: "{{ states('input_number.echo_wake_delay') | int(15) }}"
+  - condition: state
+    entity_id: input_boolean.sleep_mode_state
+    state: 'off'
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: custom
+      output_target: media_player.schlafzimmer
+      volume_targets:
+      - media_player.schlafzimmer
+      message: turn display on
   mode: single
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
@@ -4396,7 +4413,7 @@
   mode: single
 - id: sleep_mode_mueckenlampe_alexa
   alias: Sleep Mode - Bedroom Echo controls
-  description: Controls the Popotan plug and Echo Dot display in sequence on Sleep Mode changes.
+  description: Controls the Popotan plug through the office Echo and the bedroom Echo display around Sleep Mode changes.
   triggers:
   - trigger: state
     entity_id: input_boolean.sleep_mode_state
@@ -4419,9 +4436,9 @@
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: custom
-          output_target: media_player.schlafzimmer
+          output_target: media_player.arbeitszimmer
           volume_targets:
-          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
           message: Mückenlampe ausschalten
       - action: script.alexa_output_with_configured_volume
         data:
@@ -4438,17 +4455,23 @@
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: custom
-          output_target: media_player.schlafzimmer
+          output_target: media_player.arbeitszimmer
           volume_targets:
-          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
           message: Mückenlampe einschalten
-      - action: script.alexa_output_with_configured_volume
-        data:
-          output_type: custom
-          output_target: media_player.schlafzimmer
-          volume_targets:
-          - media_player.schlafzimmer
-          message: turn display on
+      - if:
+        - condition: template
+          value_template: "{{ trigger.id == 'startup' or (trigger.id == 'sleep_off' and trigger.to_state is not none and trigger.to_state.context.user_id is not none) }}"
+        then:
+        - delay:
+            seconds: "{{ states('input_number.echo_wake_delay') | int(15) }}"
+        - action: script.alexa_output_with_configured_volume
+          data:
+            output_type: custom
+            output_target: media_player.schlafzimmer
+            volume_targets:
+            - media_player.schlafzimmer
+            message: turn display on
   mode: queued
   max: 4
 - id: sleep_mode_enforce_rooms

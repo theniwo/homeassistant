@@ -61,6 +61,7 @@ GUI helper names use concise English labels. `WHZ`, `AZ`, and `SZ` mean living r
 | `input_number.phone_handover_offset` | Phone handover offset | Announcement delay, minutes |
 | `input_number.bt_disconnect_offset` | BT disconnect offset | Disconnect before alarm, seconds |
 | `input_number.echo_announcement_volume` | Echo announcement volume | Announcement volume on a 0–10 scale |
+| `input_number.echo_wake_delay` | Echo wake delay | Delay after the bedroom alarm is dismissed, seconds; default 15 |
 | `input_number.echo_day_volume` | Echo day volume | Daytime volume on a 0–10 scale |
 | `input_number.echo_night_volume` | Echo night volume | Nighttime volume on a 0–10 scale |
 | `input_datetime.echo_quiet_time` | Echo quiet time | Start of quiet hours |
