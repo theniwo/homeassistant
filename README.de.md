@@ -41,6 +41,21 @@ Aufwachlicht     = Wecker + Wake-light-Delay
 
 Die Bluetooth-Verbindung wählt das gekoppelte Smartphone als Quelle des Schlafzimmer-Echos aus. Bluetooth am Smartphone wird nicht ausgeschaltet. Die geplante Verbindung erfolgt nach der Schlafenszeit; bei manuellem Einschalten des Sleep Mode gibt es ebenfalls einen Verbindungsversuch als Rückfall.
 
+### Sleep Mode und Weckerende
+
+Der Sleep Mode bleibt aktiv, wenn der Alexa-Wecker zur geplanten Zeit zu klingeln beginnt. Er endet erst, wenn der Wecker des Schlafzimmer-Echos beendet wurde; ein Snooze beendet den Sleep Mode nicht. Beim Beenden ruft Home Assistant `script.sleep_mode_end_now` auf. Dadurch werden Samsung Sleep Mode, der interne Status, Snom-DND und die FRITZ!Box-Anrufbeantworter nach denselben Override- und Krank-Regeln wie beim manuellen Beenden zurückgesetzt.
+
+Alexa Media Player liefert ein Ereignis für das Beenden eines Weckers, aber keine verlässliche Angabe dazu, ob der Befehl per Sprache oder in einer App gegeben wurde. Im üblichen Ablauf löst „Alexa, Wecker aus“ die Automation aus; ein anderweitig beendeter Wecker im Schlafzimmer kann sie ebenfalls auslösen. Der Echo-Wecker muss beendet sein und darf nicht nur auf Snooze stehen.
+
+```mermaid
+flowchart LR
+    A[Wecker klingelt] --> B[Sleep Mode bleibt aktiv]
+    B --> C{Schlafzimmer-Wecker beendet?}
+    C -->|Snooze| B
+    C -->|Ja| D[Sleep Mode beenden]
+    D --> E[Samsung, Snom und FRITZ!Box nach Override-Regeln zurücksetzen]
+```
+
 ```mermaid
 flowchart LR
     C[Schichtkalender] --> S[Helper Schichtbeginn]
@@ -184,7 +199,7 @@ gantt
     Work Mode endet :milestone, 2026-10-28 16:30, 0m
 ```
 
-Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster geschlossen sind. WRK heizt von 07:00 bis 16:00; WHZ heizt morgens von 06:00 bis 08:00 und ab 15:30 bis zum Sleep Mode um 22:00. BED wird von 21:00 bis zum Wecker um 07:00 vorgeheizt. Nach dem Beenden des Weckers schaltet das Schlafzimmer-Echo-Display mit seinem separaten `echo_wake_delay` nach 15 Sekunden ein.
+Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster geschlossen sind. WRK heizt von 07:00 bis 16:00; WHZ heizt morgens von 06:00 bis 08:00 und ab 15:30 bis zum Sleep Mode um 22:00. BED wird von 21:00 bis zum Wecker um 07:00 vorgeheizt. Sleep Mode bleibt während des klingelnden Weckers aktiv und endet nach dem Beenden des Schlafzimmer-Weckers. Danach schaltet das Schlafzimmer-Echo-Display mit seinem separaten `echo_wake_delay` nach 15 Sekunden ein.
 
 ## Heizungen und Geräte
 

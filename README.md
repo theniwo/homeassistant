@@ -41,6 +41,21 @@ wake lights      = alarm time + wake light delay
 
 The BT connection selects the paired phone as the bedroom Echo's source. It does not disable Bluetooth on the phone. The scheduled connection happens after bedtime; manual Sleep Mode activation also requests a connection as a fallback.
 
+### Sleep Mode and alarm dismissal
+
+Sleep Mode stays active when the Alexa alarm starts ringing at its scheduled time. It ends only after the bedroom Echo alarm is dismissed; snoozing does not end Sleep Mode. Home Assistant then calls `script.sleep_mode_end_now`, which resets Samsung Sleep Mode, its internal state, Snom DND, and the FRITZ!Box answering machines under the same override and sick-mode rules as manual shutdown.
+
+Alexa Media Player reports that an alarm was dismissed, but does not reliably identify whether dismissal came from a voice command or an app. In the normal flow, “Alexa, stop the alarm” triggers this automation; dismissing the bedroom alarm another way can also trigger it. The alarm must be dismissed, not snoozed.
+
+```mermaid
+flowchart LR
+    A[Alarm rings] --> B[Sleep Mode stays active]
+    B --> C{Bedroom alarm dismissed?}
+    C -->|Snoozed| B
+    C -->|Yes| D[End Sleep Mode]
+    D --> E[Reset Samsung, Snom, and FRITZ!Box under override rules]
+```
+
 ```mermaid
 flowchart LR
     C[Shift calendar] --> S[Shift start helper]
@@ -184,7 +199,7 @@ gantt
     Work Mode ends :milestone, 2026-10-28 16:30, 0m
 ```
 
-Heating bars assume you are home and the relevant windows are closed. The WRK comfort window is 07:00–16:00; WHZ warms 06:00–08:00 and again from 15:30 until Sleep Mode starts at 22:00. BED preheats from 21:00 to the 07:00 alarm. After the alarm is dismissed, the Echo display turns on after its separate 15-second `echo_wake_delay`.
+Heating bars assume you are home and the relevant windows are closed. The WRK comfort window is 07:00–16:00; WHZ warms 06:00–08:00 and again from 15:30 until Sleep Mode starts at 22:00. BED preheats from 21:00 to the 07:00 alarm. Sleep Mode remains active while the alarm rings and ends after the bedroom alarm is dismissed. The Echo display then turns on after its separate 15-second `echo_wake_delay`.
 
 ## Heating and device behavior
 

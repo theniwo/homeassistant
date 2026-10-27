@@ -2474,20 +2474,11 @@
     id: late_dnd_on
     value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead = ((states(''input_number.alarm_offset'') | float(1)) * 60) | int %} {% set sleep_lead = ((states(''input_number.sleep_duration'') | float(8)) * 60) | int %} {% set dnd_lead = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %} {% set target = (shift_minutes - alarm_lead - sleep_lead - dnd_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}'
   - trigger: template
-    id: early_sleep_off
-    value_template: "{% set t = states('input_datetime.early_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
-  - trigger: template
-    id: late_sleep_off
-    value_template: "{% set t = states('input_datetime.late_shift_start').split(':') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead =\n  ((states('input_number.alarm_offset') | float(1)) * 60)\n  | int\n%} {% set target = (shift_minutes - alarm_lead) % 1440 %} {{ (now().hour * 60 + now().minute) == target }}"
-  - trigger: template
     id: free_sleep_on
     value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_duration'') | float(8) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm - sleep) % 1440 }}'
   - trigger: template
     id: free_dnd_on
     value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_duration'') | float(8) * 60) | int %}{% set dnd = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %}{{ now().hour * 60 + now().minute == (start - alarm - sleep - dnd) % 1440 }}'
-  - trigger: template
-    id: free_sleep_off
-    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{{ now().hour * 60 + now().minute == (start - alarm) % 1440 }}'
   actions:
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else (''Spätschicht'' if trigger.id.startswith(''late_'') else ''Freischicht'') }}'
@@ -2526,30 +2517,6 @@
         - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.snom_dnd_state
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
-      - condition: state
-        entity_id: input_boolean.snom_dnd_state
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.dnd_override
-        state: 'off'
-      - condition: template
-        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
-      - condition: state
-        entity_id: input_boolean.work_mode_state
-        state: 'off'
-      sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'off'
-        response_variable: snom_dnd_result
-      - if: '{{ snom_dnd_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.snom_dnd_state
   - choose:
     - conditions:
       - condition: template
@@ -2568,27 +2535,6 @@
       - if: '{{ fritzbox_tam_result[''returncode''] == 0 }}'
         then:
         - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.fritz_ab_state
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.id.endswith(''_sleep_off'') and (shift_found | bool) }}'
-      - condition: state
-        entity_id: input_boolean.fritz_ab_state
-        state: 'on'
-      - condition: state
-        entity_id: input_boolean.dnd_override
-        state: 'off'
-      - condition: template
-        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
-      sequence:
-      - action: shell_command.fritzbox_tam_set
-        data:
-          enabled: 'off'
-        response_variable: fritzbox_tam_result
-      - if: '{{ fritzbox_tam_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.fritz_ab_state
   - choose:
@@ -2620,29 +2566,6 @@
             intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
             intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
       - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.sleep_mode_state
-    - conditions:
-      - condition: template
-        value_template: "{{
-  trigger.id in ['early_sleep_off', 'late_sleep_off', 'free_sleep_off']
-  and (shift_found | bool)
-}}"
-      - condition: state
-        entity_id: input_boolean.sleep_mode_state
-        state: 'on'
-      - condition: template
-        value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
-      sequence:
-      - action: notify.mobile_app_sm_s931b
-        data:
-          message: command_activity
-          data:
-            intent_action: android.intent.action.MAIN
-            intent_package_name: com.samsung.android.app.routines
-            intent_class_name: com.samsung.android.app.routines.ui.shortcut.ShortcutLaunchActivity
-            intent_extras: EXTRA_KEY_ROUTINE_UUID:{{ states('input_text.samsung_sleep_mode_id') | trim }}:long
-      - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.sleep_mode_state
   - choose:
@@ -3886,6 +3809,27 @@
         - light.nachttischlampe_licht
         - light.stehlampe_schlafzimmer_licht
       continue_on_error: true
+  mode: single
+- id: calendar_shifts_sleep_mode_end_after_alarm_dismissal
+  alias: Calendar - Shifts - End Sleep mode after alarm dismissal
+  description: Ends Sleep Mode after the bedroom Alexa alarm is dismissed, not when it starts ringing.
+  triggers:
+  - trigger: event
+    event_type: alexa_media_alarm_dismissal_event
+  conditions:
+  - condition: state
+    entity_id: input_boolean.sleep_mode_state
+    state: 'on'
+  - condition: template
+    value_template: >-
+      {% set bedroom_serial = device_attr(device_id('media_player.schlafzimmer'), 'serial_number') %}
+      {% set dismissed_serial = trigger.event.data.get('device', {}).get('id', '') %}
+      {% set alarm_event = trigger.event.data.get('event', {}) %}
+      {{ bedroom_serial not in [none, '', 'unknown']
+         and dismissed_serial == bedroom_serial
+         and alarm_event.get('snoozedToTime') is none }}
+  actions:
+  - action: script.sleep_mode_end_now
   mode: single
 - id: calendar_shifts_echo_display_after_alarm_dismissal
   alias: Calendar - Shifts - Echo display after alarm dismissal
