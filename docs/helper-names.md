@@ -1,6 +1,6 @@
 # Home Assistant helper names
 
-GUI helper names use concise English labels. `WHZ`, `AZ`, and `SZ` mean living room, office, and bedroom. `Offset` means a relative duration; Home Assistant shows the helper's unit beside its value. Clock values use `time`.
+GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living room, office, and bedroom. `Offset` means a relative duration; Home Assistant shows the helper's unit beside its value. Clock values use `time`.
 
 ## State and mode
 
@@ -25,9 +25,9 @@ GUI helper names use concise English labels. `WHZ`, `AZ`, and `SZ` mean living r
 
 | Entity ID | GUI name | Purpose / unit |
 | --- | --- | --- |
-| `input_number.whz_target_temp` | WHZ target temp | Living room comfort target, °C |
-| `input_number.az_target_temp` | AZ target temp | Office comfort target, °C |
-| `input_number.sz_target_temp` | SZ target temp | Bedroom comfort target, °C |
+| `input_number.whz_target_temp` | WHZ temp | Living room comfort target, °C |
+| `input_number.az_target_temp` | WRK temp | Office comfort target, °C |
+| `input_number.sz_target_temp` | BED temp | Bedroom comfort target, °C |
 | `input_number.heating_min_temp` | Heating min temp | Base target with windows closed, °C |
 | `input_number.window_open_temp` | Window open temp | Target while a window is open, °C |
 | `input_number.heating_preheat_offset` | Heating preheat offset | Preheat duration before an event, hours |
