@@ -3545,7 +3545,7 @@
   max: 20
 - id: calendar_shifts_pill_reminder_20261008
   alias: Calendar - Shifts - Pill reminder
-  description: Announces a pill reminder before a scheduled work shift.
+  description: Announces a pill reminder before a scheduled shift or free-shift calendar event.
   triggers:
   - trigger: template
     id: early_pill_reminder
@@ -3553,10 +3553,12 @@
   - trigger: template
     id: late_pill_reminder
     value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
+  - trigger: template
+    id: free_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.free_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
   actions:
   - variables:
-      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_pill_reminder'' else ''Spätschicht'' }}'
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
+      shift_start_entity: "{% if trigger.id == 'early_pill_reminder' %}input_datetime.early_shift_start{% elif trigger.id == 'late_pill_reminder' %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
       pill_lead_minutes: '{{ ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) }}'
   - variables:
       calendar_day_offset: '{% set shift_start = states(shift_start_entity).split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {{ 1 if shift_minutes - (pill_lead_minutes | int) < 0 else 0 }}'
@@ -3573,7 +3575,9 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_pill_reminder' and 'früh' in title) or (trigger.id == 'late_pill_reminder' and 'spät' in title) or (trigger.id == 'free_pill_reminder' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+  - variables:
+      spoken_schedule_name: "{% if trigger.id == 'early_pill_reminder' %}Deine Frühschicht{% elif trigger.id == 'late_pill_reminder' %}Deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}Dein Support Standby{% else %}Deine Freischicht{% endif %}"
   - condition: template
     value_template: '{{ shift_found | bool }}'
   - action: script.alexa_output_with_configured_volume
@@ -3586,10 +3590,10 @@
       - media_player.kuche
       - media_player.wohnzimmer
       - media_player.badezimmer
-      message: "{% if pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Schicht beginnt jetzt!\n{% else %}\nDenk daran, deine Tabletten einzunehmen. Deine {{ shift_name }} beginnt in\n{{ pill_lead_minutes }} Minuten.\n{% endif %}"
+      message: "{% if pill_lead_minutes | int == 0 %}\n  Denk daran, deine Tabletten einzunehmen. {{ spoken_schedule_name }} beginnt jetzt!\n{% else %}\nDenk daran, deine Tabletten einzunehmen. {{ spoken_schedule_name }} beginnt in {{ pill_lead_minutes }} Minuten.\n{% endif %}"
 - id: calendar_shifts_bedtime_pill_reminder_20261008
   alias: Calendar - Shifts - Bedtime pill reminder
-  description: Announces a pill reminder before calculated bedtime on scheduled work-shift days.
+  description: Announces a pill reminder before calculated bedtime on scheduled weekdays.
   triggers:
   - trigger: template
     id: early_bedtime_pill_reminder
@@ -3597,10 +3601,12 @@
   - trigger: template
     id: late_bedtime_pill_reminder
     value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
+  - trigger: template
+    id: free_bedtime_pill_reminder
+    value_template: '{% set shift_start = states(''input_datetime.free_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set pill_lead_minutes = ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - pill_lead_minutes) % 1440 }}'
   actions:
   - variables:
-      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_bedtime_pill_reminder'' else ''Spätschicht'' }}'
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_bedtime_pill_reminder'' else ''input_datetime.late_shift_start'' }}'
+      shift_start_entity: "{% if trigger.id == 'early_bedtime_pill_reminder' %}input_datetime.early_shift_start{% elif trigger.id == 'late_bedtime_pill_reminder' %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
       alarm_lead_minutes: '{{ (states(''input_number.alarm_offset'') | float(1) * 60) | int }}'
       sleep_lead_minutes: '{{ (states(''input_number.sleep_duration'') | float(8) * 60) | int }}'
       pill_lead_minutes: '{{ ((states(''input_number.pill_bedtime_offset'') | float(0.5) * 60) | int) }}'
@@ -3619,7 +3625,7 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_bedtime_pill_reminder' and 'früh' in title) or (trigger.id == 'late_bedtime_pill_reminder' and 'spät' in title) or (trigger.id == 'free_bedtime_pill_reminder' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
   - condition: template
     value_template: '{{ shift_found | bool }}'
   - action: script.alexa_output_with_configured_volume
@@ -3725,7 +3731,7 @@
   mode: single
 - id: calendar_shifts_wind_down_reminder
   alias: Calendar - Shifts - Wind down reminder
-  description: Announces the configured wind-down lead time before calculated bedtime on scheduled weekdays.
+  description: Announces the configured wind-down lead time before calculated bedtime for early, late, free-shift, and support-standby calendar entries.
   triggers:
   - trigger: template
     id: early_wind_down
@@ -3733,10 +3739,12 @@
   - trigger: template
     id: late_wind_down
     value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_offset'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
+  - trigger: template
+    id: free_wind_down
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set shift_minutes = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set sleep_lead_minutes = (states(''input_number.sleep_duration'') | float(8) * 60) | int %} {% set wind_down_minutes = (states(''input_number.wind_down_offset'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes - alarm_lead_minutes - sleep_lead_minutes - wind_down_minutes) % 1440 }}'
   actions:
   - variables:
-      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_wind_down'' else ''Spätschicht'' }}'
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id == ''early_wind_down'' else ''input_datetime.late_shift_start'' }}'
+      shift_start_entity: "{% if trigger.id == 'early_wind_down' %}input_datetime.early_shift_start{% elif trigger.id == 'late_wind_down' %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
       alarm_lead_minutes: '{{ (states(''input_number.alarm_offset'') | float(1) * 60) | int }}'
       sleep_lead_minutes: '{{ (states(''input_number.sleep_duration'') | float(8) * 60) | int }}'
       wind_down_lead_hours: '{{ states(''input_number.wind_down_offset'') | float(2) }}'
@@ -3756,7 +3764,7 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_wind_down' and 'früh' in title) or (trigger.id == 'late_wind_down' and 'spät' in title) or (trigger.id == 'free_wind_down' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
   - condition: template
     value_template: '{{ shift_day_weekday | int < 5 }}'
   - condition: template
@@ -3783,7 +3791,7 @@
   mode: single
 - id: calendar_shifts_shift_start_announcement
   alias: Calendar - Shifts - Schichtbeginn-Ansage
-  description: Announces five minutes before a scheduled early or late shift on all Echo devices.
+  description: Announces five minutes before scheduled early, late, free-shift, or support-standby starts on all Echo devices.
   triggers:
   - trigger: template
     id: early_shift_start_announcement
@@ -3791,9 +3799,10 @@
   - trigger: template
     id: late_shift_start_announcement
     value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start_minutes - 5) % 1440 }}'
+  - trigger: template
+    id: free_shift_start_announcement
+    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start_minutes - 5) % 1440 }}'
   actions:
-  - variables:
-      shift_name: '{{ ''Frühschicht'' if trigger.id == ''early_shift_start_announcement'' else ''Spätschicht'' }}'
   - action: calendar.get_events
     target:
       entity_id: calendar.shifts
@@ -3802,7 +3811,9 @@
       end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower %}\n  {% if (trigger.id == 'early_shift_start_announcement' and 'früh' in title)\n     or (trigger.id == 'late_shift_start_announcement' and 'spät' in title) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
+      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_shift_start_announcement' and 'früh' in title) or (trigger.id == 'late_shift_start_announcement' and 'spät' in title) or (trigger.id == 'free_shift_start_announcement' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+  - variables:
+      spoken_shift_name: "{% if trigger.id == 'early_shift_start_announcement' %}deine Frühschicht{% elif trigger.id == 'late_shift_start_announcement' %}deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}dein Support Standby{% else %}deine Freischicht{% endif %}"
   - condition: template
     value_template: '{{ now().weekday() < 5 and shift_found | bool }}'
   - action: script.alexa_output_with_configured_volume
@@ -3815,7 +3826,7 @@
       - media_player.kuche
       - media_player.wohnzimmer
       - media_player.badezimmer
-      message: In fünf Minuten beginnt deine {{ shift_name }}.
+      message: In fünf Minuten beginnt {{ spoken_shift_name }}.
   mode: single
 - id: calendar_shifts_echo_clock_display
   alias: Calendar - Shifts - Bedroom wake lights

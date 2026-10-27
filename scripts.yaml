@@ -723,7 +723,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         bedtime_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int)) }}"
         wind_down_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(wind_down_raw_minutes | int)) }}"
         pill_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(pill_raw_minutes | int)) }}"
-        schedule_is_supported: "{{ shift_label in ['Frühschicht', 'Spätschicht'] and 'Runterfahren' in shift_status and (today_at('00:00') + timedelta(days=1)).weekday() < 5 and not is_state('input_select.work_schedule_mode', 'Krank') }}"
+        schedule_is_supported: "{{ shift_label in ['Frühschicht', 'Spätschicht', 'Freischicht', 'Support Standby'] and 'Runterfahren' in shift_status and (today_at('00:00') + timedelta(days=1)).weekday() < 5 and not is_state('input_select.work_schedule_mode', 'Krank') }}"
         wind_down_is_overdue: "{{ schedule_is_supported | bool and (wind_down_datetime | as_datetime) <= now() }}"
         pill_is_overdue: "{{ schedule_is_supported | bool and (pill_datetime | as_datetime) <= now() }}"
         bedtime_is_overdue: "{{ schedule_is_supported | bool and (bedtime_datetime | as_datetime) <= now() }}"
