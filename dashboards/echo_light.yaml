@@ -1,0 +1,18 @@
+type: entities
+title: Echo & Licht
+entities:
+  - entity: input_number.echo_day_volume
+  - entity: input_number.echo_night_volume
+  - entity: input_number.echo_announcement_volume
+  - entity: input_datetime.echo_quiet_time
+  - entity: input_datetime.echo_fallback_time
+  - entity: input_number.motion_off_delay
+  - type: section
+    label: Bluetooth
+  - entity: input_number.bt_connect_offset
+    name: BT connect offset
+  - entity: input_number.bt_disconnect_offset
+    name: BT disconnect offset
+  - entity: input_text.bt_phone_source
+    name: BT phone source
+show_header_toggle: false

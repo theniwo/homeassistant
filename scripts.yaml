@@ -679,6 +679,49 @@ sleep_mode_end_now:
           target:
             entity_id: input_boolean.fritz_ab_state
 
+bedroom_echo_bluetooth_connect:
+  alias: Sleep Mode - Connect phone to bedroom Echo
+  description: Selects the configured paired phone on the bedroom Echo without changing the phone Bluetooth radio.
+  mode: single
+  sequence:
+  - variables:
+      phone_source: "{{ states('input_text.bt_phone_source') | trim }}"
+      paired_devices: "{{ state_attr('media_player.schlafzimmer', 'bluetooth_list') or [] }}"
+      current_source: "{{ state_attr('media_player.schlafzimmer', 'source') | default('Local Speaker', true) }}"
+      previous_mute_state: "{{ state_attr('media_player.schlafzimmer', 'is_volume_muted') | default(false) | bool }}"
+  - condition: template
+    value_template: "{{ phone_source != '' and phone_source in paired_devices and current_source != phone_source }}"
+  - if:
+    - condition: template
+      value_template: "{{ not (previous_mute_state | bool) }}"
+    then:
+    - action: media_player.volume_mute
+      target:
+        entity_id: media_player.schlafzimmer
+      data:
+        is_volume_muted: true
+      continue_on_error: true
+    - delay:
+        seconds: 1
+  - action: media_player.select_source
+    target:
+      entity_id: media_player.schlafzimmer
+    data:
+      source: "{{ phone_source }}"
+    continue_on_error: true
+  - delay:
+      seconds: 3
+  - if:
+    - condition: template
+      value_template: "{{ not (previous_mute_state | bool) }}"
+    then:
+    - action: media_player.volume_mute
+      target:
+        entity_id: media_player.schlafzimmer
+      data:
+        is_volume_muted: false
+      continue_on_error: true
+
 
 calendar_shifts_refresh_tomorrow_and_set_alarm:
   alias: Calendar - Shifts - Refresh tomorrow and set alarm

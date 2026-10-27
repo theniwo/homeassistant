@@ -4835,3 +4835,104 @@
         seconds: 20
     - action: script.calendar_shifts_announce_tomorrow_status
   mode: single
+
+
+- id: calendar_shifts_alexa_bluetooth_connect
+  alias: Calendar - Shifts - Alexa Bluetooth connect
+  description: Connects the configured phone to the bedroom Echo before scheduled Sleep Mode, or when Sleep Mode is enabled manually.
+  triggers:
+    - trigger: template
+      id: early_connect
+      value_template: >-
+        {% set t = states('input_datetime.early_shift_start').split(':') %}
+        {% set start = (t[0] | int) * 60 + (t[1] | int) %}
+        {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
+        {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
+        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+    - trigger: template
+      id: late_connect
+      value_template: >-
+        {% set t = states('input_datetime.late_shift_start').split(':') %}
+        {% set start = (t[0] | int) * 60 + (t[1] | int) %}
+        {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
+        {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
+        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+    - trigger: template
+      id: free_connect
+      value_template: >-
+        {% set t = states('input_datetime.free_shift_start').split(':') %}
+        {% set start = (t[0] | int) * 60 + (t[1] | int) %}
+        {% set alarm = (states('input_number.alarm_offset') | float(1) * 60) | int %}
+        {% set sleep = (states('input_number.sleep_duration') | float(9) * 60) | int %}
+        {% set lead = states('input_number.bt_connect_offset') | int(5) %}
+        {{ now().hour * 60 + now().minute == (start - alarm - sleep - lead) % 1440 }}
+    - trigger: state
+      entity_id: input_boolean.sleep_mode_state
+      to: 'on'
+      id: sleep_mode_on
+  actions:
+    - choose:
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.id == 'sleep_mode_on' }}"
+          sequence:
+            - delay:
+                seconds: 5
+            - action: script.bedroom_echo_bluetooth_connect
+        - conditions:
+            - condition: template
+              value_template: "{{ trigger.id in ['early_connect', 'late_connect', 'free_connect'] }}"
+          sequence:
+            - variables:
+                shift_start_entity: >-
+                  {% if trigger.id == 'early_connect' %}
+                    input_datetime.early_shift_start
+                  {% elif trigger.id == 'late_connect' %}
+                    input_datetime.late_shift_start
+                  {% else %}
+                    input_datetime.free_shift_start
+                  {% endif %}
+            - variables:
+                shift_start_parts: "{{ states(shift_start_entity).split(':') }}"
+                alarm_lead_minutes: "{{ (states('input_number.alarm_offset') | float(1) * 60) | int }}"
+                sleep_lead_minutes: "{{ (states('input_number.sleep_duration') | float(9) * 60) | int }}"
+                bluetooth_lead_minutes: "{{ states('input_number.bt_connect_offset') | int(5) }}"
+            - variables:
+                shift_start_minutes: "{{ (shift_start_parts[0] | int) * 60 + (shift_start_parts[1] | int) }}"
+                total_lead_minutes: "{{ (alarm_lead_minutes | int) + (sleep_lead_minutes | int) + (bluetooth_lead_minutes | int) }}"
+            - variables:
+                calendar_day_offset: >-
+                  {{ [0, (((total_lead_minutes | int) - (shift_start_minutes | int) + 1439) // 1440)] | max }}
+                calendar_query_start: >-
+                  {{ (today_at('00:00') + timedelta(days=calendar_day_offset | int)).isoformat() }}
+                calendar_query_end: >-
+                  {{ (today_at('00:00') + timedelta(days=(calendar_day_offset | int) + 1)).isoformat() }}
+            - action: calendar.get_events
+              target:
+                entity_id: calendar.shifts
+              data:
+                start_date_time: '{{ calendar_query_start }}'
+                end_date_time: '{{ calendar_query_end }}'
+              response_variable: shift_calendar
+            - variables:
+                shift_found: >-
+                  {% set weekday = (today_at('00:00') + timedelta(days=calendar_day_offset | int)).weekday() %}
+                  {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
+                  {% set day_off = titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 %}
+                  {% if weekday >= 5 or day_off %}
+                    false
+                  {% elif trigger.id == 'early_connect' %}
+                    {{ titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 }}
+                  {% elif trigger.id == 'late_connect' %}
+                    {{ titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 }}
+                  {% else %}
+                    {{ titles | select('search', '(freischicht|support standby)') | list | length > 0 }}
+                  {% endif %}
+            - if:
+                - condition: template
+                  value_template: "{{ (shift_found | bool) and not is_state('input_select.work_schedule_mode', 'Krank') }}"
+              then:
+                - action: script.bedroom_echo_bluetooth_connect
+  mode: single
