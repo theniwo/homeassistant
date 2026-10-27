@@ -48,7 +48,7 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_datetime.alarm_setup_time` | Alarm check time | Daily time for the next-day calendar check |
 | `input_number.sleep_duration` | Sleep duration | Sleep duration, hours |
 | `input_number.wind_down_offset` | Wind-down offset | Hours before sleep time |
-| `input_number.dnd_offset` | DND offset | Hours before alarm time |
+| `input_number.dnd_offset` | DND offset | Hours before calculated bedtime |
 | `input_number.pill_morning_offset` | Pill morning offset | Morning reminder offset, hours |
 | `input_number.pill_bedtime_offset` | Pill bedtime offset | Bedtime reminder offset, hours |
 | `input_number.sick_pill_offset` | Sick pill offset | Sick-mode reminder offset, hours |
