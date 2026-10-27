@@ -23,7 +23,7 @@ Mit liebevoller Hochachtung vor [NARKOZ/hacker-scripts](https://github.com/NARKO
 
 `calendar.shifts` ist die Quelle für geplante Schichten. Einträge können ganztägig sein und sich über mehrere Tage erstrecken. Deshalb fragen die Automationen den konkreten Tag mit `calendar.get_events` ab, statt sich nur auf den aktuellen Kalenderzustand zu verlassen.
 
-Der Arbeitsmodus steht derzeit auf **Automatisch**. An Werktagen steuern konkrete Kalendereinträge `Frühschicht` und `Spätschicht` den Arbeitsmodus des Smartphones und den Schichtablauf. Einträge `Freischicht` und `Support Standby` verwenden die Freischichtzeiten für Wecker, Schlaf-/DND-Zeitplan, Tablettenerinnerungen und Schichtbeginn-Ansage. Die Samsung-Work-Mode-Automation selbst behandelt derzeit nur Früh- und Spätschichten. `4TW-Frei` und `Urlaub` gelten als freie Tage. Samstags und sonntags wird kein Arbeitswecker gestellt. Ein bayerischer Feiertag unterdrückt keine ausdrücklich eingetragene Schicht. Ohne Schichteintrag wird kein Alexa-Wecker gestellt. An einem normalen, nicht anderweitig markierten Werktag kann die Heizung dennoch dem Freischichtplan folgen; Wochenende, freie Kalendertage, Feiertage und Krankmodus haben eigene Heizregeln. Im Modus `Krank` löscht Home Assistant aktive Alexa-Wecker und plant keinen neuen.
+Der Arbeitsmodus steht derzeit auf **Automatisch**. An Werktagen steuern konkrete Kalendereinträge `Frühschicht` und `Spätschicht` den Arbeitsmodus des Smartphones und den Schichtablauf. Einträge `Freischicht` und `Support Standby` verwenden die Freischichtzeiten für Wecker, Schlaf-/DND-Zeitplan, Tablettenerinnerungen und Schichtbeginn-Ansage. Die Samsung-Work-Mode-Automation selbst behandelt derzeit nur Früh- und Spätschichten. `4TW-Frei` und `Urlaub` gelten als freie Tage. Samstags und sonntags wird kein Arbeitswecker gestellt. Ein bayerischer Feiertag unterdrückt keine ausdrücklich eingetragene Schicht. Ohne Schichteintrag wird kein Alexa-Wecker gestellt. An einem normalen, nicht anderweitig markierten Werktag kann die Heizung dennoch dem Freischichtplan folgen; Wochenende, freie Kalendertage, Feiertage und Krankmodus haben eigene Heizregeln. Im Modus `Krank` löscht Home Assistant aktive Alexa-Wecker und plant keinen neuen. Außerdem unterdrückt `Krank` kalendergesteuerten Sleep Mode und neue automatische DND-Aktivierungen sowie Work-Mode-Starts und arbeitsbezogene Ansagen. Ein bereits aktiver DND-Zustand wird im Krank-Modus nicht ungefragt abgeschaltet. Manuelle Sleep-Mode- und DND-Steuerung sowie das Krank-Heizprofil bleiben davon unberührt.
 
 Die wichtigsten Zeitberechnungen lauten:
 
@@ -73,7 +73,7 @@ Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktu
 
 ## Helper und aktuelle Werte
 
-Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereiche und Schritte sind dort ergänzt, wo sie zum Verständnis hilfreich sind. Der Hinweis zum `sick_pill_offset` beschreibt einen aktuellen Verweisfehler zwischen Helper und YAML.
+Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereiche und Schritte sind dort ergänzt, wo sie zum Verständnis hilfreich sind. Die Krank-Tablettenerinnerung liegt um `sick_pill_offset` nach dem Freischichtbeginn.
 
 ### Schicht- und Uhrzeit-Helper
 
@@ -100,7 +100,7 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.dnd_offset` | 3 h | 0–4 h / 0,25 h | DND beginnt vor der berechneten Schlafenszeit |
 | `input_number.pill_morning_offset` | 0,25 h (15 min) | 0–2 h / 0,25 h | Erinnerung vor Schichtbeginn |
 | `input_number.pill_bedtime_offset` | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
-| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0,25 h | Vorgesehener Krank-Offset für Tabletten; siehe Hinweis unten |
+| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Verzögerung vor Telefonansagen |
 | `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Echo-Bluetooth vor dem Wecker trennen |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
@@ -162,6 +162,8 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 | Telefoncheck am Morgen | 08:05 (nur Frühschicht) | — | — |
 | Telefonübergabe-Check | 13:05 | 13:05 | — |
 
+Im Modus `Krank` richtet sich die Tablettenerinnerung ausschließlich nach `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: bei den aktuellen Werten 09:00 + 2 h also **11:00 Uhr**. Ein Offset von 0 löst sie genau zum Freischichtbeginn aus. Auch ein Ergebnis nach Mitternacht wird auf die Uhrzeit des Folgetags abgebildet. Dafür ist kein Kalendereintrag erforderlich; es wird kein Arbeitswecker angelegt.
+
 Die Verzögerung für das Aufwachlicht beträgt standardmäßig eine Minute; bei null gehen die Lampen direkt zur berechneten Weckerzeit an. Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt der morgendliche Telefoncheck fünf Minuten später; bei der Spätschicht gibt es keinen vergleichbaren Check um 09:35. Die Telefonübergabe wird bei beiden Schichten um 13:05 angesagt.
 
 ### Gantt-Beispiel: Frühschicht
@@ -207,7 +209,7 @@ Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster gesch
 - An Schichttagen liegen die Komfortfenster für Wohnzimmer und Arbeitszimmer rund um Schichtbeginn und Schichtende. Das Arbeitszimmer heizt vor Arbeitsbeginn und senkt vor Schichtende ab; das Wohnzimmer wärmt vor dem morgendlichen Übergang und vor Feierabend vor. `heating_preheat_offset` und `heating_cooldown_offset` bestimmen diese Fenster.
 - Außerhalb der Komfortfenster nutzen Räume bei geschlossenen Fenstern `heating_min_temp`. Ein geöffnetes Fenster setzt den betroffenen TRV auf `window_open_temp` (4 °C). Das Schlafzimmer nutzt während Sleep Mode und im berechneten Vorheizfenster seine Komforttemperatur.
 - Am Wochenende und an expliziten `4TW-Frei`-/`Urlaub`-Tagen verwendet das automatische Wohnzimmerprofil die Urlaubs-Aufstehzeit. Das Schlafzimmer bleibt an Sleep Mode gekoppelt. An einem normalen Werktag ohne Kalendereintrag kann die Heizung dem Freischichtprofil folgen, ohne einen Wecker zu stellen; Feiertage sind von diesem Rückfall ausgenommen.
-- Im Modus `Krank` löscht die Weckerautomation Alexa-Wecker und stellt keinen neuen; außerdem wird der Krankaufschlag auf die Heizsollwerte addiert. Das Wohnzimmer heizt tagsüber auch bei aktivem Sleep Mode weiter. Ein bekannter Widerspruch: Die Kalenderautomation für Sleep/DND prüft weiterhin den Schichteintrag, aber ihre Einschaltaktionen nicht auf den Modus `Krank`. Bei einem expliziten Schichteintrag können daher Sleep Mode und DND weiterhin automatisch eingeschaltet werden. Vorgesehen ist im Krankmodus ein manueller Sleep Mode ohne automatischen Schlaf-/DND-Rhythmus.
+- Im Modus `Krank` löscht die Weckerautomation Alexa-Wecker und stellt keinen neuen; außerdem wird der Krankaufschlag auf die Heizsollwerte addiert. Das Wohnzimmer heizt tagsüber auch bei aktivem Sleep Mode weiter. Kalendergesteuerter Sleep Mode und neue DND-Aktivierungen sowie Work-Mode-Starts und arbeitsbezogene Ansagen werden unterdrückt. Ein bereits aktiver DND-Zustand wird nicht automatisch ausgeschaltet. Manuelle Sleep-Mode- und DND-Steuerung bleiben verfügbar. Die Tablettenerinnerung wird unabhängig vom Kalender bei Freischichtbeginn plus Krank-Offset ausgelöst.
 - Shelly-TRV-Befehle laufen über Retry-Skripte, die den Sollwert pollen und den Befehl wiederholen, bis das Gerät den Zielwert meldet. Fenstersensoren wirken auf die Heizentscheidung ein; ein nicht erreichbarer Sensor ist keine Pflichtbedingung.
 - Bewegungslicht hält Küche sowie vorderen und hinteren Flur getrennt eingeschaltet, solange Bewegung erkannt wird. Zum zweiminütigen Nachlauf kommt eine zehnminütige Flur-Sicherheitsabschaltung.
 - `Home Leave - All` schaltet konfigurierte Lampen und Geräte außerhalb der geschützten Arbeitsumgebung ab. PC, Server und die separat gesteuerten Arbeitszimmer-Kreise sind von dieser Abwesenheitsabschaltung ausgenommen.
@@ -216,9 +218,9 @@ Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster gesch
 - Sleep Mode bittet das Echo im Arbeitszimmer, die Popotan-Steckdose „Mückenlampe“ auszuschalten. Außerhalb von Sleep Mode sendet dasselbe Echo den Einschaltbefehl. Die Steckdose wird über Alexa-Custom-Befehle und nicht über einen nativen Home-Assistant-Schalter gesteuert. Das Display des Schlafzimmer-Echos wird rund um Sleep Mode und beim Home-Assistant-Start ebenfalls per Alexa-Befehl geschaltet.
 - Fehlgeschlagene Backups melden sich über Telegram.
 
-## Aktueller Umsetzungshinweis
+## Umsetzungshinweis
 
-Der Live-Helper `input_number.sick_pill_offset` steht auf 2 Stunden. Die Krank-Tablettenautomation liest noch die alte Entity-ID `input_number.sick_temp_offset_tablettenerinnerung`, die im Helper-Register nicht existiert. Deshalb greift der YAML-Fallback von 2 Stunden, statt den aktuellen Helper auszulesen. Diese README hält den Fehler fest; sie ändert die Automation nicht.
+Die Krank-Tablettenerinnerung liest `input_number.sick_pill_offset` und verwendet `input_datetime.free_shift_start` als Zeitbasis. Die zuvor vorhandenen Abweichungen – falsche Helper-ID und Spätschicht als Referenz – sind in der Repository-Konfiguration korrigiert.
 
 ## Prüfung und Vibe-Coding-Hinweis
 

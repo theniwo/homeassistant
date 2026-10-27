@@ -23,7 +23,7 @@ With affectionate admiration for [NARKOZ/hacker-scripts](https://github.com/NARK
 
 `calendar.shifts` is the source of truth for scheduled shifts. Calendar events may be all-day or span multiple days, so the automations query the relevant date with `calendar.get_events` instead of relying only on the current calendar state.
 
-The work schedule mode is currently **Automatisch**. On weekdays, explicit `Frühschicht` and `Spätschicht` events drive the work-phone mode and shift schedule. Explicit `Freischicht` and `Support Standby` events use the free-shift clock for the alarm, sleep/DND schedule, pill reminders, and shift-start announcement; the Samsung Work Mode automation itself currently handles only early and late shifts. `4TW-Frei` and `Urlaub` are days off. Saturdays and Sundays never get a work alarm. A Bavarian public holiday does not suppress a shift that is explicitly present in the shift calendar. With no shift event, no Alexa alarm is set. An ordinary unmarked weekday may use the free-shift heating schedule, but weekends, marked days off, public holidays, and sick mode follow their own heating rules. In `Krank` mode, Home Assistant cancels active Alexa alarms and does not schedule a new one.
+The work schedule mode is currently **Automatisch**. On weekdays, explicit `Frühschicht` and `Spätschicht` events drive the work-phone mode and shift schedule. Explicit `Freischicht` and `Support Standby` events use the free-shift clock for the alarm, sleep/DND schedule, pill reminders, and shift-start announcement; the Samsung Work Mode automation itself currently handles only early and late shifts. `4TW-Frei` and `Urlaub` are days off. Saturdays and Sundays never get a work alarm. A Bavarian public holiday does not suppress a shift that is explicitly present in the shift calendar. With no shift event, no Alexa alarm is set. An ordinary unmarked weekday may use the free-shift heating schedule, but weekends, marked days off, public holidays, and sick mode follow their own heating rules. In `Krank` mode, Home Assistant cancels active Alexa alarms and does not schedule a new one. It also suppresses calendar-driven Sleep Mode and new automatic DND activations, Work Mode starts, and work-related announcements. An existing DND state is not turned off automatically. Manual Sleep Mode and DND controls and the sick heating profile remain available.
 
 The main time calculations are:
 
@@ -73,7 +73,7 @@ The next-day alarm automation checks the calendar daily at **18:00**, refreshes 
 
 ## Helpers and current values
 
-All values in these tables are editable in Home Assistant. Ranges and steps are included where they are useful for understanding a setting. The `sick_pill_offset` note below describes a current YAML/helper mismatch.
+All values in these tables are editable in Home Assistant. Ranges and steps are included where they are useful for understanding a setting. The sick-mode pill reminder is scheduled relative to the free-shift start using `sick_pill_offset`.
 
 ### Shift and clock helpers
 
@@ -100,7 +100,7 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.dnd_offset` | 3 h | 0–4 h / 0.25 h | DND starts before calculated bedtime |
 | `input_number.pill_morning_offset` | 0.25 h (15 min) | 0–2 h / 0.25 h | Morning pill reminder before shift start |
 | `input_number.pill_bedtime_offset` | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder |
-| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0.25 h | Intended sick-mode pill reminder offset; see note below |
+| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Delay before phone handover announcements |
 | `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Disconnect Echo Bluetooth before the alarm |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
@@ -162,6 +162,8 @@ These examples use the live values above. Wind-down and DND start on the previou
 | Phone morning check | 08:05 (early only) | — | — |
 | Phone handover check | 13:05 | 13:05 | — |
 
+In `Krank` mode, the pill reminder uses only `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: with the current values, 09:00 + 2 h gives **11:00**. An offset of 0 triggers exactly at the free-shift start. Times after midnight wrap to the following clock time. No calendar event is required, and this reference time does not create a work alarm.
+
 The wake-light delay is one minute by default; setting it to zero turns the lamps on at the calculated alarm time. The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone morning check follows five minutes later; there is no equivalent phone check at the late-shift start. Phone handover is announced at 13:05 for either shift.
 
 ### Gantt example: early shift
@@ -207,7 +209,7 @@ Heating bars assume you are home and the relevant windows are closed. The WRK co
 - During shift days, the living room and office use comfort windows around shift start and end. The office starts before work and cools down before shift end; the living room warms before the morning transition and before the end of work. `heating_preheat_offset` and `heating_cooldown_offset` set those windows.
 - Outside comfort windows, closed-window rooms use `heating_min_temp`. An open window sets the affected TRV to `window_open_temp` (4 °C). The bedroom uses its comfort target during Sleep Mode and its calculated preheat window.
 - On weekends and explicit `4TW-Frei`/`Urlaub` days, the automatic living room profile uses the vacation wake helper. The bedroom is still governed by Sleep Mode. On an ordinary unmarked weekday, heating can follow the free-shift schedule even though no alarm is set; public holidays are excluded from this fallback.
-- In `Krank`, the alarm automation cancels Alexa alarms and does not schedule another one, and the sick temperature offset is added to heating targets. The living room continues its daytime heating behavior even with Sleep Mode on. A known mismatch is that the calendar Sleep/DND automation still checks for the scheduled shift but does not gate its “on” actions on `Krank`; an explicit shift entry can therefore still trigger scheduled Sleep Mode/DND actions. The intended sick-mode behavior is manual Sleep Mode and no automatic sleep/DND rhythm.
+- In `Krank`, the alarm automation cancels Alexa alarms and does not schedule another one, and the sick temperature offset is added to heating targets. The living room continues its daytime heating behavior even with Sleep Mode on. Calendar-driven Sleep Mode and new automatic DND activations, Work Mode starts, and work-related announcements are suppressed. An existing DND state is not turned off automatically. Manual Sleep Mode and DND controls remain available. The sick-mode pill reminder runs independently of the calendar at free-shift start plus the configured offset.
 - Shelly TRV commands use retry scripts that poll for the requested temperature and repeat until the device reports the target. Window sensors are optional inputs to the heat decision; a sensor that is unavailable is not a required gate.
 - Motion lighting keeps the kitchen and separate front/rear hallway zones on while motion is detected. A two-minute off delay is supplemented by the ten-minute hallway fail-safe.
 - `Home Leave - All` switches off the configured lights and non-workspace equipment while keeping PC/server and the protected workspace controls out of the away shutdown.
@@ -216,9 +218,9 @@ Heating bars assume you are home and the relevant windows are closed. The WRK co
 - Sleep Mode asks the office Echo to switch off the Popotan “Mückenlampe”; outside Sleep Mode it asks the same Echo to switch it on. The plug is controlled through Alexa custom commands rather than a native Home Assistant switch entity. The bedroom Echo display is switched off/on through Alexa commands around Sleep Mode and Home Assistant startup.
 - Backup failures are reported through Telegram.
 
-## Current implementation note
+## Implementation note
 
-The live helper `input_number.sick_pill_offset` is currently 2 hours. The sick-mode pill automation still reads the old entity ID `input_number.sick_temp_offset_tablettenerinnerung`, which is not present in the helper registry, so it falls back to 2 hours instead of reading the current helper. This documentation records that mismatch; it does not change the automation.
+The sick-mode pill reminder reads `input_number.sick_pill_offset` and uses `input_datetime.free_shift_start` as its reference. The previous helper-ID mismatch and late-shift reference are corrected in the repository configuration.
 
 ## Validation and Vibe-coding disclaimer
 

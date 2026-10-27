@@ -2186,6 +2186,8 @@
       entity_id: calendar.shifts
   - delay:
       seconds: 5
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
       tomorrow_start: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
       tomorrow_end: '{{ (today_at(''00:00'') + timedelta(days=2)).isoformat() }}'
@@ -2197,6 +2199,8 @@
       start_date_time: '{{ tomorrow_start }}'
       end_date_time: '{{ tomorrow_end }}'
     response_variable: shifts
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - condition: template
     value_template: '{{ tomorrow_weekday | int < 5 }}'
   - variables:
@@ -2274,6 +2278,8 @@
       - condition: trigger
         id: early_start
       - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
         value_template: '{{ ''frühschicht'' in shift_titles }}'
       - condition: state
         entity_id: input_boolean.work_mode_state
@@ -2293,6 +2299,8 @@
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: announce
@@ -2304,6 +2312,8 @@
       - condition: trigger
         id: late_start
       - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
         value_template: '{{ ''spätschicht'' in shift_titles }}'
       - condition: state
         entity_id: input_boolean.work_mode_state
@@ -2324,11 +2334,15 @@
       - condition: trigger
         id: phone_handover
       - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
         value_template: '{{ ''frühschicht'' in shift_titles }}'
       sequence:
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: announce
@@ -2340,11 +2354,15 @@
       - condition: trigger
         id: phone_handover
       - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
         value_template: '{{ ''spätschicht'' in shift_titles }}'
       sequence:
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - action: script.alexa_output_with_configured_volume
         data:
           output_type: announce
@@ -2424,6 +2442,8 @@
       - condition: state
         entity_id: input_boolean.work_mode_state
         state: 'on'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       sequence:
       - action: shell_command.snom_dnd_set
         data:
@@ -2437,6 +2457,8 @@
     - conditions:
       - condition: trigger
         id: work_off
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
         entity_id: input_boolean.sleep_mode_state
         state: 'off'
@@ -2480,6 +2502,8 @@
     id: free_dnd_on
     value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %}{% set start = (t[0] | int) * 60 + (t[1] | int) %}{% set alarm = (states(''input_number.alarm_offset'') | float(1) * 60) | int %}{% set sleep = (states(''input_number.sleep_duration'') | float(8) * 60) | int %}{% set dnd = ((states(''input_number.dnd_offset'') | float(1) * 60) | int) %}{{ now().hour * 60 + now().minute == (start - alarm - sleep - dnd) % 1440 }}'
   actions:
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
       shift_name: '{{ ''Frühschicht'' if trigger.id.startswith(''early_'') else (''Spätschicht'' if trigger.id.startswith(''late_'') else ''Freischicht'') }}'
       shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.free_shift_start'') }}'
@@ -2495,12 +2519,16 @@
       start_date_time: '{{ calendar_query_start }}'
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
       shift_found: '{% set target_day = (now() + timedelta(days=calendar_day_offset | int)).weekday() %}{% set titles = shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if target_day >= 5 %}false{% elif trigger.id.startswith(''free_'') %}{{ ''freischicht'' in titles or ''support standby'' in titles }}{% elif trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in titles or ''sv früh'' in titles or ''svv früh'' in titles }}{% else %}{{ ''spätschicht'' in titles or ''sv spät'' in titles or ''svv spät'' in titles }}{% endif %}'
   - choose:
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
         entity_id: input_boolean.snom_dnd_state
         state: 'off'
@@ -2521,6 +2549,8 @@
     - conditions:
       - condition: template
         value_template: '{{ trigger.id.endswith(''_dnd_on'') and (shift_found | bool) }}'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
         entity_id: input_boolean.fritz_ab_state
         state: 'off'
@@ -2541,6 +2571,8 @@
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_dnd_on'', ''late_dnd_on'', ''free_dnd_on''] and (shift_found | bool) }}'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
         entity_id: input_boolean.dnd_override
         state: 'off'
@@ -2553,6 +2585,8 @@
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
         entity_id: input_boolean.sleep_mode_state
         state: 'off'
@@ -2572,6 +2606,8 @@
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       sequence:
       - action: script.calendar_shifts_verify_alexa_alarm
         data:
@@ -2597,6 +2633,8 @@
     seconds: /1
     id: second_tick
   conditions:
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - condition: template
     value_template: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set current_key = now().strftime(''%Y-%m-%d %H:%M:%S'') %} {% set early_today = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set late_today = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {% set candidates = [early_today.strftime(''%Y-%m-%d %H:%M:%S''), (early_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S''), late_today.strftime(''%Y-%m-%d %H:%M:%S''), (late_today + timedelta(days=1)).strftime(''%Y-%m-%d %H:%M:%S'')] %} {{ current_key in candidates }}'
   actions:
@@ -2626,6 +2664,8 @@
       start_date_time: '{{ calendar_query_start }}'
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
+  - condition: template
+    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
       shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false) %} {% for event in events %}\n  {% if (event.summary | default('') | lower | trim) == (shift_name | lower) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
   - condition: template
@@ -3691,7 +3731,7 @@
   - condition: template
     value_template: '{{ shift_day_weekday | int < 5 }}'
   - condition: template
-    value_template: '{{ shift_found | bool }}'
+    value_template: "{{ shift_found | bool and not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - if:
     - condition: template
       value_template: '{{ is_state(media_player.nils_s_fire_tv, playing) or is_state(media_player.fire_tv_wohnzimmer_alt, playing) }}'
@@ -3738,7 +3778,7 @@
   - variables:
       spoken_shift_name: "{% if trigger.id == 'early_shift_start_announcement' %}deine Frühschicht{% elif trigger.id == 'late_shift_start_announcement' %}deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}dein Support Standby{% else %}deine Freischicht{% endif %}"
   - condition: template
-    value_template: '{{ now().weekday() < 5 and shift_found | bool }}'
+    value_template: "{{ now().weekday() < 5 and shift_found | bool and not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -4145,18 +4185,34 @@
   mode: single
 - id: calendar_shifts_sick_pill_reminder_20261014
   alias: Calendar - Shifts - Sick pill reminder
-  description: Announces the sick-mode pill reminder at the late-shift start plus the configured sick offset.
+  description: Announces one sick-mode pill reminder at the free-shift start plus the configured sick offset, without requiring a calendar event.
   triggers:
   - trigger: template
     id: sick_pill_reminder
-    value_template: '{% set shift_start = states(''input_datetime.late_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set sick_offset_minutes = (states(''input_number.sick_temp_offset_tablettenerinnerung'') | float(2) * 60) | int %} {{ now().hour * 60 + now().minute == (shift_minutes + sick_offset_minutes) % 1440 }}'
+    value_template: >-
+      {% set shift_start = states('input_datetime.free_shift_start') %}
+      {% set offset_hours = states('input_number.sick_pill_offset') | float(2) %}
+      {% if shift_start not in ['unknown', 'unavailable', 'none', ''] %}
+        {% set start = shift_start.split(':') %}
+        {% set start_minutes = (start[0] | int) * 60 + (start[1] | int) %}
+        {% set reminder_minutes = (start_minutes + ((offset_hours * 60) | int)) % 1440 %}
+        {{ now().hour * 60 + now().minute == reminder_minutes }}
+      {% else %}
+        false
+      {% endif %}
   conditions:
   - condition: state
     entity_id: input_select.work_schedule_mode
     state: Krank
   actions:
   - variables:
-      sick_offset_hours: '{{ states(''input_number.sick_temp_offset_tablettenerinnerung'') | float(2) }}'
+      sick_offset_hours: "{{ states('input_number.sick_pill_offset') | float(2) }}"
+      reminder_time: >-
+        {% set start = states('input_datetime.free_shift_start').split(':') %}
+        {% set start_minutes = (start[0] | int) * 60 + (start[1] | int) %}
+        {% set offset_minutes = (sick_offset_hours | float(2) * 60) | int %}
+        {% set target = (start_minutes + offset_minutes) % 1440 %}
+        {{ '%02d:%02d' | format(target // 60, target % 60) }}
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -4167,7 +4223,12 @@
       - media_player.kuche
       - media_player.wohnzimmer
       - media_player.badezimmer
-      message: "{% if sick_offset_hours | float == 0 %}\n  Denk daran, deine Tabletten einzunehmen. Deine Spätschicht beginnt jetzt.\n{% else %}\n  Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung ist {{ sick_offset_hours }} Stunden nach dem üblichen Spätschichtbeginn.\n{% endif %}"
+      message: >-
+        {% if sick_offset_hours | float == 0 %}
+          Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung zum Freischichtbeginn ist jetzt fällig.
+        {% else %}
+          Denk daran, deine Tabletten einzunehmen. Die Krank-Erinnerung ist {{ sick_offset_hours | string | replace('.', ',') }} Stunden nach dem Freischichtbeginn, also um {{ reminder_time }} Uhr.
+        {% endif %}
   mode: single
 - id: motion_hall_lighting_hold_20261015
   alias: Motion - Flur Vorne Lichtsteuerung
