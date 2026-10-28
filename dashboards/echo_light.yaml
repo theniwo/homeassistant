@@ -13,10 +13,16 @@ entities:
     name: Wake light delay
   - type: section
     label: Bluetooth
+  - entity: input_select.bt_disconnect_mode
+    name: BT disconnect schedule
   - entity: input_number.bt_connect_offset
     name: BT connect offset
   - entity: input_number.bt_disconnect_offset
-    name: BT disconnect offset
+    name: Alarm disconnect offset
+  - entity: input_number.bt_sleep_disconnect_offset_hours
+    name: Bedtime disconnect offset
+  - entity: input_datetime.bt_disconnect_time
+    name: Fixed disconnect time
   - entity: input_text.bt_phone_source
     name: BT phone source
 show_header_toggle: false

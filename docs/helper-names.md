@@ -59,7 +59,10 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | --- | --- | --- |
 | `input_datetime.phone_handover_time` | Phone handover time | Phone handover clock time |
 | `input_number.phone_handover_offset` | Phone handover offset | Announcement delay, minutes |
-| `input_number.bt_disconnect_offset` | BT disconnect offset | Disconnect before alarm, seconds |
+| `input_select.bt_disconnect_mode` | BT disconnect mode | Select alarm, bedtime, or fixed-time disconnect |
+| `input_number.bt_disconnect_offset` | Alarm disconnect offset | Disconnect lead before the alarm, seconds |
+| `input_number.bt_sleep_disconnect_offset_hours` | Bedtime disconnect offset | Delay after bedtime, hours |
+| `input_datetime.bt_disconnect_time` | Fixed disconnect time | Daily disconnect time |
 | `input_number.bt_connect_offset` | BT connect offset | Connect the phone to the bedroom Echo after scheduled Sleep Mode, minutes; default 5, range 0–20 |
 | `input_text.bt_phone_source` | BT phone source | Paired phone source name used by the bedroom Echo |
 | `input_number.echo_announcement_volume` | Echo announcement volume | Announcement volume on a 0–10 scale |

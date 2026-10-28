@@ -34,12 +34,12 @@ wind-down        = bedtime - wind-down offset
 DND starts       = bedtime - DND offset
 morning pills    = shift start - morning pill offset
 bedtime pills    = bedtime - bedtime pill offset
-BT disconnect    = alarm time - BT disconnect offset
+BT disconnect    = selected schedule: alarm - offset, bedtime + offset, or fixed time
 BT connection    = bedtime + BT connect offset
 wake lights      = alarm time + wake light delay
 ```
 
-The BT connection selects the paired phone as the bedroom Echo's source. It does not disable Bluetooth on the phone. Pre-alarm disconnection uses the same shift selection as the alarm automation: early shift, late shift, and free shift/Support Standby. It queries the target calendar date; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger a work disconnect. The time is alarm time minus the BT disconnect offset. The Home Assistant app cannot directly disconnect one paired Bluetooth device, so Home Assistant tells the bedroom Echo to switch to `Local Speaker`.
+`input_select.bt_disconnect_mode` offers three schedules: `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (default 03:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone.
 
 ### Sleep Mode and alarm dismissal
 
@@ -65,7 +65,7 @@ flowchart LR
     B --> W[Wind-down = bedtime - wind-down offset]
     B --> D[DND = bedtime - DND offset]
     B --> BC[BT connect = bedtime + connect offset]
-    A --> BD[BT disconnect = alarm - disconnect offset]
+    A --> BD[BT disconnect schedule: alarm, bedtime, or fixed time]
     S --> M[Work Mode on at start, off at shift end]
 ```
 
@@ -106,7 +106,10 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.pill_bedtime_offset` | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder |
 | `input_number.sick_pill_offset` | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Delay before phone handover announcements |
-| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Disconnect Echo Bluetooth before the alarm |
+| `input_select.bt_disconnect_mode` | Zum Wecker | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
+| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Lead before alarm for `Zum Wecker` |
+| `input_number.bt_sleep_disconnect_offset_hours` | 1 h | 0–6 h / 0.25 h | Delay after bedtime for `Zum Schlafen` |
+| `input_datetime.bt_disconnect_time` | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
 
 An offset of zero for a pill reminder means “announce now” at the scheduled start/bedtime; it does not disable the reminder.

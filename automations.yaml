@@ -2627,7 +2627,7 @@
   max: 10
 - id: '1791378679790'
   alias: Calendar - Shifts - Alexa Bluetooth disconnect
-  description: Mutes the bedroom Echo briefly and switches to Local Speaker before early, late, or free-shift alarms.
+  description: Disconnects the bedroom Echo from the phone using the selected alarm, bedtime, or fixed-time schedule.
   triggers:
   - trigger: time_pattern
     seconds: /1
@@ -2637,25 +2637,32 @@
     value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - condition: template
     value_template: >-
+      {% set mode = states('input_select.bt_disconnect_mode') %}
+      {% if mode == 'Zur Uhrzeit' %}
+        {{ now().strftime('%H:%M:%S') == states('input_datetime.bt_disconnect_time') }}
+      {% else %}
       {% set alarm_lead_minutes = (states('input_number.alarm_offset') | float(1) * 60) | int %}
-      {% set bluetooth_lead_seconds = states('input_number.bt_disconnect_offset') | int(60) %}
+      {% set alarm_lead_seconds = states('input_number.bt_disconnect_offset') | int(60) if mode == 'Zum Wecker' else 0 %}
+      {% set sleep_minutes = (states('input_number.sleep_duration') | float(9) * 60) | int if mode == 'Zum Schlafen' else 0 %}
+      {% set sleep_disconnect_minutes = (states('input_number.bt_sleep_disconnect_offset_hours') | float(1) * 60) | int if mode == 'Zum Schlafen' else 0 %}
       {% set current_key = now().strftime('%Y-%m-%d %H:%M:%S') %}
       {% set start_entities = ['input_datetime.early_shift_start', 'input_datetime.late_shift_start', 'input_datetime.free_shift_start'] %}
       {% set candidates = namespace(keys=[]) %}
       {% for entity in start_entities %}
-        {% set target = today_at(states(entity)) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %}
+        {% set target = today_at(states(entity)) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %}
         {% set candidates.keys = candidates.keys + [target.strftime('%Y-%m-%d %H:%M:%S'), (target + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')] %}
       {% endfor %}
       {{ current_key in candidates.keys }}
+      {% endif %}
   actions:
   - variables:
       current_time_key: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      early_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      early_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      late_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      late_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      free_today_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.free_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
-      free_tomorrow_key: '{% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set bluetooth_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) %} {% set target = today_at(states(''input_datetime.free_shift_start'')) - timedelta(minutes=alarm_lead_minutes, seconds=bluetooth_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_today_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = ((states(''input_number.alarm_offset'') | float(1) * 60) | int) if mode == ''Zum Wecker'' else ((states(''input_number.alarm_offset'') | float(1) * 60) | int) %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      early_tomorrow_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_today_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      late_tomorrow_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.late_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      free_today_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.free_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
+      free_tomorrow_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.free_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) + timedelta(days=1) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
   - variables:
       early_match_today: '{{ current_time_key == early_today_key }}'
       early_match_tomorrow: '{{ current_time_key == early_tomorrow_key }}'
@@ -2664,8 +2671,8 @@
       free_match_today: '{{ current_time_key == free_today_key }}'
       free_match_tomorrow: '{{ current_time_key == free_tomorrow_key }}'
   - variables:
-      shift_type: '{{ ''early'' if (early_match_today | bool) or (early_match_tomorrow | bool) else (''late'' if (late_match_today | bool) or (late_match_tomorrow | bool) else ''free'') }}'
-      shift_day_offset: '{{ 1 if (early_match_tomorrow | bool) or (late_match_tomorrow | bool) or (free_match_tomorrow | bool) else 0 }}'
+      shift_type: "{{ 'fixed' if is_state('input_select.bt_disconnect_mode', 'Zur Uhrzeit') else ('early' if (early_match_today | bool) or (early_match_tomorrow | bool) else ('late' if (late_match_today | bool) or (late_match_tomorrow | bool) else 'free')) }}"
+      shift_day_offset: "{{ 1 if (early_match_tomorrow | bool) or (late_match_tomorrow | bool) or (free_match_tomorrow | bool) else 0 }}"
       bluetooth_lead_seconds: '{{ states(''input_number.bt_disconnect_offset'') | int(60) }}'
       previous_mute_state: '{{ state_attr(''media_player.schlafzimmer'', ''is_volume_muted'') | default(false) | bool }}'
   - variables:
@@ -2682,6 +2689,9 @@
     value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
       shift_found: >-
+        {% if is_state('input_select.bt_disconnect_mode', 'Zur Uhrzeit') %}
+          true
+        {% else %}
         {% set target_day = (today_at('00:00') + timedelta(days=shift_day_offset | int)).weekday() %}
         {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
         {% set day_off = titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 %}
@@ -2693,6 +2703,7 @@
           {{ titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 and is_state('input_select.work_schedule_mode', 'Automatisch') }}
         {% else %}
           {{ titles | select('search', '(freischicht|support standby)') | list | length > 0 }}
+        {% endif %}
         {% endif %}
   - condition: template
     value_template: '{{ shift_found | bool }}'

@@ -34,12 +34,12 @@ Runterfahren     = Schlafenszeit - Runterfahr-Offset
 DND beginnt     = Schlafenszeit - DND-Offset
 Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Offset
 Abend-Tabletten = Schlafenszeit - Zubettgeh-Tabletten-Offset
-BT trennen       = Wecker - BT-Trenn-Offset
+BT trennen       = gewählter Plan: Wecker - Offset, Schlafenszeit + Offset oder feste Uhrzeit
 BT verbinden     = Schlafenszeit + BT-Verbindungs-Offset
 Aufwachlicht     = Wecker + Wake-light-Delay
 ```
 
-Die Bluetooth-Verbindung wählt das gekoppelte Smartphone als Quelle des Schlafzimmer-Echos aus. Bluetooth am Smartphone wird nicht ausgeschaltet. Die Trennung vor dem Wecker folgt derselben Schichtauswahl wie die Weckerautomation: Frühschicht, Spätschicht sowie Freischicht/Support Standby. Der konkrete Kalendertag wird abgefragt; Wochenenden, `4TW-Frei`, `Urlaub` und Krankmodus lösen keinen Arbeits-Disconnect aus. Der Zeitpunkt ist Weckerzeit minus BT-Trenn-Offset. Die Home-Assistant-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen; deshalb weist Home Assistant das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten.
+`input_select.bt_disconnect_mode` bietet drei Pläne: `Zum Wecker` verwendet Weckerzeit minus `bt_disconnect_offset`; `Zum Schlafen` verwendet Schlafenszeit plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` verwendet täglich `bt_disconnect_time` (Standard 03:00). Die ersten beiden folgen dem Kalender für Frühschicht, Spätschicht und Freischicht/Support Standby; Wochenende, `4TW-Frei`, `Urlaub` und Krankmodus lösen dort keinen kalendergesteuerten Disconnect aus. Die feste Uhrzeit läuft täglich, außer im Krankmodus. Home Assistant weist das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten. Die HA-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen und schaltet auch nicht das Bluetooth am Smartphone aus.
 
 ### Sleep Mode und Weckerende
 
@@ -65,7 +65,7 @@ flowchart LR
     B --> W[Runterfahren = Schlafenszeit - Runterfahr-Offset]
     B --> D[DND = Schlafenszeit - DND-Offset]
     B --> BC[BT verbinden = Schlafenszeit + BT-Offset]
-    A --> BD[BT trennen = Wecker - BT-Trenn-Offset]
+    A --> BD[BT-Trennplan: Wecker, Schlafenszeit oder feste Uhrzeit]
     S --> M[Work Mode bei Beginn an, bei Schichtende aus]
 ```
 
@@ -106,7 +106,10 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.pill_bedtime_offset` | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
 | `input_number.sick_pill_offset` | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Verzögerung vor Telefonansagen |
-| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Echo-Bluetooth vor dem Wecker trennen |
+| `input_select.bt_disconnect_mode` | Zum Wecker | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
+| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Abstand vor dem Wecker bei „Zum Wecker“ |
+| `input_number.bt_sleep_disconnect_offset_hours` | 1 h | 0–6 h / 0,25 h | Abstand nach Schlafenszeit bei „Zum Schlafen“ |
+| `input_datetime.bt_disconnect_time` | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
 
 Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn beziehungsweise zur Schlafenszeit; er deaktiviert die Erinnerung nicht.
