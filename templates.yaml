@@ -91,3 +91,25 @@
         {% else %}
           Nicht verfügbar
         {% endif %}
+- sensor:
+    - name: Snom DND actual status
+      default_entity_id: sensor.snom_dnd_actual_status
+      unique_id: snom_dnd_actual_status_read_only
+      icon: mdi:phone-lock
+      state: >-
+        {% set current_state = states('input_boolean.snom_dnd_status') %}
+        {{ 'Ein' if current_state == 'on' else 'Aus' if current_state == 'off' else 'Nicht verfügbar' }}
+    - name: GNOME DND niwo actual status
+      default_entity_id: sensor.gnome_dnd_niwo_actual_status
+      unique_id: gnome_dnd_niwo_actual_status_read_only
+      icon: mdi:bell-sleep
+      state: >-
+        {% set current_state = states('input_boolean.gnome_dnd_niwo_actual') %}
+        {{ 'Ein' if current_state == 'on' else 'Aus' if current_state == 'off' else 'Nicht verfügbar' }}
+    - name: GNOME DND work actual status
+      default_entity_id: sensor.gnome_dnd_work_actual_status
+      unique_id: gnome_dnd_work_actual_status_read_only
+      icon: mdi:bell-sleep
+      state: >-
+        {% set current_state = states('input_boolean.gnome_dnd_work_actual') %}
+        {{ 'Ein' if current_state == 'on' else 'Aus' if current_state == 'off' else 'Nicht verfügbar' }}

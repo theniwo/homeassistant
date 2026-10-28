@@ -1,41 +1,36 @@
-type: vertical-stack
-cards:
-  - type: entities
-    title: GNOME DND Steuerung
-    entities:
-      - entity: input_boolean.gnome_dnd_niwo
-        name: GNOME (niwo)
-      - entity: input_boolean.gnome_dnd_work
-        name: GNOME (work)
-    show_header_toggle: false
-  - type: markdown
-    title: DND Status
-    content: >-
-      {% set snom = states('input_boolean.snom_dnd_status') %}
-      {% set gnome_niwo = states('input_boolean.gnome_dnd_niwo_actual') %}
-      {% set gnome_work = states('input_boolean.gnome_dnd_work_actual') %}
-      {% set samsung = states('sensor.samsung_s25_dnd_status') %}
-      {% set echo_bedroom = states('switch.schlafzimmer_do_not_disturb_switch') %}
-      {% set echo_office = states('switch.arbeitszimmer_do_not_disturb_switch') %}
-      {% set echo_kitchen = states('switch.kuche_do_not_disturb_switch') %}
-      {% set echo_living = states('switch.wohnzimmer_do_not_disturb_switch') %}
-      {% set echo_bathroom = states('switch.badezimmer_do_not_disturb_switch') %}
-      {% for label, value in [
-        ('Snom', snom),
-        ('GNOME (niwo)', gnome_niwo),
-        ('GNOME (work)', gnome_work),
-        ('Samsung S25', samsung),
-        ('Echo Schlafzimmer', echo_bedroom),
-        ('Echo Arbeitszimmer', echo_office),
-        ('Echo Küche', echo_kitchen),
-        ('Echo Wohnzimmer', echo_living),
-        ('Echo Badezimmer', echo_bathroom)
-      ] %}
-      {% if value in ['on', 'Ein'] or value.startswith('Ein ·') %}
-      🔕 **{{ label }}** · {{ value }}
-      {% elif value in ['off', 'Aus'] %}
-      🔔 **{{ label }}** · {{ value }}
-      {% else %}
-      ❔ **{{ label }}** · {{ value }}
-      {% endif %}<br>
-      {% endfor %}
+type: entities
+title: DND Status
+entities:
+  - type: section
+    label: GNOME
+  - entity: input_boolean.gnome_dnd_niwo
+    name: GNOME (niwo) DND request
+  - entity: sensor.gnome_dnd_niwo_actual_status
+    name: GNOME (niwo) actual
+  - entity: input_boolean.gnome_dnd_work
+    name: GNOME (work) DND request
+  - entity: sensor.gnome_dnd_work_actual_status
+    name: GNOME (work) actual
+  - type: section
+    label: Phone
+  - entity: sensor.snom_dnd_actual_status
+    name: Snom
+  - entity: sensor.samsung_s25_dnd_status
+    name: Samsung S25
+  - type: section
+    label: Echo
+  - entity: switch.schlafzimmer_do_not_disturb_switch
+    name: Echo Schlafzimmer
+  - entity: switch.arbeitszimmer_do_not_disturb_switch
+    name: Echo Arbeitszimmer
+  - entity: switch.kuche_do_not_disturb_switch
+    name: Echo Küche
+  - entity: switch.wohnzimmer_do_not_disturb_switch
+    name: Echo Wohnzimmer
+  - entity: switch.badezimmer_do_not_disturb_switch
+    name: Echo Badezimmer
+show_header_toggle: false
+state_color: true
+grid_options:
+  rows: 4
+  columns: 12
