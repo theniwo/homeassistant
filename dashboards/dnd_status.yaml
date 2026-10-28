@@ -1,34 +1,55 @@
-type: markdown
-title: DND Status
-content: >-
-  {% set snom = states('input_boolean.snom_dnd_status') %}
-  {% set gnome_niwo = states('input_boolean.gnome_dnd_niwo') %}
-  {% set gnome_work = states('input_boolean.gnome_dnd_work') %}
-  {% set samsung = states('sensor.samsung_s25_dnd_status') %}
-  {% set echo_bedroom = states('switch.schlafzimmer_do_not_disturb_switch') %}
-  {% set echo_office = states('switch.arbeitszimmer_do_not_disturb_switch') %}
-  {% set echo_kitchen = states('switch.kuche_do_not_disturb_switch') %}
-  {% set echo_living = states('switch.wohnzimmer_do_not_disturb_switch') %}
-  {% set echo_bathroom = states('switch.badezimmer_do_not_disturb_switch') %}
-  {% for label, value in [
-    ('Snom', snom),
-    ('GNOME (niwo)', gnome_niwo),
-    ('GNOME (work)', gnome_work),
-    ('Samsung S25', samsung),
-    ('Echo Schlafzimmer', echo_bedroom),
-    ('Echo Arbeitszimmer', echo_office),
-    ('Echo Küche', echo_kitchen),
-    ('Echo Wohnzimmer', echo_living),
-    ('Echo Badezimmer', echo_bathroom)
-  ] %}
-  {% if value in ['on', 'Ein'] or value.startswith('Ein ·') %}
-  🔕 **{{ label }}** · {{ value }}
-  {% elif value in ['off', 'Aus'] %}
-  🔔 **{{ label }}** · {{ value }}
-  {% else %}
-  ❔ **{{ label }}** · {{ value }}
-  {% endif %}<br>
-  {% endfor %}
-grid_options:
-  rows: 4
-  columns: 12
+type: vertical-stack
+cards:
+  - type: markdown
+    title: DND Status
+    content: >-
+      {% set snom = states('input_boolean.snom_dnd_status') %}
+      {% set samsung = states('sensor.samsung_s25_dnd_status') %}
+      {% set echo_bedroom = states('switch.schlafzimmer_do_not_disturb_switch') %}
+      {% set echo_office = states('switch.arbeitszimmer_do_not_disturb_switch') %}
+      {% set echo_kitchen = states('switch.kuche_do_not_disturb_switch') %}
+      {% set echo_living = states('switch.wohnzimmer_do_not_disturb_switch') %}
+      {% set echo_bathroom = states('switch.badezimmer_do_not_disturb_switch') %}
+      {% for label, value in [
+        ('Snom', snom),
+        ('Samsung S25', samsung),
+        ('Echo Schlafzimmer', echo_bedroom),
+        ('Echo Arbeitszimmer', echo_office),
+        ('Echo Küche', echo_kitchen),
+        ('Echo Wohnzimmer', echo_living),
+        ('Echo Badezimmer', echo_bathroom)
+      ] %}
+      {% if value in ['on', 'Ein'] or value.startswith('Ein ·') %}
+      🔕 **{{ label }}** · {{ value }}
+      {% elif value in ['off', 'Aus'] %}
+      🔔 **{{ label }}** · {{ value }}
+      {% else %}
+      ❔ **{{ label }}** · {{ value }}
+      {% endif %}<br>
+      {% endfor %}
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: input_boolean.gnome_dnd_niwo
+        name: GNOME · niwo
+        icon: mdi:account-bell
+        color: state
+        state_content: state
+        tap_action:
+          action: call-service
+          service: input_boolean.toggle
+          target:
+            entity_id: input_boolean.gnome_dnd_niwo_override
+      - type: tile
+        entity: input_boolean.gnome_dnd_work
+        name: GNOME · work
+        icon: mdi:account-bell
+        color: state
+        state_content: state
+        tap_action:
+          action: call-service
+          service: input_boolean.toggle
+          target:
+            entity_id: input_boolean.gnome_dnd_work_override

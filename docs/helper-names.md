@@ -15,6 +15,8 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_boolean.dnd_override` | DND override | Manual global DND override |
 | `input_boolean.gnome_dnd_niwo` | GNOME DND niwo | GNOME DND state for the niwo account |
 | `input_boolean.gnome_dnd_work` | GNOME DND work | GNOME DND state for the work account |
+| `input_boolean.gnome_dnd_niwo_override` | GNOME DND niwo override | Add DND for niwo while global DND is off |
+| `input_boolean.gnome_dnd_work_override` | GNOME DND work override | Add DND for work while global DND is off |
 | `input_boolean.snom_dnd_status` | Snom DND status | Read-back state from the Snom phone |
 | `input_boolean.enforce_sleep` | Enforce sleep | Apply the room shutdown when Sleep Mode starts |
 | `input_select.work_schedule_mode` | Work schedule mode | Automatic, free shift, or sick mode |
