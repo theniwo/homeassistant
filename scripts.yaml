@@ -515,6 +515,50 @@ alexa_output_with_configured_volume:
               data:
                 volume_level: '{{ previous_volume }}'
               continue_on_error: true
+
+work_sim_voicemail_enable_prompt:
+  alias: Work SIM - Prompt to enable voicemail
+  description: Sends a phone notification that opens the dialer with the immediate voicemail forwarding code when confirmed.
+  icon: mdi:voicemail
+  mode: single
+  sequence:
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: Mobilbox einschalten?
+      message: Tippe auf Ja, um den Wähler mit dem Code für die sofortige Mobilbox-Weiterleitung zu öffnen. Der Anruf wird nicht automatisch gestartet.
+      data:
+        tag: work_sim_voicemail_forwarding
+        timeout: "{{ (states('input_number.work_sim_voicemail_prompt_timeout') | int(5)) * 60 }}"
+        actions:
+        - action: URI
+          title: Ja
+          uri: deep-link://tel:**21*3311*11%23
+          authenticationRequired: true
+        - action: NO
+          title: Abbrechen
+          authenticationRequired: true
+
+work_sim_voicemail_disable_prompt:
+  alias: Work SIM - Prompt to disable voicemail
+  description: Sends a phone notification that opens the dialer with the immediate voicemail forwarding cancellation code when confirmed.
+  icon: mdi:voicemail-off
+  mode: single
+  sequence:
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: Mobilbox ausschalten?
+      message: Tippe auf Ja, um den Wähler mit dem Code zum Ausschalten der sofortigen Mobilbox-Weiterleitung zu öffnen. Der Anruf wird nicht automatisch gestartet.
+      data:
+        tag: work_sim_voicemail_forwarding
+        timeout: "{{ (states('input_number.work_sim_voicemail_prompt_timeout') | int(5)) * 60 }}"
+        actions:
+        - action: URI
+          title: Ja
+          uri: deep-link://tel:##21%23
+          authenticationRequired: true
+        - action: NO
+          title: Abbrechen
+          authenticationRequired: true
 master_dnd_override_on:
   alias: Master DND override ON
   sequence:
