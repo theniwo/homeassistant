@@ -1,6 +1,6 @@
 # Home Assistant helper names
 
-GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living room, office, and bedroom. `Offset` means a relative duration; Home Assistant shows the helper's unit beside its value. Clock values use `time`.
+GUI helper names use concise English labels. Temperature helpers use the room name alone; their radiator icon identifies them. `Offset` means a relative duration; Home Assistant shows the helper's unit beside its value. Clock values use `time`.
 
 ## State and mode
 
@@ -31,9 +31,9 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 
 | Entity ID | GUI name | Purpose / unit |
 | --- | --- | --- |
-| `input_number.whz_target_temp` | WHZ temp | Living room comfort target, °C |
-| `input_number.az_target_temp` | WRK temp | Office comfort target, °C |
-| `input_number.sz_target_temp` | BED temp | Bedroom comfort target, °C |
+| `input_number.whz_target_temp` | Wohnzimmer | Living room comfort target, °C |
+| `input_number.az_target_temp` | Arbeitszimmer | Office comfort target, °C |
+| `input_number.sz_target_temp` | Schlafzimmer | Bedroom comfort target, °C |
 | `input_number.heating_min_temp` | Heating min temp | Base target with windows closed, °C |
 | `input_number.window_open_temp` | Window open temp | Target while a window is open, °C |
 | `input_number.heating_preheat_offset` | Heating preheat offset | Preheat duration before an event, hours |
@@ -71,6 +71,8 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_number.bt_sleep_disconnect_offset_hours` | Bedtime disconnect offset | Delay after bedtime, hours |
 | `input_datetime.bt_disconnect_time` | Fixed disconnect time | Daily disconnect time |
 | `input_number.bt_connect_offset` | BT connect offset | Connect the phone to the bedroom Echo after scheduled Sleep Mode, minutes; default 5, range 0–20 |
+| `input_number.bt_connect_retry_interval` | BT connect retry interval | Minutes between attempts to connect the phone to the bedroom Echo; default 5, range 1–30, step 1 |
+| `input_number.bt_connect_retry_attempts` | BT connect retry attempts | Maximum total connection attempts, including the first; default 3, range 1–10, step 1 |
 | `input_text.bt_phone_source` | BT phone source | Paired phone source name used by the bedroom Echo |
 | `input_number.echo_announcement_volume` | Echo announcement volume | Announcement volume on a 0–10 scale |
 | `input_number.echo_wake_delay` | Echo wake delay | Delay after the bedroom alarm is dismissed, seconds; default 15 |

@@ -4,11 +4,11 @@ entities:
   - entity: input_select.work_schedule_mode
     name: Arbeitsmodus
   - entity: input_number.whz_target_temp
-    name: WHZ
+    name: Wohnzimmer
   - entity: input_number.az_target_temp
-    name: WRK
+    name: Arbeitszimmer
   - entity: input_number.sz_target_temp
-    name: BED
+    name: Schlafzimmer
   - entity: input_number.heating_min_temp
   - entity: input_number.heating_preheat_offset
   - entity: input_number.heating_cooldown_offset

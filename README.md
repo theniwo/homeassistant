@@ -37,11 +37,11 @@ DND starts       = bedtime - DND offset
 morning pills    = shift start - morning pill offset
 bedtime pills    = bedtime - bedtime pill offset
 BT disconnect    = selected schedule: alarm - offset, bedtime + offset, or fixed time
-BT connection    = bedtime + BT connect offset
+BT connection    = bedtime + BT connect offset; retry until source confirms, within configured attempt limit
 wake lights      = alarm time + wake light delay
 ```
 
-`input_select.bt_disconnect_mode` offers three schedules: `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (default 03:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone.
+`input_select.bt_disconnect_mode` offers three schedules: `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (default 03:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone. After the configured connection time, Home Assistant checks the Echo's selected source and retries every `bt_connect_retry_interval` minutes until connected or `bt_connect_retry_attempts` total attempts have run.
 
 ### Sleep Mode and alarm dismissal
 
@@ -77,7 +77,7 @@ The next-day alarm automation checks the calendar daily at **18:00**, refreshes 
 
 ![Home Assistant dashboard with overrides, tomorrow overview, status, Echo and light controls, sleep and alarm helpers, heating profiles, and shift times](docs/images/home-assistant-dashboard-2026-10.png)
 
-This screenshot shows the live Home view on 2026-10-28. The Echo & Light card contains the Bluetooth disconnect selector and its alarm, bedtime, and fixed-time settings. The other cards group overrides, tomorrow's schedule, device status, Sleep Mode and reminders, heating profiles, and shift times. In this capture, the selected Bluetooth plan is `Zum Schlafen`.
+This screenshot shows the live Home view on 2026-10-28. The Echo & Light card contains the Bluetooth disconnect selector, connect timing and retry settings. The other cards group overrides, tomorrow's schedule, device status, Sleep Mode and reminders, heating profiles, and shift times. In this capture, the selected Bluetooth plan is `Zum Schlafen`.
 
 The DND card shows the global DND requirement and per-device switches. A long press on the GNOME, Snom, or Samsung S25 switch resets that device's policy to `Follow global`; Echo switches remain individually controlled.
 
@@ -118,6 +118,8 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.bt_sleep_disconnect_offset_hours` | 1.25 h | 0–6 h / 0.25 h | Delay after bedtime for `Zum Schlafen` |
 | `input_datetime.bt_disconnect_time` | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
+| `input_number.bt_connect_retry_interval` | 5 min | 1–30 min / 1 min | Wait between unsuccessful Bluetooth connection attempts |
+| `input_number.bt_connect_retry_attempts` | 3 attempts | 1–10 / 1 | Total connection attempts, including the first |
 
 An offset of zero for a pill reminder means “announce now” at the scheduled start/bedtime; it does not disable the reminder.
 
@@ -126,8 +128,8 @@ An offset of zero for a pill reminder means “announce now” at the scheduled 
 | Helper | Current value | Range / step | Purpose |
 | --- | ---: | --- | --- |
 | `input_number.whz_target_temp` | 22 °C | 4–31 °C / 1 °C | Living room comfort target |
-| `input_number.az_target_temp` | 23 °C | 4–31 °C / 1 °C | Office comfort target (`WRK`) |
-| `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Bedroom comfort target (`BED`) |
+| `input_number.az_target_temp` | 23 °C | 4–31 °C / 1 °C | Office comfort target |
+| `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Bedroom comfort target |
 | `input_number.heating_min_temp` | 16 °C | 4–18 °C / 0.5 °C | Base target outside comfort windows with windows closed |
 | `input_number.window_open_temp` | 4 °C | 4–5 °C / 1 °C | Target while a window is open; 4 °C is the off setting |
 | `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0.25 h | Heating lead before a schedule event |
@@ -171,6 +173,7 @@ These examples use the live values above. Wind-down and DND start on the previou
 | Bedtime / scheduled Sleep Mode | 22:00 (previous day) | 23:30 (previous day) | 23:00 (previous day) |
 | Bedtime pill reminder | 21:30 | 23:00 | 22:30 |
 | Phone connects to bedroom Echo | 22:05 | 23:35 | 23:05 |
+| Additional Bluetooth attempts if needed | 22:10, 22:15 | 23:40, 23:45 | 23:10, 23:15 |
 | Bluetooth disconnect (current selector) | 23:15 (previous day) | 00:45 | 00:15 |
 | Bedroom wake lights | 07:01 | 08:31 | 08:01 |
 | Morning pill reminder | 07:45 | 09:15 | 08:45 |
@@ -192,32 +195,34 @@ gantt
     section Previous evening
     Calendar check and Alexa alarm request :milestone, 2026-10-27 18:00, 0m
     Wind-down and DND start :milestone, 2026-10-27 19:00, 0m
-    BED preheat starts :active, 2026-10-27 21:00, 600m
+    Bedroom preheat starts :active, 2026-10-27 21:00, 600m
     Bedtime pill reminder :milestone, 2026-10-27 21:30, 0m
     Sleep Mode and Echo quiet hours :milestone, 2026-10-27 22:00, 0m
     Alarm verification and bedtime announcement :milestone, 2026-10-27 22:00, 0m
     Enforce Sleep shutdown (if enabled) :milestone, 2026-10-27 22:00, 0m
     Mückenlampe off and bedroom Echo display off :milestone, 2026-10-27 22:00, 0m
-    Phone connects to bedroom Echo :milestone, 2026-10-27 22:05, 0m
+    Phone connects to bedroom Echo (attempt 1) :milestone, 2026-10-27 22:05, 0m
+    BT retry 2 if needed :milestone, 2026-10-27 22:10, 0m
+    BT retry 3 if needed :milestone, 2026-10-27 22:15, 0m
     Echo Bluetooth disconnects (1 h 15 min after bedtime) :milestone, 2026-10-27 23:15, 0m
     section Morning
-    WHZ morning preheat :active, 2026-10-28 06:00, 120m
-    WRK preheat starts :active, 2026-10-28 07:00, 540m
+    Living room morning preheat :active, 2026-10-28 06:00, 120m
+    Office preheat starts :active, 2026-10-28 07:00, 540m
     Alexa alarm and day volume :milestone, 2026-10-28 07:00, 0m
     Bedroom wake lights (1 min delay) :milestone, 2026-10-28 07:01, 0m
     Morning pill reminder :milestone, 2026-10-28 07:45, 0m
     Shift-start announcement :milestone, 2026-10-28 07:55, 0m
-    Work Mode and shift start; WHZ morning window ends :milestone, 2026-10-28 08:00, 0m
+    Work Mode and shift start; living room morning window ends :milestone, 2026-10-28 08:00, 0m
     Phone morning check (phone transfer and call forwarding) :milestone, 2026-10-28 08:05, 0m
     section Workday and evening transition
     Work shift :active, 2026-10-28 08:00, 510m
     Phone handover reminder :milestone, 2026-10-28 13:05, 0m
-    WHZ preheat for Feierabend :active, 2026-10-28 15:30, 390m
-    WRK cooldown starts :milestone, 2026-10-28 16:00, 0m
+    Living room preheats for Feierabend :active, 2026-10-28 15:30, 390m
+    Office cooldown starts :milestone, 2026-10-28 16:00, 0m
     Work Mode ends :milestone, 2026-10-28 16:30, 0m
 ```
 
-Heating bars assume you are home and the relevant windows are closed. The WRK comfort window is 07:00–16:00; WHZ warms 06:00–08:00 and again from 15:30 until Sleep Mode starts at 22:00. BED preheats from 21:00 to the 07:00 alarm. Sleep Mode remains active while the alarm rings and ends after the bedroom alarm is dismissed. The Echo display then turns on after its separate 15-second `echo_wake_delay`.
+Heating bars assume you are home and the relevant windows are closed. The office comfort window is 07:00–16:00; the living room warms 06:00–08:00 and again from 15:30 until Sleep Mode starts at 22:00. The bedroom preheats from 21:00 to the 07:00 alarm. Sleep Mode remains active while the alarm rings and ends after the bedroom alarm is dismissed. The Echo display then turns on after its separate 15-second `echo_wake_delay`.
 
 ## Heating and device behavior
 

@@ -37,11 +37,11 @@ DND beginnt     = Schlafenszeit - DND-Offset
 Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Offset
 Abend-Tabletten = Schlafenszeit - Zubettgeh-Tabletten-Offset
 BT trennen       = gewählter Plan: Wecker - Offset, Schlafenszeit + Offset oder feste Uhrzeit
-BT verbinden     = Schlafenszeit + BT-Verbindungs-Offset
+BT verbinden      = Schlafenszeit + BT-Verbindungs-Offset; bei Bedarf bis zum Versuchslimit erneut versuchen
 Aufwachlicht     = Wecker + Wake-light-Delay
 ```
 
-`input_select.bt_disconnect_mode` bietet drei Pläne: `Zum Wecker` verwendet Weckerzeit minus `bt_disconnect_offset`; `Zum Schlafen` verwendet Schlafenszeit plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` verwendet täglich `bt_disconnect_time` (Standard 03:00). Die ersten beiden folgen dem Kalender für Frühschicht, Spätschicht und Freischicht/Support Standby; Wochenende, `4TW-Frei`, `Urlaub` und Krankmodus lösen dort keinen kalendergesteuerten Disconnect aus. Die feste Uhrzeit läuft täglich, außer im Krankmodus. Home Assistant weist das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten. Die HA-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen und schaltet auch nicht das Bluetooth am Smartphone aus.
+`input_select.bt_disconnect_mode` bietet drei Pläne: `Zum Wecker` verwendet Weckerzeit minus `bt_disconnect_offset`; `Zum Schlafen` verwendet Schlafenszeit plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` verwendet täglich `bt_disconnect_time` (Standard 03:00). Die ersten beiden folgen dem Kalender für Frühschicht, Spätschicht und Freischicht/Support Standby; Wochenende, `4TW-Frei`, `Urlaub` und Krankmodus lösen dort keinen kalendergesteuerten Disconnect aus. Die feste Uhrzeit läuft täglich, außer im Krankmodus. Home Assistant weist das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten. Die HA-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen und schaltet auch nicht das Bluetooth am Smartphone aus. Nach dem geplanten Verbindungszeitpunkt prüft Home Assistant die ausgewählte Echo-Quelle und wiederholt den Verbindungsversuch bis zur Verbindung oder bis das eingestellte Versuchslimit erreicht ist.
 
 ### Sleep Mode und Weckerende
 
@@ -77,7 +77,7 @@ Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktu
 
 ![Home-Assistant-Dashboard mit Overrides, Morgenübersicht, Status, Echo- und Lichtsteuerung, Schlaf- und Wecker-Helpern, Heizprofilen und Schichtzeiten](docs/images/home-assistant-dashboard-2026-10.png)
 
-Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält das Auswahlmenü für den Bluetooth-Disconnect sowie die Zeitwerte für Wecker, Schlafenszeit und feste Uhrzeit. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
+Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält das Auswahlmenü für den Bluetooth-Disconnect sowie Verbindungs- und Wiederholungswerte. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
 
 Die DND-Kachel zeigt die globale DND-Anforderung und die einzelnen Geräteschalter. Gedrückthalten eines Schalters für GNOME, Snom oder Samsung S25 setzt dessen Richtlinie auf `Follow global` zurück. Die Echo-Schalter bleiben unabhängig steuerbar.
 
@@ -118,6 +118,8 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.bt_sleep_disconnect_offset_hours` | 1,25 h | 0–6 h / 0,25 h | Abstand nach Schlafenszeit bei „Zum Schlafen“ |
 | `input_datetime.bt_disconnect_time` | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
+| `input_number.bt_connect_retry_interval` | 5 min | 1–30 min / 1 min | Wartezeit zwischen erfolglosen Bluetooth-Verbindungsversuchen |
+| `input_number.bt_connect_retry_attempts` | 3 Versuche | 1–10 / 1 | Gesamtzahl der Verbindungsversuche einschließlich des ersten |
 
 Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn beziehungsweise zur Schlafenszeit; er deaktiviert die Erinnerung nicht.
 
@@ -126,8 +128,8 @@ Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn 
 | Helper | Aktueller Wert | Bereich / Schritt | Zweck |
 | --- | ---: | --- | --- |
 | `input_number.whz_target_temp` | 22 °C | 4–31 °C / 1 °C | Komforttemperatur Wohnzimmer |
-| `input_number.az_target_temp` | 23 °C | 4–31 °C / 1 °C | Komforttemperatur Arbeitszimmer (`WRK`) |
-| `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Komforttemperatur Schlafzimmer (`BED`) |
+| `input_number.az_target_temp` | 23 °C | 4–31 °C / 1 °C | Komforttemperatur Arbeitszimmer |
+| `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Komforttemperatur Schlafzimmer |
 | `input_number.heating_min_temp` | 16 °C | 4–18 °C / 0,5 °C | Grundtemperatur außerhalb der Komfortfenster bei geschlossenem Fenster |
 | `input_number.window_open_temp` | 4 °C | 4–5 °C / 1 °C | Sollwert bei offenem Fenster; 4 °C bedeutet aus |
 | `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0,25 h | Heizvorlauf vor einem Planereignis |
@@ -171,6 +173,7 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 | Schlafenszeit / geplanter Sleep Mode | 22:00 (Vorabend) | 23:30 (Vorabend) | 23:00 (Vorabend) |
 | Tablettenerinnerung vor dem Zubettgehen | 21:30 | 23:00 | 22:30 |
 | Handy verbindet sich mit Schlafzimmer-Echo | 22:05 | 23:35 | 23:05 |
+| Weitere Bluetooth-Versuche bei Bedarf | 22:10, 22:15 | 23:40, 23:45 | 23:10, 23:15 |
 | Bluetooth-Disconnect (aktuelle Auswahl) | 23:15 (Vorabend) | 00:45 | 00:15 |
 | Schlafzimmer-Aufwachlicht | 07:01 | 08:31 | 08:01 |
 | Morgen-Tablettenerinnerung | 07:45 | 09:15 | 08:45 |
@@ -192,32 +195,34 @@ gantt
     section Vorabend
     Kalenderprüfung und Alexa-Wecker :milestone, 2026-10-27 18:00, 0m
     Runterfahren und DND starten :milestone, 2026-10-27 19:00, 0m
-    BED Vorheizen beginnt :active, 2026-10-27 21:00, 600m
+    Schlafzimmer Vorheizen beginnt :active, 2026-10-27 21:00, 600m
     Tablettenerinnerung vor dem Schlafen :milestone, 2026-10-27 21:30, 0m
     Sleep Mode und Echo-Ruhezeit :milestone, 2026-10-27 22:00, 0m
     Weckerprüfung und Schlafenszeit-Ansage :milestone, 2026-10-27 22:00, 0m
     Enforce-Sleep-Abschaltung (wenn aktiv) :milestone, 2026-10-27 22:00, 0m
     Mückenlampe und Schlafzimmer-Echo-Display aus :milestone, 2026-10-27 22:00, 0m
-    Handy verbindet mit Schlafzimmer-Echo :milestone, 2026-10-27 22:05, 0m
+    Handy verbindet mit Schlafzimmer-Echo (Versuch 1) :milestone, 2026-10-27 22:05, 0m
+    BT-Wiederholung 2 falls nötig :milestone, 2026-10-27 22:10, 0m
+    BT-Wiederholung 3 falls nötig :milestone, 2026-10-27 22:15, 0m
     Echo-Bluetooth trennt (1 h 15 min nach Schlafenszeit) :milestone, 2026-10-27 23:15, 0m
     section Morgen
-    WHZ morgens vorheizen :active, 2026-10-28 06:00, 120m
-    WRK Vorheizen beginnt :active, 2026-10-28 07:00, 540m
+    Wohnzimmer morgens vorheizen :active, 2026-10-28 06:00, 120m
+    Arbeitszimmer Vorheizen beginnt :active, 2026-10-28 07:00, 540m
     Alexa-Wecker und Tageslautstärke :milestone, 2026-10-28 07:00, 0m
     Schlafzimmer-Aufwachlicht (1 min Verzögerung) :milestone, 2026-10-28 07:01, 0m
     Morgen-Tablettenerinnerung :milestone, 2026-10-28 07:45, 0m
     Ansage zum Schichtbeginn :milestone, 2026-10-28 07:55, 0m
-    Work Mode und Schichtbeginn; WHZ-Morgenfenster endet :milestone, 2026-10-28 08:00, 0m
+    Work Mode und Schichtbeginn; Wohnzimmer-Morgenfenster endet :milestone, 2026-10-28 08:00, 0m
     Telefoncheck am Morgen (Telefon und Rufumleitung) :milestone, 2026-10-28 08:05, 0m
     section Arbeitstag und Feierabend-Übergang
     Schicht :active, 2026-10-28 08:00, 510m
     Telefonübergabe-Ansage :milestone, 2026-10-28 13:05, 0m
-    WHZ für Feierabend vorheizen :active, 2026-10-28 15:30, 390m
-    WRK-Abkühlphase beginnt :milestone, 2026-10-28 16:00, 0m
+    Wohnzimmer für Feierabend vorheizen :active, 2026-10-28 15:30, 390m
+    Arbeitszimmer-Abkühlphase beginnt :milestone, 2026-10-28 16:00, 0m
     Work Mode endet :milestone, 2026-10-28 16:30, 0m
 ```
 
-Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster geschlossen sind. WRK heizt von 07:00 bis 16:00; WHZ heizt morgens von 06:00 bis 08:00 und ab 15:30 bis zum Sleep Mode um 22:00. BED wird von 21:00 bis zum Wecker um 07:00 vorgeheizt. Sleep Mode bleibt während des klingelnden Weckers aktiv und endet nach dem Beenden des Schlafzimmer-Weckers. Danach schaltet das Schlafzimmer-Echo-Display mit seinem separaten `echo_wake_delay` nach 15 Sekunden ein.
+Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster geschlossen sind. Das Arbeitszimmer heizt von 07:00 bis 16:00; das Wohnzimmer heizt morgens von 06:00 bis 08:00 und ab 15:30 bis zum Sleep Mode um 22:00. Das Schlafzimmer wird von 21:00 bis zum Wecker um 07:00 vorgeheizt. Sleep Mode bleibt während des klingelnden Weckers aktiv und endet nach dem Beenden des Schlafzimmer-Weckers. Danach schaltet das Schlafzimmer-Echo-Display mit seinem separaten `echo_wake_delay` nach 15 Sekunden ein.
 
 ## Heizungen und Geräte
 

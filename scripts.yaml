@@ -703,46 +703,63 @@ sleep_mode_end_now:
 
 bedroom_echo_bluetooth_connect:
   alias: Sleep Mode - Connect phone to bedroom Echo
-  description: Selects the configured paired phone on the bedroom Echo without changing the phone Bluetooth radio.
+  description: Retries selecting the configured phone on the bedroom Echo until connected, with a configurable interval and attempt limit.
   mode: single
   sequence:
   - variables:
       phone_source: "{{ states('input_text.bt_phone_source') | trim }}"
       paired_devices: "{{ state_attr('media_player.schlafzimmer', 'bluetooth_list') or [] }}"
-      current_source: "{{ state_attr('media_player.schlafzimmer', 'source') | default('Local Speaker', true) }}"
-      previous_mute_state: "{{ state_attr('media_player.schlafzimmer', 'is_volume_muted') | default(false) | bool }}"
+      retry_interval_minutes: "{{ states('input_number.bt_connect_retry_interval') | int(5) }}"
+      retry_attempts: "{{ states('input_number.bt_connect_retry_attempts') | int(3) }}"
   - condition: template
-    value_template: "{{ phone_source != '' and phone_source in paired_devices and current_source != phone_source }}"
-  - if:
-    - condition: template
-      value_template: "{{ not (previous_mute_state | bool) }}"
-    then:
-    - action: media_player.volume_mute
-      target:
-        entity_id: media_player.schlafzimmer
-      data:
-        is_volume_muted: true
-      continue_on_error: true
-    - delay:
-        seconds: 1
-  - action: media_player.select_source
-    target:
-      entity_id: media_player.schlafzimmer
-    data:
-      source: "{{ phone_source }}"
-    continue_on_error: true
-  - delay:
-      seconds: 3
-  - if:
-    - condition: template
-      value_template: "{{ not (previous_mute_state | bool) }}"
-    then:
-    - action: media_player.volume_mute
-      target:
-        entity_id: media_player.schlafzimmer
-      data:
-        is_volume_muted: false
-      continue_on_error: true
+    value_template: "{{ phone_source != '' and phone_source in paired_devices }}"
+  - repeat:
+      sequence:
+      - if:
+        - condition: template
+          value_template: "{{ is_state('input_boolean.sleep_mode_state', 'on') and state_attr('media_player.schlafzimmer', 'source') != phone_source }}"
+        then:
+        - variables:
+            previous_mute_state: "{{ state_attr('media_player.schlafzimmer', 'is_volume_muted') | default(false) | bool }}"
+        - if:
+          - condition: template
+            value_template: "{{ not (previous_mute_state | bool) }}"
+          then:
+          - action: media_player.volume_mute
+            target:
+              entity_id: media_player.schlafzimmer
+            data:
+              is_volume_muted: true
+            continue_on_error: true
+          - delay:
+              seconds: 1
+        - action: media_player.select_source
+          target:
+            entity_id: media_player.schlafzimmer
+          data:
+            source: "{{ phone_source }}"
+          continue_on_error: true
+        - delay:
+            seconds: 3
+        - if:
+          - condition: template
+            value_template: "{{ not (previous_mute_state | bool) }}"
+          then:
+          - action: media_player.volume_mute
+            target:
+              entity_id: media_player.schlafzimmer
+            data:
+              is_volume_muted: false
+            continue_on_error: true
+        - if:
+          - condition: template
+            value_template: "{{ state_attr('media_player.schlafzimmer', 'source') != phone_source and is_state('input_boolean.sleep_mode_state', 'on') and repeat.index < (retry_attempts | int) }}"
+          then:
+          - delay:
+              minutes: "{{ retry_interval_minutes | int }}"
+      until:
+      - condition: template
+        value_template: "{{ state_attr('media_player.schlafzimmer', 'source') == phone_source or repeat.index >= (retry_attempts | int) or not is_state('input_boolean.sleep_mode_state', 'on') }}"
 
 
 calendar_shifts_refresh_tomorrow_and_set_alarm:
