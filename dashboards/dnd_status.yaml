@@ -14,8 +14,22 @@ entities:
     label: GNOME
   - entity: switch.gnome_dnd_niwo
     name: GNOME (niwo)
+    hold_action:
+      action: call-service
+      service: input_select.select_option
+      target:
+        entity_id: input_select.gnome_dnd_niwo_policy
+      data:
+        option: Follow global
   - entity: switch.gnome_dnd_work
     name: GNOME (work)
+    hold_action:
+      action: call-service
+      service: input_select.select_option
+      target:
+        entity_id: input_select.gnome_dnd_work_policy
+      data:
+        option: Follow global
   - type: section
     label: Phone
   - entity: switch.snom_dnd_control

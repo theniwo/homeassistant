@@ -107,13 +107,17 @@
       availability: "{{ states('input_boolean.gnome_dnd_niwo_actual') in ['on', 'off'] }}"
       state: "{{ is_state('input_boolean.gnome_dnd_niwo_actual', 'on') }}"
       turn_on:
-        - action: input_boolean.turn_on
+        - action: input_select.select_option
           target:
-            entity_id: input_boolean.gnome_dnd_niwo
+            entity_id: input_select.gnome_dnd_niwo_policy
+          data:
+            option: Force on
       turn_off:
-        - action: input_boolean.turn_off
+        - action: input_select.select_option
           target:
-            entity_id: input_boolean.gnome_dnd_niwo
+            entity_id: input_select.gnome_dnd_niwo_policy
+          data:
+            option: Force off
     - name: GNOME DND work
       default_entity_id: switch.gnome_dnd_work
       unique_id: gnome_dnd_work_control
@@ -121,13 +125,17 @@
       availability: "{{ states('input_boolean.gnome_dnd_work_actual') in ['on', 'off'] }}"
       state: "{{ is_state('input_boolean.gnome_dnd_work_actual', 'on') }}"
       turn_on:
-        - action: input_boolean.turn_on
+        - action: input_select.select_option
           target:
-            entity_id: input_boolean.gnome_dnd_work
+            entity_id: input_select.gnome_dnd_work_policy
+          data:
+            option: Force on
       turn_off:
-        - action: input_boolean.turn_off
+        - action: input_select.select_option
           target:
-            entity_id: input_boolean.gnome_dnd_work
+            entity_id: input_select.gnome_dnd_work_policy
+          data:
+            option: Force off
     - name: Snom DND control
       default_entity_id: switch.snom_dnd_control
       unique_id: snom_dnd_control

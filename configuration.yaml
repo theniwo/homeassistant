@@ -106,6 +106,20 @@ input_select:
       - Zum Schlafen
       - Zur Uhrzeit
     icon: mdi:bluetooth-off
+  gnome_dnd_niwo_policy:
+    name: GNOME niwo DND policy
+    options:
+      - Follow global
+      - Force on
+      - Force off
+    icon: mdi:bell-cog
+  gnome_dnd_work_policy:
+    name: GNOME work DND policy
+    options:
+      - Follow global
+      - Force on
+      - Force off
+    icon: mdi:bell-cog
 
 input_number:
   bt_sleep_disconnect_offset_hours:

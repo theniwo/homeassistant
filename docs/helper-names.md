@@ -13,8 +13,8 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_boolean.snom_dnd_state` | Snom DND state | Scheduled Snom DND state |
 | `input_boolean.fritz_ab_state` | FRITZ AB state | Scheduled Fritz!Box answering machine state |
 | `input_boolean.dnd_override` | DND override | Manual global DND override |
-| `input_boolean.gnome_dnd_niwo` | GNOME DND niwo | Per-account DND request; global DND also applies |
-| `input_boolean.gnome_dnd_work` | GNOME DND work | Per-account DND request; global DND also applies |
+| `input_boolean.gnome_dnd_niwo` | GNOME DND niwo | Legacy per-account DND request; superseded by its policy selector |
+| `input_boolean.gnome_dnd_work` | GNOME DND work | Legacy per-account DND request; superseded by its policy selector |
 | `input_boolean.gnome_dnd_niwo_actual` | GNOME DND niwo actual | Read-back state from the niwo desktop agent |
 | `input_boolean.gnome_dnd_work_actual` | GNOME DND work actual | Read-back state from the work desktop agent |
 | `input_boolean.snom_dnd_status` | Snom DND status | Read-back state from the Snom phone |
@@ -22,6 +22,8 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_select.work_schedule_mode` | Work schedule mode | Automatic, free shift, or sick mode |
 | `input_select.enforce_sleep_reset_mode` | Enforce sleep reset | Reset policy for Enforce sleep |
 | `input_select.whz_sleep_profile` | WHZ sleep profile | Living room profile while Sleep Mode is active |
+| `input_select.gnome_dnd_niwo_policy` | GNOME niwo DND policy | Follow global, force on, or force off |
+| `input_select.gnome_dnd_work_policy` | GNOME work DND policy | Follow global, force on, or force off |
 
 ## Heating
 
