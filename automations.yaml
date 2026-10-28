@@ -4596,6 +4596,40 @@
         target:
           entity_id: input_boolean.enforce_sleep
   mode: single
+- id: calendar_shifts_work_sim_voicemail_prompt
+  alias: Calendar - Shifts - Work SIM voicemail prompt
+  description: Sends a timed Yes/No notification on Work Mode changes to open the Samsung dialer with the Telekom voicemail forwarding code.
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.work_mode_state
+    to: 'on'
+    id: work_start
+  - trigger: state
+    entity_id: input_boolean.work_mode_state
+    to: 'off'
+    id: work_end
+  actions:
+  - variables:
+      notification_title: "{{ 'Arbeitsbeginn: Mobilbox-Weiterleitung aus?' if trigger.id == 'work_start' else 'Feierabend: Mobilbox sofort aktivieren?' }}"
+      notification_message: "{{ 'Die Arbeits-SIM soll wieder normal klingeln. Ja öffnet den Wähler mit ##21#.' if trigger.id == 'work_start' else 'Anrufe auf die Arbeits-SIM sollen sofort zur Mobilbox. Ja öffnet den Wähler mit **21*3311*11#.' }}"
+      dialer_uri: "{{ 'deep-link://tel:##21%23' if trigger.id == 'work_start' else 'deep-link://tel:**21*3311*11%23' }}"
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: '{{ notification_title }}'
+      message: '{{ notification_message }}'
+      data:
+        tag: work_sim_voicemail_forwarding
+        timeout: 300
+        actions:
+        - action: URI
+          title: Ja
+          uri: '{{ dialer_uri }}'
+          authenticationRequired: true
+        - action: NO
+          title: Nein
+          authenticationRequired: true
+  mode: queued
+  max: 2
 - id: calendar_shifts_living_sleep_profile_override_20261017
   alias: Calendar - Shifts - Wohnzimmer Sleep Mode heating profile
   description: Uses the selected or calendar-derived day profile to preheat the living room during Sleep Mode; without a scheduled shift, the comfort target remains set.
