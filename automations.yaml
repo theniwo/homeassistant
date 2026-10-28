@@ -4631,16 +4631,13 @@
       title: '{{ notification_title }}'
       message: '{{ notification_message }}'
       data:
-        tag: work_sim_voicemail_forwarding
         timeout: '{{ timeout_minutes | int * 60 }}'
         actions:
         - action: URI
           title: Ja
           uri: '{{ dialer_uri }}'
-          authenticationRequired: true
         - action: NO
           title: Nein
-          authenticationRequired: true
   - delay:
       minutes: '{{ timeout_minutes | int }}'
   - condition: template
