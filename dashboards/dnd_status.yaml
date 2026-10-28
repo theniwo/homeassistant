@@ -3,19 +3,15 @@ title: DND Status
 entities:
   - type: section
     label: GNOME
-  - entity: input_boolean.gnome_dnd_niwo
-    name: GNOME (niwo) DND request
-  - entity: sensor.gnome_dnd_niwo_actual_status
-    name: GNOME (niwo) actual
-  - entity: input_boolean.gnome_dnd_work
-    name: GNOME (work) DND request
-  - entity: sensor.gnome_dnd_work_actual_status
-    name: GNOME (work) actual
+  - entity: switch.gnome_dnd_niwo
+    name: GNOME (niwo)
+  - entity: switch.gnome_dnd_work
+    name: GNOME (work)
   - type: section
     label: Phone
-  - entity: sensor.snom_dnd_actual_status
+  - entity: switch.snom_dnd_control
     name: Snom
-  - entity: sensor.samsung_s25_dnd_status
+  - entity: switch.samsung_s25_dnd_control
     name: Samsung S25
   - type: section
     label: Echo

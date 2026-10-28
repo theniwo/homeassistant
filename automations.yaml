@@ -4466,18 +4466,6 @@
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.snom_dnd_status
-      - if:
-        - condition: state
-          entity_id: input_boolean.work_mode_state
-          state: 'off'
-        - condition: state
-          entity_id: input_boolean.sleep_mode_state
-          state: 'off'
-        - condition: state
-          entity_id: input_boolean.dnd_override
-          state: 'off'
-        - condition: template
-          value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   mode: single
 - id: sleep_mode_mueckenlampe_alexa
   alias: Sleep Mode - Bedroom Echo controls
