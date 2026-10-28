@@ -120,6 +120,20 @@ input_select:
       - Force on
       - Force off
     icon: mdi:bell-cog
+  snom_dnd_policy:
+    name: Snom DND policy
+    options:
+      - Follow global
+      - Force on
+      - Force off
+    icon: mdi:bell-cog
+  samsung_s25_dnd_policy:
+    name: Samsung S25 DND policy
+    options:
+      - Follow global
+      - Force on
+      - Force off
+    icon: mdi:bell-cog
 
 input_number:
   bt_sleep_disconnect_offset_hours:

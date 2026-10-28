@@ -2445,15 +2445,9 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'on'
-        response_variable: snom_work_result
-      - if: '{{ snom_work_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.snom_dnd_state
     - conditions:
       - condition: trigger
         id: work_off
@@ -2469,15 +2463,9 @@
         entity_id: input_boolean.snom_dnd_state
         state: 'on'
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'off'
-        response_variable: snom_work_result
-      - if: '{{ snom_work_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.snom_dnd_state
   mode: single
 - id: '1791356584531'
   alias: Calendar - Shifts - Samsung Sleep mode
@@ -2530,21 +2518,12 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
-        entity_id: input_boolean.snom_dnd_status
-        state: 'off'
-      - condition: state
         entity_id: input_boolean.dnd_override
         state: 'off'
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'on'
-        response_variable: snom_dnd_result
-      - if: '{{ snom_dnd_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.snom_dnd_state
   - choose:
     - conditions:
       - condition: template
@@ -2568,21 +2547,6 @@
           target:
             entity_id: input_boolean.fritz_ab_state
   - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.id in [''early_dnd_on'', ''late_dnd_on'', ''free_dnd_on''] and (shift_found | bool) }}'
-      - condition: template
-        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
-      - condition: state
-        entity_id: input_boolean.dnd_override
-        state: 'off'
-      sequence:
-      - action: notify.mobile_app_sm_s931b
-        data:
-          message: command_dnd
-          data:
-            command: priority_only
-        continue_on_error: true
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
@@ -3661,17 +3625,9 @@
       - condition: template
         value_template: '{{ trigger.id in [''enable'', ''startup''] and is_state(''input_boolean.dnd_override'', ''on'') }}'
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'on'
-        response_variable: snom_master_result
-      - if:
-          condition: template
-          value_template: '{{ snom_master_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_on
-          target:
-            entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.snom_dnd_state
       - action: shell_command.fritzbox_tam_set
         data:
           enabled: 'on'
@@ -3683,12 +3639,6 @@
         - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.fritz_ab_state
-      - action: notify.mobile_app_sm_s931b
-        data:
-          message: command_dnd
-          data:
-            command: priority_only
-        continue_on_error: true
     - conditions:
       - condition: template
         value_template: '{{ trigger.id == ''disable'' }}'
@@ -3701,17 +3651,9 @@
           entity_id: input_boolean.sleep_mode_state
           state: 'off'
         then:
-        - action: shell_command.snom_dnd_set
-          data:
-            desired: 'off'
-          response_variable: snom_master_result
-        - if:
-            condition: template
-            value_template: '{{ snom_master_result[''returncode''] == 0 }}'
-          then:
-          - action: input_boolean.turn_off
-            target:
-              entity_id: input_boolean.snom_dnd_state
+        - action: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.snom_dnd_state
       - action: shell_command.fritzbox_tam_set
         data:
           enabled: 'off'
@@ -3723,12 +3665,6 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.fritz_ab_state
-      - action: notify.mobile_app_sm_s931b
-        data:
-          message: command_dnd
-          data:
-            command: 'off'
-        continue_on_error: true
   mode: single
 - id: calendar_shifts_wind_down_reminder
   alias: Calendar - Shifts - Wind down reminder
@@ -4466,6 +4402,49 @@
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.snom_dnd_status
+  mode: single
+- id: calendar_shifts_phone_dnd_policy
+  alias: Calendar - Shifts - Phone DND policies
+  description: Applies the Follow global, Force on, or Force off policy to Snom and Samsung S25 while leaving Echo DND independent.
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.sleep_mode_state
+    - input_boolean.dnd_override
+    - input_boolean.snom_dnd_state
+    - input_select.snom_dnd_policy
+    - input_select.samsung_s25_dnd_policy
+    - input_boolean.snom_dnd_status
+    - sensor.samsung_s25_sm_s931b_do_not_disturb_sensor
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: homeassistant
+    event: start
+  actions:
+  - variables:
+      global_dnd_requested: "{{ is_state('input_boolean.sleep_mode_state', 'on') or is_state('input_boolean.dnd_override', 'on') or is_state('input_boolean.snom_dnd_state', 'on') }}"
+      snom_policy: "{{ states('input_select.snom_dnd_policy') }}"
+      samsung_policy: "{{ states('input_select.samsung_s25_dnd_policy') }}"
+      snom_should_be_on: "{{ snom_policy == 'Force on' or (snom_policy == 'Follow global' and (global_dnd_requested | bool)) }}"
+      samsung_should_be_on: "{{ samsung_policy == 'Force on' or (samsung_policy == 'Follow global' and (global_dnd_requested | bool)) }}"
+      samsung_actual_state: "{{ states('sensor.samsung_s25_sm_s931b_do_not_disturb_sensor') }}"
+  - if:
+    - condition: template
+      value_template: "{{ snom_policy in ['Follow global', 'Force on', 'Force off'] and states('input_boolean.snom_dnd_status') in ['on', 'off'] and (is_state('input_boolean.snom_dnd_status', 'on') != (snom_should_be_on | bool)) }}"
+    then:
+    - action: shell_command.snom_dnd_set
+      data:
+        desired: "{{ 'on' if (snom_should_be_on | bool) else 'off' }}"
+  - if:
+    - condition: template
+      value_template: "{{ samsung_policy in ['Follow global', 'Force on', 'Force off'] and samsung_actual_state in ['off', 'priority_only', 'total_silence', 'alarms_only'] and ((samsung_actual_state != 'off') != (samsung_should_be_on | bool)) }}"
+    then:
+    - action: notify.mobile_app_sm_s931b
+      data:
+        message: command_dnd
+        data:
+          command: "{{ 'priority_only' if (samsung_should_be_on | bool) else 'off' }}"
+      continue_on_error: true
   mode: single
 - id: sleep_mode_mueckenlampe_alexa
   alias: Sleep Mode - Bedroom Echo controls

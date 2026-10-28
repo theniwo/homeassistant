@@ -589,17 +589,9 @@ sleep_mode_now:
   - action: input_boolean.turn_on
     target:
       entity_id: input_boolean.sleep_mode_state
-  - action: shell_command.snom_dnd_set
-    data:
-      desired: 'on'
-    response_variable: snom_dnd_result
-  - if:
-    - condition: template
-      value_template: '{{ snom_dnd_result[''returncode''] == 0 }}'
-    then:
-    - action: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.snom_dnd_state
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.snom_dnd_state
   - action: shell_command.fritzbox_tam_set
     data:
       enabled: 'on'
@@ -651,17 +643,9 @@ sleep_mode_end_now:
         entity_id: input_boolean.work_mode_state
         state: 'off'
       sequence:
-      - action: shell_command.snom_dnd_set
-        data:
-          desired: 'off'
-        response_variable: snom_dnd_result
-      - if:
-        - condition: template
-          value_template: '{{ snom_dnd_result[''returncode''] == 0 }}'
-        then:
-        - action: input_boolean.turn_off
-          target:
-            entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.snom_dnd_state
     - conditions:
       - condition: template
         value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and is_state(''input_boolean.dnd_override'',
@@ -802,22 +786,9 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         - condition: template
           value_template: "{{ dnd_is_due | bool and is_state('input_boolean.dnd_override', 'off') }}"
       then:
-        - if:
-            - condition: state
-              entity_id: input_boolean.snom_dnd_status
-              state: 'off'
-          then:
-            - action: shell_command.snom_dnd_set
-              data:
-                desired: 'on'
-              response_variable: snom_dnd_result
-            - if:
-                - condition: template
-                  value_template: "{{ snom_dnd_result['returncode'] == 0 }}"
-              then:
-                - action: input_boolean.turn_on
-                  target:
-                    entity_id: input_boolean.snom_dnd_state
+        - action: input_boolean.turn_on
+          target:
+            entity_id: input_boolean.snom_dnd_state
         - if:
             - condition: state
               entity_id: input_boolean.fritz_ab_state
@@ -834,11 +805,6 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
                 - action: input_boolean.turn_on
                   target:
                     entity_id: input_boolean.fritz_ab_state
-        - action: notify.mobile_app_sm_s931b
-          data:
-            message: command_dnd
-            data:
-              command: priority_only
     - if:
         - condition: template
           value_template: "{{ wind_down_is_overdue | bool or pill_is_overdue | bool or bedtime_is_overdue | bool }}"

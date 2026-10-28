@@ -143,13 +143,17 @@
       availability: "{{ states('input_boolean.snom_dnd_status') in ['on', 'off'] }}"
       state: "{{ is_state('input_boolean.snom_dnd_status', 'on') }}"
       turn_on:
-        - action: shell_command.snom_dnd_set
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.snom_dnd_policy
           data:
-            desired: 'on'
+            option: Force on
       turn_off:
-        - action: shell_command.snom_dnd_set
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.snom_dnd_policy
           data:
-            desired: 'off'
+            option: Force off
     - name: Samsung S25 DND control
       default_entity_id: switch.samsung_s25_dnd_control
       unique_id: samsung_s25_dnd_control
@@ -157,14 +161,14 @@
       availability: "{{ states('sensor.samsung_s25_sm_s931b_do_not_disturb_sensor') in ['off', 'priority_only', 'total_silence', 'alarms_only'] }}"
       state: "{{ states('sensor.samsung_s25_sm_s931b_do_not_disturb_sensor') != 'off' }}"
       turn_on:
-        - action: notify.mobile_app_sm_s931b
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.samsung_s25_dnd_policy
           data:
-            message: command_dnd
-            data:
-              command: priority_only
+            option: Force on
       turn_off:
-        - action: notify.mobile_app_sm_s931b
+        - action: input_select.select_option
+          target:
+            entity_id: input_select.samsung_s25_dnd_policy
           data:
-            message: command_dnd
-            data:
-              command: 'off'
+            option: Force off

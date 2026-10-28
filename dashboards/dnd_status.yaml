@@ -34,8 +34,22 @@ entities:
     label: Phone
   - entity: switch.snom_dnd_control
     name: Snom
+    hold_action:
+      action: call-service
+      service: input_select.select_option
+      target:
+        entity_id: input_select.snom_dnd_policy
+      data:
+        option: Follow global
   - entity: switch.samsung_s25_dnd_control
     name: Samsung S25
+    hold_action:
+      action: call-service
+      service: input_select.select_option
+      target:
+        entity_id: input_select.samsung_s25_dnd_policy
+      data:
+        option: Follow global
   - type: section
     label: Echo
   - entity: switch.schlafzimmer_do_not_disturb_switch

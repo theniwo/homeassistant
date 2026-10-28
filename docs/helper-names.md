@@ -24,6 +24,8 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | `input_select.whz_sleep_profile` | WHZ sleep profile | Living room profile while Sleep Mode is active |
 | `input_select.gnome_dnd_niwo_policy` | GNOME niwo DND policy | Follow global, force on, or force off |
 | `input_select.gnome_dnd_work_policy` | GNOME work DND policy | Follow global, force on, or force off |
+| `input_select.snom_dnd_policy` | Snom DND policy | Follow global, force on, or force off |
+| `input_select.samsung_s25_dnd_policy` | Samsung S25 DND policy | Follow global, force on, or force off |
 
 ## Heating
 
