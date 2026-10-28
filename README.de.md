@@ -79,6 +79,8 @@ Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktu
 
 Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält das Auswahlmenü für den Bluetooth-Disconnect sowie die Zeitwerte für Wecker, Schlafenszeit und feste Uhrzeit. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
 
+Die DND-Kachel zeigt die globale DND-Anforderung und die einzelnen Geräteschalter. Gedrückthalten eines Schalters für GNOME, Snom oder Samsung S25 setzt dessen Richtlinie auf `Follow global` zurück. Die Echo-Schalter bleiben unabhängig steuerbar.
+
 ## Helper und aktuelle Werte
 
 Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereiche und Schritte sind dort ergänzt, wo sie zum Verständnis hilfreich sind. Die Krank-Tablettenerinnerung liegt um `sick_pill_offset` nach dem Freischichtbeginn.

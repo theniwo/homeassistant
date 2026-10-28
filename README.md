@@ -79,6 +79,8 @@ The next-day alarm automation checks the calendar daily at **18:00**, refreshes 
 
 This screenshot shows the live Home view on 2026-10-28. The Echo & Light card contains the Bluetooth disconnect selector and its alarm, bedtime, and fixed-time settings. The other cards group overrides, tomorrow's schedule, device status, Sleep Mode and reminders, heating profiles, and shift times. In this capture, the selected Bluetooth plan is `Zum Schlafen`.
 
+The DND card shows the global DND requirement and per-device switches. A long press on the GNOME, Snom, or Samsung S25 switch resets that device's policy to `Follow global`; Echo switches remain individually controlled.
+
 ## Helpers and current values
 
 All values in these tables are editable in Home Assistant. Ranges and steps are included where they are useful for understanding a setting. The sick-mode pill reminder is scheduled relative to the free-shift start using `sick_pill_offset`.
