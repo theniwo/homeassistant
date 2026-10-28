@@ -1,0 +1,19 @@
+type: entities
+title: Shift times & phone
+entities:
+  - entity: input_datetime.early_shift_start
+  - entity: input_datetime.early_shift_end
+  - entity: input_datetime.late_shift_start
+  - entity: input_datetime.late_shift_end
+  - entity: input_datetime.free_shift_start
+  - entity: input_datetime.alarm_setup_time
+  - entity: input_datetime.phone_handover_time
+  - entity: input_number.phone_handover_offset
+  - type: section
+    label: Work SIM voicemail
+  - entity: input_number.work_sim_voicemail_prompt_timeout
+    name: Voicemail prompt timeout
+  - entity: input_number.bt_disconnect_offset
+  - entity: input_text.samsung_work_mode_id
+  - entity: input_text.samsung_sleep_mode_id
+show_header_toggle: false

@@ -65,6 +65,7 @@ GUI helper names use concise English labels. `WHZ`, `WRK`, and `BED` mean living
 | --- | --- | --- |
 | `input_datetime.phone_handover_time` | Phone handover time | Phone handover clock time |
 | `input_number.phone_handover_offset` | Phone handover offset | Announcement delay, minutes |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | Minutes before the follow-up announcement; default 5, range 1–30, step 1 |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Select alarm, bedtime, or fixed-time disconnect |
 | `input_number.bt_disconnect_offset` | Alarm disconnect offset | Disconnect lead before the alarm, seconds |
 | `input_number.bt_sleep_disconnect_offset_hours` | Bedtime disconnect offset | Delay after bedtime, hours |

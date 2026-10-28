@@ -136,6 +136,14 @@ input_select:
     icon: mdi:bell-cog
 
 input_number:
+  work_sim_voicemail_prompt_timeout:
+    name: Work SIM voicemail prompt timeout
+    min: 1
+    max: 30
+    step: 1
+    unit_of_measurement: min
+    mode: slider
+    icon: mdi:voicemail
   bt_sleep_disconnect_offset_hours:
     name: BT sleep disconnect offset
     min: 0

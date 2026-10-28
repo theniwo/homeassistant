@@ -4598,7 +4598,7 @@
   mode: single
 - id: calendar_shifts_work_sim_voicemail_prompt
   alias: Calendar - Shifts - Work SIM voicemail prompt
-  description: Sends a timed Yes/No notification on Work Mode changes to open the Samsung dialer with the Telekom voicemail forwarding code.
+  description: Announces a configurable work SIM voicemail prompt window, sends a timed Yes/No notification, and reports that the forwarding status still needs manual confirmation.
   triggers:
   - trigger: state
     entity_id: input_boolean.work_mode_state
@@ -4610,16 +4610,29 @@
     id: work_end
   actions:
   - variables:
+      timeout_minutes: "{{ states('input_number.work_sim_voicemail_prompt_timeout') | int(5) }}"
       notification_title: "{{ 'Arbeitsbeginn: Mobilbox-Weiterleitung aus?' if trigger.id == 'work_start' else 'Feierabend: Mobilbox sofort aktivieren?' }}"
       notification_message: "{{ 'Die Arbeits-SIM soll wieder normal klingeln. Ja öffnet den Wähler mit ##21#.' if trigger.id == 'work_start' else 'Anrufe auf die Arbeits-SIM sollen sofort zur Mobilbox. Ja öffnet den Wähler mit **21*3311*11#.' }}"
       dialer_uri: "{{ 'deep-link://tel:##21%23' if trigger.id == 'work_start' else 'deep-link://tel:**21*3311*11%23' }}"
+      initial_announcement: "{{ 'Work Mode ist aktiv. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM aus. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' if trigger.id == 'work_start' else 'Work Mode ist beendet. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM ein. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' }}"
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: '{{ initial_announcement }}'
   - action: notify.mobile_app_sm_s931b
     data:
       title: '{{ notification_title }}'
       message: '{{ notification_message }}'
       data:
         tag: work_sim_voicemail_forwarding
-        timeout: 300
+        timeout: '{{ timeout_minutes | int * 60 }}'
         actions:
         - action: URI
           title: Ja
@@ -4628,8 +4641,24 @@
         - action: NO
           title: Nein
           authenticationRequired: true
-  mode: queued
-  max: 2
+  - delay:
+      minutes: '{{ timeout_minutes | int }}'
+  - condition: template
+    value_template: "{{ (trigger.id == 'work_start' and is_state('input_boolean.work_mode_state', 'on')) or (trigger.id == 'work_end' and is_state('input_boolean.work_mode_state', 'off')) }}"
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: >-
+        Die Mobilbox-Weiterleitung der Arbeits-SIM konnte von Home Assistant nicht ausgelesen werden.
+        Der Status ist deshalb nicht bestätigt. Prüfe ihn bitte am Telefon mit Sternchen Raute 21 Raute.
+  mode: restart
 - id: calendar_shifts_living_sleep_profile_override_20261017
   alias: Calendar - Shifts - Wohnzimmer Sleep Mode heating profile
   description: Uses the selected or calendar-derived day profile to preheat the living room during Sleep Mode; without a scheduled shift, the comfort target remains set.
