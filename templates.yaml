@@ -99,14 +99,6 @@
       state: >-
         {% set current_state = states('input_boolean.snom_dnd_status') %}
         {{ 'Ein' if current_state == 'on' else 'Aus' if current_state == 'off' else 'Nicht verfügbar' }}
-- sensor:
-    - name: Global DND requirement
-      default_entity_id: sensor.global_dnd_requirement
-      unique_id: global_dnd_requirement_status
-      icon: >-
-        {% set current_state = states('input_boolean.snom_dnd_state') %}
-        {{ 'mdi:bell-ring' if current_state == 'on' else 'mdi:bell-off' if current_state == 'off' else 'mdi:bell-alert' }}
-      state: "{{ '' if states('input_boolean.snom_dnd_state') in ['on', 'off'] else 'Nicht verfügbar' }}"
 - switch:
     - name: GNOME DND niwo
       default_entity_id: switch.gnome_dnd_niwo

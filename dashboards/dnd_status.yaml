@@ -1,8 +1,15 @@
 type: entities
 title: DND Status
 entities:
-  - entity: sensor.global_dnd_requirement
+  - type: custom:template-entity-row
     name: Global DND requirement
+    icon: >-
+      {{ 'mdi:bell-ring' if is_state('input_boolean.snom_dnd_state', 'on') else 'mdi:bell-off' }}
+    state: ""
+    active: "{{ 'active' if is_state('input_boolean.snom_dnd_state', 'on') else '' }}"
+    color: "{{ '#ffd54f' if is_state('input_boolean.snom_dnd_state', 'on') else 'var(--secondary-text-color)' }}"
+    tap_action:
+      action: none
   - type: section
     label: GNOME
   - entity: switch.gnome_dnd_niwo
