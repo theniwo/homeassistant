@@ -538,7 +538,7 @@ work_sim_voicemail_enable_prompt:
 work_sim_voicemail_disable_prompt:
   alias: Work SIM - Prompt to disable voicemail
   description: Sends a phone notification that opens the dialer with the immediate voicemail forwarding cancellation code when confirmed.
-  icon: mdi:voicemail-off
+  icon: mdi:voicemail
   mode: single
   sequence:
   - action: notify.mobile_app_sm_s931b

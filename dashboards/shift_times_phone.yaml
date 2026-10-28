@@ -19,7 +19,7 @@ entities:
     icon: mdi:voicemail
   - entity: script.work_sim_voicemail_disable_prompt
     name: Prompt to disable voicemail
-    icon: mdi:voicemail-off
+    icon: mdi:voicemail
   - entity: input_number.bt_disconnect_offset
   - entity: input_text.samsung_work_mode_id
   - entity: input_text.samsung_sleep_mode_id
