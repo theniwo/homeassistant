@@ -10,6 +10,9 @@
 !scenes.yaml
 !dashboards/
 !dashboards/*.yaml
+!docs/
+!docs/images/
+!docs/images/*.png
 !scripts/
 !scripts/*.py
 

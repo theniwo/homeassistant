@@ -2,7 +2,7 @@
 
 > **Sprache:** Deutsch · [English README](README.md)
 
-Dieses Repository enthält die Home-Assistant-Konfiguration für kalendergesteuerte Arbeitsschichten, Wecker, Smartphone-Modi, Heizungen, Echo-Geräte, Erinnerungen und Licht. Die Helper-Werte werden in der Home-Assistant-Oberfläche gepflegt. Die folgenden Werte entsprechen dem Live-System, geprüft am **27.10.2026**.
+Dieses Repository enthält die Home-Assistant-Konfiguration für kalendergesteuerte Arbeitsschichten, Wecker, Smartphone-Modi, Heizungen, Echo-Geräte, Erinnerungen und Licht. Die Helper-Werte werden in der Home-Assistant-Oberfläche gepflegt. Die folgenden Werte entsprechen dem Live-System, geprüft am **28.10.2026**.
 
 ## Projektaufbau
 
@@ -39,7 +39,7 @@ BT verbinden     = Schlafenszeit + BT-Verbindungs-Offset
 Aufwachlicht     = Wecker + Wake-light-Delay
 ```
 
-Die Bluetooth-Verbindung wählt das gekoppelte Smartphone als Quelle des Schlafzimmer-Echos aus. Bluetooth am Smartphone wird nicht ausgeschaltet. Die geplante Verbindung erfolgt nach der Schlafenszeit; bei manuellem Einschalten des Sleep Mode gibt es ebenfalls einen Verbindungsversuch als Rückfall.
+Die Bluetooth-Verbindung wählt das gekoppelte Smartphone als Quelle des Schlafzimmer-Echos aus. Bluetooth am Smartphone wird nicht ausgeschaltet. Die Trennung vor dem Wecker folgt derselben Schichtauswahl wie die Weckerautomation: Frühschicht, Spätschicht sowie Freischicht/Support Standby. Der konkrete Kalendertag wird abgefragt; Wochenenden, `4TW-Frei`, `Urlaub` und Krankmodus lösen keinen Arbeits-Disconnect aus. Der Zeitpunkt ist Weckerzeit minus BT-Trenn-Offset. Die Home-Assistant-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen; deshalb weist Home Assistant das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten.
 
 ### Sleep Mode und Weckerende
 
@@ -70,6 +70,10 @@ flowchart LR
 ```
 
 Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktualisiert `calendar.shifts`, fragt morgen mit `calendar.get_events` ab und sendet Alexa einen individuellen Weckerbefehl. Eine Statuskachel zeigt Schicht und geplante Zeiten. Zusätzlich wird vor der Schlafenszeit geprüft, ob der Alexa-Wecker tatsächlich vorhanden ist.
+
+### Dashboard
+
+![Home-Assistant-Dashboard mit Morgenübersicht, Status, Overrides, Echo- und Lichtsteuerung, Schlaf- und Wecker-Helpern sowie Heizprofilen](docs/images/home-assistant-dashboard.png)
 
 ## Helper und aktuelle Werte
 

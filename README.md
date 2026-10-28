@@ -2,7 +2,7 @@
 
 > **Language:** English · [Deutsche Version](README.de.md)
 
-This repository contains the Home Assistant configuration for calendar-based work shifts, alarms, phone modes, heating, Echo devices, reminders, and lighting. Helper values are edited in the Home Assistant UI; the values below are a snapshot of the live instance checked on **2026-10-27**.
+This repository contains the Home Assistant configuration for calendar-based work shifts, alarms, phone modes, heating, Echo devices, reminders, and lighting. Helper values are edited in the Home Assistant UI; the values below are a snapshot of the live instance checked on **2026-10-28**.
 
 ## Project layout
 
@@ -39,7 +39,7 @@ BT connection    = bedtime + BT connect offset
 wake lights      = alarm time + wake light delay
 ```
 
-The BT connection selects the paired phone as the bedroom Echo's source. It does not disable Bluetooth on the phone. The scheduled connection happens after bedtime; manual Sleep Mode activation also requests a connection as a fallback.
+The BT connection selects the paired phone as the bedroom Echo's source. It does not disable Bluetooth on the phone. Pre-alarm disconnection uses the same shift selection as the alarm automation: early shift, late shift, and free shift/Support Standby. It queries the target calendar date; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger a work disconnect. The time is alarm time minus the BT disconnect offset. The Home Assistant app cannot directly disconnect one paired Bluetooth device, so Home Assistant tells the bedroom Echo to switch to `Local Speaker`.
 
 ### Sleep Mode and alarm dismissal
 
@@ -70,6 +70,10 @@ flowchart LR
 ```
 
 The next-day alarm automation checks the calendar daily at **18:00**, refreshes `calendar.shifts`, queries tomorrow with `calendar.get_events`, and sends Alexa a custom alarm command. A separate status panel reports the shift and planned times. The status/alarm check also verifies that the Alexa alarm exists before bedtime.
+
+### Dashboard
+
+![Home Assistant dashboard showing the tomorrow overview, status, overrides, Echo and lighting controls, sleep and alarm helpers, and heating profiles](docs/images/home-assistant-dashboard.png)
 
 ## Helpers and current values
 
