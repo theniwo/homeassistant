@@ -1,9 +1,19 @@
 type: vertical-stack
 cards:
+  - type: entities
+    title: GNOME DND Steuerung
+    entities:
+      - entity: input_boolean.gnome_dnd_niwo
+        name: GNOME (niwo)
+      - entity: input_boolean.gnome_dnd_work
+        name: GNOME (work)
+    show_header_toggle: false
   - type: markdown
     title: DND Status
     content: >-
       {% set snom = states('input_boolean.snom_dnd_status') %}
+      {% set gnome_niwo = states('input_boolean.gnome_dnd_niwo_actual') %}
+      {% set gnome_work = states('input_boolean.gnome_dnd_work_actual') %}
       {% set samsung = states('sensor.samsung_s25_dnd_status') %}
       {% set echo_bedroom = states('switch.schlafzimmer_do_not_disturb_switch') %}
       {% set echo_office = states('switch.arbeitszimmer_do_not_disturb_switch') %}
@@ -12,6 +22,8 @@ cards:
       {% set echo_bathroom = states('switch.badezimmer_do_not_disturb_switch') %}
       {% for label, value in [
         ('Snom', snom),
+        ('GNOME (niwo)', gnome_niwo),
+        ('GNOME (work)', gnome_work),
         ('Samsung S25', samsung),
         ('Echo Schlafzimmer', echo_bedroom),
         ('Echo Arbeitszimmer', echo_office),
@@ -27,29 +39,3 @@ cards:
       ❔ **{{ label }}** · {{ value }}
       {% endif %}<br>
       {% endfor %}
-  - type: grid
-    columns: 2
-    square: false
-    cards:
-      - type: tile
-        entity: input_boolean.gnome_dnd_niwo
-        name: GNOME · niwo
-        icon: mdi:account-bell
-        color: state
-        state_content: state
-        tap_action:
-          action: call-service
-          service: input_boolean.toggle
-          target:
-            entity_id: input_boolean.gnome_dnd_niwo_override
-      - type: tile
-        entity: input_boolean.gnome_dnd_work
-        name: GNOME · work
-        icon: mdi:account-bell
-        color: state
-        state_content: state
-        tap_action:
-          action: call-service
-          service: input_boolean.toggle
-          target:
-            entity_id: input_boolean.gnome_dnd_work_override
