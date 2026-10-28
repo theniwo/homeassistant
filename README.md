@@ -73,7 +73,9 @@ The next-day alarm automation checks the calendar daily at **18:00**, refreshes 
 
 ### Dashboard
 
-![Home Assistant dashboard showing the tomorrow overview, status, overrides, Echo and lighting controls, sleep and alarm helpers, and heating profiles](docs/images/home-assistant-dashboard.png)
+![Home Assistant dashboard with overrides, tomorrow overview, status, Echo and light controls, sleep and alarm helpers, heating profiles, and shift times](docs/images/home-assistant-dashboard-2026-10.png)
+
+This screenshot shows the live Home view on 2026-10-28. The Echo & Light card contains the Bluetooth disconnect selector and its alarm, bedtime, and fixed-time settings. The other cards group overrides, tomorrow's schedule, device status, Sleep Mode and reminders, heating profiles, and shift times. In this capture, the selected Bluetooth plan is `Zum Schlafen`.
 
 ## Helpers and current values
 
@@ -106,9 +108,9 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.pill_bedtime_offset` | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder |
 | `input_number.sick_pill_offset` | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Delay before phone handover announcements |
-| `input_select.bt_disconnect_mode` | Zum Wecker | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
-| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Lead before alarm for `Zum Wecker` |
-| `input_number.bt_sleep_disconnect_offset_hours` | 1 h | 0–6 h / 0.25 h | Delay after bedtime for `Zum Schlafen` |
+| `input_select.bt_disconnect_mode` | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
+| `input_number.bt_disconnect_offset` | 30 s | 0–120 s / 1 s | Lead before alarm for `Zum Wecker` |
+| `input_number.bt_sleep_disconnect_offset_hours` | 1.25 h | 0–6 h / 0.25 h | Delay after bedtime for `Zum Schlafen` |
 | `input_datetime.bt_disconnect_time` | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
 
@@ -162,7 +164,7 @@ These examples use the live values above. Wind-down and DND start on the previou
 | Bedtime / scheduled Sleep Mode | 22:00 (previous day) | 23:30 (previous day) | 23:00 (previous day) |
 | Bedtime pill reminder | 21:30 | 23:00 | 22:30 |
 | Phone connects to bedroom Echo | 22:05 | 23:35 | 23:05 |
-| Bluetooth disconnects before alarm | 06:59:41 | 08:29:41 | 07:59:41 |
+| Bluetooth disconnect (current selector) | 23:15 (previous day) | 00:45 | 00:15 |
 | Bedroom wake lights | 07:01 | 08:31 | 08:01 |
 | Morning pill reminder | 07:45 | 09:15 | 08:45 |
 | Shift-start announcement | 07:55 | 09:25 | 08:55 |
@@ -190,9 +192,9 @@ gantt
     Enforce Sleep shutdown (if enabled) :milestone, 2026-10-27 22:00, 0m
     Mückenlampe off and bedroom Echo display off :milestone, 2026-10-27 22:00, 0m
     Phone connects to bedroom Echo :milestone, 2026-10-27 22:05, 0m
+    Echo Bluetooth disconnects (1 h 15 min after bedtime) :milestone, 2026-10-27 23:15, 0m
     section Morning
     WHZ morning preheat :active, 2026-10-28 06:00, 120m
-    Echo Bluetooth disconnects (19 s before alarm) :milestone, 2026-10-28 06:59, 0m
     WRK preheat starts :active, 2026-10-28 07:00, 540m
     Alexa alarm and day volume :milestone, 2026-10-28 07:00, 0m
     Bedroom wake lights (1 min delay) :milestone, 2026-10-28 07:01, 0m

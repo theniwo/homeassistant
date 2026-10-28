@@ -73,7 +73,9 @@ Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktu
 
 ### Dashboard
 
-![Home-Assistant-Dashboard mit Morgenübersicht, Status, Overrides, Echo- und Lichtsteuerung, Schlaf- und Wecker-Helpern sowie Heizprofilen](docs/images/home-assistant-dashboard.png)
+![Home-Assistant-Dashboard mit Overrides, Morgenübersicht, Status, Echo- und Lichtsteuerung, Schlaf- und Wecker-Helpern, Heizprofilen und Schichtzeiten](docs/images/home-assistant-dashboard-2026-10.png)
+
+Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält das Auswahlmenü für den Bluetooth-Disconnect sowie die Zeitwerte für Wecker, Schlafenszeit und feste Uhrzeit. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
 
 ## Helper und aktuelle Werte
 
@@ -106,9 +108,9 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.pill_bedtime_offset` | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
 | `input_number.sick_pill_offset` | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
 | `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Verzögerung vor Telefonansagen |
-| `input_select.bt_disconnect_mode` | Zum Wecker | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
-| `input_number.bt_disconnect_offset` | 19 s | 0–120 s / 1 s | Abstand vor dem Wecker bei „Zum Wecker“ |
-| `input_number.bt_sleep_disconnect_offset_hours` | 1 h | 0–6 h / 0,25 h | Abstand nach Schlafenszeit bei „Zum Schlafen“ |
+| `input_select.bt_disconnect_mode` | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
+| `input_number.bt_disconnect_offset` | 30 s | 0–120 s / 1 s | Abstand vor dem Wecker bei „Zum Wecker“ |
+| `input_number.bt_sleep_disconnect_offset_hours` | 1,25 h | 0–6 h / 0,25 h | Abstand nach Schlafenszeit bei „Zum Schlafen“ |
 | `input_datetime.bt_disconnect_time` | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
 | `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
 
@@ -162,7 +164,7 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 | Schlafenszeit / geplanter Sleep Mode | 22:00 (Vorabend) | 23:30 (Vorabend) | 23:00 (Vorabend) |
 | Tablettenerinnerung vor dem Zubettgehen | 21:30 | 23:00 | 22:30 |
 | Handy verbindet sich mit Schlafzimmer-Echo | 22:05 | 23:35 | 23:05 |
-| Bluetooth trennt vor dem Wecker | 06:59:41 | 08:29:41 | 07:59:41 |
+| Bluetooth-Disconnect (aktuelle Auswahl) | 23:15 (Vorabend) | 00:45 | 00:15 |
 | Schlafzimmer-Aufwachlicht | 07:01 | 08:31 | 08:01 |
 | Morgen-Tablettenerinnerung | 07:45 | 09:15 | 08:45 |
 | Ansage zum Schichtbeginn | 07:55 | 09:25 | 08:55 |
@@ -190,9 +192,9 @@ gantt
     Enforce-Sleep-Abschaltung (wenn aktiv) :milestone, 2026-10-27 22:00, 0m
     Mückenlampe und Schlafzimmer-Echo-Display aus :milestone, 2026-10-27 22:00, 0m
     Handy verbindet mit Schlafzimmer-Echo :milestone, 2026-10-27 22:05, 0m
+    Echo-Bluetooth trennt (1 h 15 min nach Schlafenszeit) :milestone, 2026-10-27 23:15, 0m
     section Morgen
     WHZ morgens vorheizen :active, 2026-10-28 06:00, 120m
-    Echo-Bluetooth trennt (19 s vor Wecker) :milestone, 2026-10-28 06:59, 0m
     WRK Vorheizen beginnt :active, 2026-10-28 07:00, 540m
     Alexa-Wecker und Tageslautstärke :milestone, 2026-10-28 07:00, 0m
     Schlafzimmer-Aufwachlicht (1 min Verzögerung) :milestone, 2026-10-28 07:01, 0m
