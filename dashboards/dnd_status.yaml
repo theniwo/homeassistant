@@ -1,26 +1,34 @@
-type: entities
+type: markdown
 title: DND Status
-entities:
-  - entity: input_boolean.snom_dnd_status
-    name: Snom
-  - entity: input_boolean.gnome_dnd_niwo
-    name: GNOME (niwo)
-  - entity: input_boolean.gnome_dnd_work
-    name: GNOME (work)
-  - entity: sensor.samsung_s25_dnd_status
-    name: Samsung S25
-  - entity: switch.schlafzimmer_do_not_disturb_switch
-    name: Echo Schlafzimmer
-  - entity: switch.arbeitszimmer_do_not_disturb_switch
-    name: Echo Arbeitszimmer
-  - entity: switch.kuche_do_not_disturb_switch
-    name: Echo Küche
-  - entity: switch.wohnzimmer_do_not_disturb_switch
-    name: Echo Wohnzimmer
-  - entity: switch.badezimmer_do_not_disturb_switch
-    name: Echo Badezimmer
-show_header_toggle: false
-state_color: true
+content: >-
+  {% set snom = states('input_boolean.snom_dnd_status') %}
+  {% set gnome_niwo = states('input_boolean.gnome_dnd_niwo') %}
+  {% set gnome_work = states('input_boolean.gnome_dnd_work') %}
+  {% set samsung = states('sensor.samsung_s25_dnd_status') %}
+  {% set echo_bedroom = states('switch.schlafzimmer_do_not_disturb_switch') %}
+  {% set echo_office = states('switch.arbeitszimmer_do_not_disturb_switch') %}
+  {% set echo_kitchen = states('switch.kuche_do_not_disturb_switch') %}
+  {% set echo_living = states('switch.wohnzimmer_do_not_disturb_switch') %}
+  {% set echo_bathroom = states('switch.badezimmer_do_not_disturb_switch') %}
+  {% for label, value in [
+    ('Snom', snom),
+    ('GNOME (niwo)', gnome_niwo),
+    ('GNOME (work)', gnome_work),
+    ('Samsung S25', samsung),
+    ('Echo Schlafzimmer', echo_bedroom),
+    ('Echo Arbeitszimmer', echo_office),
+    ('Echo Küche', echo_kitchen),
+    ('Echo Wohnzimmer', echo_living),
+    ('Echo Badezimmer', echo_bathroom)
+  ] %}
+  {% if value in ['on', 'Ein'] or value.startswith('Ein ·') %}
+  🔕 **{{ label }}** · {{ value }}
+  {% elif value in ['off', 'Aus'] %}
+  🔔 **{{ label }}** · {{ value }}
+  {% else %}
+  ❔ **{{ label }}** · {{ value }}
+  {% endif %}<br>
+  {% endfor %}
 grid_options:
   rows: 4
   columns: 12
