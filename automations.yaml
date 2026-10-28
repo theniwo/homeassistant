@@ -2454,6 +2454,11 @@
         - action: input_boolean.turn_on
           target:
             entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_on
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
     - conditions:
       - condition: trigger
         id: work_off
@@ -2478,6 +2483,11 @@
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.snom_dnd_state
+      - action: input_boolean.turn_off
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
   mode: single
 - id: '1791356584531'
   alias: Calendar - Shifts - Samsung Sleep mode
@@ -2530,7 +2540,7 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: state
-        entity_id: input_boolean.snom_dnd_state
+        entity_id: input_boolean.snom_dnd_status
         state: 'off'
       - condition: state
         entity_id: input_boolean.dnd_override
@@ -2582,6 +2592,12 @@
           message: command_dnd
           data:
             command: priority_only
+        continue_on_error: true
+      - action: input_boolean.turn_on
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
     - conditions:
       - condition: template
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
@@ -3688,6 +3704,12 @@
           data:
             command: priority_only
         continue_on_error: true
+      - action: input_boolean.turn_on
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
+        continue_on_error: true
     - conditions:
       - condition: template
         value_template: '{{ trigger.id == ''disable'' }}'
@@ -3728,6 +3750,21 @@
           data:
             command: 'off'
         continue_on_error: true
+      - if:
+        - condition: state
+          entity_id: input_boolean.work_mode_state
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.sleep_mode_state
+          state: 'off'
+        - condition: template
+          value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id:
+            - input_boolean.gnome_dnd_niwo
+            - input_boolean.gnome_dnd_work
   mode: single
 - id: calendar_shifts_wind_down_reminder
   alias: Calendar - Shifts - Wind down reminder
@@ -4458,6 +4495,11 @@
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.snom_dnd_status
+      - action: input_boolean.turn_on
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
     - conditions:
       - condition: template
         value_template: '{{ snom_status_result[''returncode''] == 0 and (snom_status_result[''stdout''] | from_json).get(''state'') == ''off'' }}'
@@ -4465,6 +4507,24 @@
       - action: input_boolean.turn_off
         target:
           entity_id: input_boolean.snom_dnd_status
+      - if:
+        - condition: state
+          entity_id: input_boolean.work_mode_state
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.sleep_mode_state
+          state: 'off'
+        - condition: state
+          entity_id: input_boolean.dnd_override
+          state: 'off'
+        - condition: template
+          value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+        then:
+        - action: input_boolean.turn_off
+          target:
+            entity_id:
+            - input_boolean.gnome_dnd_niwo
+            - input_boolean.gnome_dnd_work
   mode: single
 - id: sleep_mode_mueckenlampe_alexa
   alias: Sleep Mode - Bedroom Echo controls

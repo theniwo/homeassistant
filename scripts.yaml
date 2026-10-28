@@ -589,6 +589,11 @@ sleep_mode_now:
   - action: input_boolean.turn_on
     target:
       entity_id: input_boolean.sleep_mode_state
+  - action: input_boolean.turn_on
+    target:
+      entity_id:
+      - input_boolean.gnome_dnd_niwo
+      - input_boolean.gnome_dnd_work
   - action: shell_command.snom_dnd_set
     data:
       desired: 'on'
@@ -662,6 +667,18 @@ sleep_mode_end_now:
         - action: input_boolean.turn_off
           target:
             entity_id: input_boolean.snom_dnd_state
+    - conditions:
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') and is_state('input_boolean.dnd_override', 'off') }}"
+      - condition: state
+        entity_id: input_boolean.work_mode_state
+        state: 'off'
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id:
+          - input_boolean.gnome_dnd_niwo
+          - input_boolean.gnome_dnd_work
     - conditions:
       - condition: template
         value_template: '{{ not is_state(''input_select.work_schedule_mode'', ''Krank'') and is_state(''input_boolean.dnd_override'',
@@ -760,7 +777,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
         dnd_raw_minutes: "{{ (bedtime_raw_minutes | int) - (dnd_lead_minutes | int) }}"
         dnd_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(dnd_raw_minutes | int)) }}"
         dnd_schedule_is_eligible: "{{ shift_label in ['Frühschicht', 'Spätschicht', 'Freischicht', 'Support Standby'] and (today_at('00:00') + timedelta(days=1)).weekday() < 5 }}"
-        dnd_is_due: "{{ dnd_schedule_is_eligible | bool and (dnd_datetime | as_datetime) <= now() }}"
+        dnd_is_due: "{{ dnd_schedule_is_eligible | bool and not is_state('input_select.work_schedule_mode', 'Krank') and (dnd_datetime | as_datetime) <= now() }}"
         pill_raw_minutes: "{{ (bedtime_raw_minutes | int) - (pill_lead_minutes | int) }}"
         alarm_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(alarm_raw_minutes | int)) }}"
         bedtime_datetime: "{{ today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int)) }}"
@@ -804,7 +821,7 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
       then:
         - if:
             - condition: state
-              entity_id: input_boolean.snom_dnd_state
+              entity_id: input_boolean.snom_dnd_status
               state: 'off'
           then:
             - action: shell_command.snom_dnd_set
@@ -818,6 +835,11 @@ calendar_shifts_refresh_tomorrow_and_set_alarm:
                 - action: input_boolean.turn_on
                   target:
                     entity_id: input_boolean.snom_dnd_state
+        - action: input_boolean.turn_on
+          target:
+            entity_id:
+            - input_boolean.gnome_dnd_niwo
+            - input_boolean.gnome_dnd_work
         - if:
             - condition: state
               entity_id: input_boolean.fritz_ab_state
