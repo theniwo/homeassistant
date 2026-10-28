@@ -1,6 +1,8 @@
 type: entities
 title: DND Status
 entities:
+  - entity: sensor.global_dnd_requirement
+    name: Global DND requirement
   - type: section
     label: GNOME
   - entity: switch.gnome_dnd_niwo
