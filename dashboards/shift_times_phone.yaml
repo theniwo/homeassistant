@@ -13,10 +13,13 @@ entities:
     label: Work SIM voicemail
   - entity: input_number.work_sim_voicemail_prompt_timeout
     name: Voicemail prompt timeout
+    icon: mdi:timer-outline
   - entity: script.work_sim_voicemail_enable_prompt
     name: Prompt to enable voicemail
+    icon: mdi:voicemail
   - entity: script.work_sim_voicemail_disable_prompt
     name: Prompt to disable voicemail
+    icon: mdi:voicemail-off
   - entity: input_number.bt_disconnect_offset
   - entity: input_text.samsung_work_mode_id
   - entity: input_text.samsung_sleep_mode_id
