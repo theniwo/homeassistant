@@ -180,7 +180,7 @@ These examples use the live values above. Wind-down and DND start on the previou
 
 In `Krank` mode, the pill reminder uses only `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: with the current values, 09:00 + 2 h gives **11:00**. An offset of 0 triggers exactly at the free-shift start. Times after midnight wrap to the following clock time. No calendar event is required, and this reference time does not create a work alarm.
 
-The wake-light delay is one minute by default; setting it to zero turns the lamps on at the calculated alarm time. The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone morning check follows five minutes later; there is no equivalent phone check at the late-shift start. Phone handover is announced at 13:05 for either shift.
+The wake-light delay is one minute by default; setting it to zero turns the lamps on at the calculated alarm time. The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone morning check follows five minutes later; there is no equivalent phone check at the late-shift start. Phone handover is announced at 13:05 only for early and late shifts; free-shift and Support Standby days never receive that phone-service reminder.
 
 ### Gantt example: early shift
 

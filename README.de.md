@@ -180,7 +180,7 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 
 Im Modus `Krank` richtet sich die Tablettenerinnerung ausschließlich nach `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: bei den aktuellen Werten 09:00 + 2 h also **11:00 Uhr**. Ein Offset von 0 löst sie genau zum Freischichtbeginn aus. Auch ein Ergebnis nach Mitternacht wird auf die Uhrzeit des Folgetags abgebildet. Dafür ist kein Kalendereintrag erforderlich; es wird kein Arbeitswecker angelegt.
 
-Die Verzögerung für das Aufwachlicht beträgt standardmäßig eine Minute; bei null gehen die Lampen direkt zur berechneten Weckerzeit an. Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt der morgendliche Telefoncheck fünf Minuten später; bei der Spätschicht gibt es keinen vergleichbaren Check um 09:35. Die Telefonübergabe wird bei beiden Schichten um 13:05 angesagt.
+Die Verzögerung für das Aufwachlicht beträgt standardmäßig eine Minute; bei null gehen die Lampen direkt zur berechneten Weckerzeit an. Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt der morgendliche Telefoncheck fünf Minuten später; bei der Spätschicht gibt es keinen vergleichbaren Check um 09:35. Die Telefonübergabe wird nur bei Früh- und Spätschicht um 13:05 angesagt. An Freischicht- und Support-Standby-Tagen gibt es keine Telefonübergabe-Ansage.
 
 ### Gantt-Beispiel: Frühschicht
 

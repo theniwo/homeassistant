@@ -2246,7 +2246,7 @@
   mode: single
 - id: '1790775343784'
   alias: Calendar - Shifts - Samsung Work mode
-  description: Controls Samsung Work mode and phone handover reminders
+  description: Controls Samsung Work mode for early and late shifts; phone handover announcements are limited to those two shift types and never run for free shift or Support Standby.
   triggers:
   - trigger: time
     at: input_datetime.early_shift_start
