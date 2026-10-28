@@ -9,6 +9,14 @@ entities:
   - entity: input_datetime.alarm_setup_time
   - entity: input_datetime.phone_handover_time
   - entity: input_number.phone_handover_offset
+  - type: section
+    label: Work SIM voicemail
+  - entity: input_number.work_sim_voicemail_prompt_timeout
+    name: Voicemail prompt timeout
+  - entity: script.work_sim_voicemail_enable_prompt
+    name: Prompt to enable voicemail
+  - entity: script.work_sim_voicemail_disable_prompt
+    name: Prompt to disable voicemail
   - entity: input_number.bt_disconnect_offset
   - entity: input_text.samsung_work_mode_id
   - entity: input_text.samsung_sleep_mode_id

@@ -25,12 +25,4 @@ entities:
     name: Fixed disconnect time
   - entity: input_text.bt_phone_source
     name: BT phone source
-  - type: section
-    label: Work SIM voicemail
-  - entity: input_number.work_sim_voicemail_prompt_timeout
-    name: Voicemail prompt timeout
-  - entity: script.work_sim_voicemail_enable_prompt
-    name: Prompt to enable voicemail
-  - entity: script.work_sim_voicemail_disable_prompt
-    name: Prompt to disable voicemail
 show_header_toggle: false
