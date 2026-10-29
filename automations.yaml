@@ -4720,7 +4720,7 @@
   mode: single
 - id: calendar_shifts_work_sim_voicemail_prompt
   alias: Calendar - Shifts - Work SIM voicemail prompt
-  description: Announces a configurable work SIM voicemail prompt window, sends a timed Yes/No notification, and reports that the forwarding status still needs manual confirmation.
+  description: Announces the requested work SIM change and sends a timed Yes/No notification without a post-timeout Alexa announcement.
   triggers:
   - trigger: state
     entity_id: input_boolean.work_mode_state
@@ -4760,23 +4760,6 @@
           uri: '{{ dialer_uri }}'
         - action: NO
           title: Nein
-  - delay:
-      minutes: '{{ timeout_minutes | int }}'
-  - condition: template
-    value_template: "{{ (trigger.id == 'work_start' and is_state('input_boolean.work_mode_state', 'on')) or (trigger.id == 'work_end' and is_state('input_boolean.work_mode_state', 'off')) }}"
-  - action: script.alexa_output_with_configured_volume
-    data:
-      output_type: announce
-      output_target: media_player.uberall
-      volume_targets:
-      - media_player.schlafzimmer
-      - media_player.arbeitszimmer
-      - media_player.kuche
-      - media_player.wohnzimmer
-      - media_player.badezimmer
-      message: >-
-        Die Mobilbox-Weiterleitung der Arbeits-SIM konnte von Home Assistant nicht ausgelesen werden.
-        Der Status ist deshalb nicht bestätigt. Prüfe ihn bitte am Telefon mit Sternchen Raute 21 Raute.
   mode: restart
 - id: calendar_shifts_living_sleep_profile_override_20261017
   alias: Calendar - Shifts - Wohnzimmer Sleep Mode heating profile
