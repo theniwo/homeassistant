@@ -2206,13 +2206,21 @@
   - variables:
       shift_events: '{{ shifts.get(''calendar.shifts'', {}).get(''events'', []) }}'
       shift_titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | join('' | '') }}'
+      selected_shift: >-
+        {% if 'früh' in shift_titles %}Frühschicht
+        {% elif 'support standby' in shift_titles %}Support Standby
+        {% elif 'freischicht' in shift_titles %}Freischicht
+        {% elif 'spät' in shift_titles %}Spätschicht
+        {% elif '4tw-frei' in shift_titles %}4TW-Frei
+        {% elif 'urlaub' in shift_titles %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
       early_alarm_time: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
       late_alarm_time: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
       free_alarm_time: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(1) * 60) | int %} {% set alarm = (start - lead) % 1440 %} {{ ''%02d:%02d'' | format(alarm // 60, alarm % 60) }}'
   - choose:
     - conditions:
       - condition: template
-        value_template: '{{ ''früh'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') == ''Automatisch'' }}'
+        value_template: "{{ (selected_shift | trim) == 'Frühschicht' and is_state('input_select.work_schedule_mode', 'Automatisch') }}"
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2223,7 +2231,7 @@
           message: Stell den Wecker für morgen früh um {{ early_alarm_time }} Uhr mit meinen Lieblingssongs
     - conditions:
       - condition: template
-        value_template: '{{ ''spät'' in shift_titles and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') == ''Automatisch'' }}'
+        value_template: "{{ (selected_shift | trim) == 'Spätschicht' and is_state('input_select.work_schedule_mode', 'Automatisch') }}"
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2234,7 +2242,7 @@
           message: Stell den Wecker für morgen früh um {{ late_alarm_time }} Uhr mit meinen Lieblingssongs
     - conditions:
       - condition: template
-        value_template: '{{ (''freischicht'' in shift_titles or ''support standby'' in shift_titles) and ''4tw-frei'' not in shift_titles and ''urlaub'' not in shift_titles and states(''input_select.work_schedule_mode'') != ''Krank'' }}'
+        value_template: "{{ (selected_shift | trim) in ['Support Standby', 'Freischicht'] and not is_state('input_select.work_schedule_mode', 'Krank') }}"
       sequence:
       - action: script.alexa_output_with_configured_volume
         data:
@@ -2273,6 +2281,14 @@
     response_variable: shift_calendar
   - variables:
       shift_titles: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | join('' | '') }}'
+      selected_shift: >-
+        {% if 'früh' in shift_titles %}Frühschicht
+        {% elif 'support standby' in shift_titles %}Support Standby
+        {% elif 'freischicht' in shift_titles %}Freischicht
+        {% elif 'spät' in shift_titles %}Spätschicht
+        {% elif '4tw-frei' in shift_titles %}4TW-Frei
+        {% elif 'urlaub' in shift_titles %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
   - choose:
     - conditions:
       - condition: trigger
@@ -2280,7 +2296,7 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: template
-        value_template: '{{ ''frühschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Frühschicht' }}"
       - condition: state
         entity_id: input_boolean.work_mode_state
         state: 'off'
@@ -2314,7 +2330,7 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: template
-        value_template: '{{ ''spätschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Spätschicht' }}"
       - condition: state
         entity_id: input_boolean.work_mode_state
         state: 'off'
@@ -2336,7 +2352,7 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: template
-        value_template: '{{ ''frühschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Frühschicht' }}"
       sequence:
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
@@ -2356,7 +2372,7 @@
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
       - condition: template
-        value_template: '{{ ''spätschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Spätschicht' }}"
       sequence:
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
@@ -2374,7 +2390,7 @@
       - condition: trigger
         id: early_end
       - condition: template
-        value_template: '{{ ''frühschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Frühschicht' }}"
       - condition: state
         entity_id: input_boolean.work_mode_state
         state: 'on'
@@ -2394,7 +2410,7 @@
       - condition: trigger
         id: late_end
       - condition: template
-        value_template: '{{ ''spätschicht'' in shift_titles }}'
+        value_template: "{{ (selected_shift | trim) == 'Spätschicht' }}"
       - condition: state
         entity_id: input_boolean.work_mode_state
         state: 'on'
@@ -2510,7 +2526,28 @@
   - condition: template
     value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - variables:
-      shift_found: '{% set target_day = (now() + timedelta(days=calendar_day_offset | int)).weekday() %}{% set titles = shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if target_day >= 5 %}false{% elif trigger.id.startswith(''free_'') %}{{ ''freischicht'' in titles or ''support standby'' in titles }}{% elif trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in titles or ''sv früh'' in titles or ''svv früh'' in titles }}{% else %}{{ ''spätschicht'' in titles or ''sv spät'' in titles or ''svv spät'' in titles }}{% endif %}'
+      selected_shift: >-
+        {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 %}Frühschicht
+        {% elif titles | select('search', 'support standby') | list | length > 0 %}Support Standby
+        {% elif titles | select('search', 'freischicht') | list | length > 0 %}Freischicht
+        {% elif titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 %}Spätschicht
+        {% elif titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei
+        {% elif titles | select('search', 'urlaub') | list | length > 0 %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
+      shift_found: >-
+        {% set target_day = (now() + timedelta(days=calendar_day_offset | int)).weekday() %}
+        {% if target_day >= 5 %}
+          false
+        {% elif trigger.id.startswith('early_') %}
+          {{ (selected_shift | trim) == 'Frühschicht' }}
+        {% elif trigger.id.startswith('free_') %}
+          {{ (selected_shift | trim) in ['Support Standby', 'Freischicht'] }}
+        {% elif trigger.id.startswith('late_') %}
+          {{ (selected_shift | trim) == 'Spätschicht' }}
+        {% else %}
+          false
+        {% endif %}
   - choose:
     - conditions:
       - condition: template
@@ -2636,8 +2673,18 @@
       free_match_today: '{{ current_time_key == free_today_key }}'
       free_match_tomorrow: '{{ current_time_key == free_tomorrow_key }}'
   - variables:
-      shift_type: "{{ 'fixed' if is_state('input_select.bt_disconnect_mode', 'Zur Uhrzeit') else ('early' if (early_match_today | bool) or (early_match_tomorrow | bool) else ('late' if (late_match_today | bool) or (late_match_tomorrow | bool) else 'free')) }}"
-      shift_day_offset: "{{ 1 if (early_match_tomorrow | bool) or (late_match_tomorrow | bool) or (free_match_tomorrow | bool) else 0 }}"
+      shift_type: >-
+        {% if is_state('input_select.bt_disconnect_mode', 'Zur Uhrzeit') %}fixed
+        {% elif (early_match_today | bool) or (early_match_tomorrow | bool) %}early
+        {% elif (free_match_today | bool) or (free_match_tomorrow | bool) %}free
+        {% else %}late{% endif %}
+      shift_day_offset: >-
+        {% if early_match_tomorrow | bool %}1
+        {% elif early_match_today | bool %}0
+        {% elif free_match_tomorrow | bool %}1
+        {% elif free_match_today | bool %}0
+        {% elif late_match_tomorrow | bool %}1
+        {% else %}0{% endif %}
       bluetooth_lead_seconds: '{{ states(''input_number.bt_disconnect_offset'') | int(60) }}'
       previous_mute_state: '{{ state_attr(''media_player.schlafzimmer'', ''is_volume_muted'') | default(false) | bool }}'
   - variables:
@@ -2659,15 +2706,18 @@
         {% else %}
         {% set target_day = (today_at('00:00') + timedelta(days=shift_day_offset | int)).weekday() %}
         {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
-        {% set day_off = titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 %}
-        {% if target_day >= 5 or day_off %}
+        {% if target_day >= 5 %}
           false
-        {% elif shift_type == 'early' %}
-          {{ titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 and is_state('input_select.work_schedule_mode', 'Automatisch') }}
-        {% elif shift_type == 'late' %}
-          {{ titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 and is_state('input_select.work_schedule_mode', 'Automatisch') }}
+        {% elif titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 %}
+          {{ (shift_type | trim) == 'early' and is_state('input_select.work_schedule_mode', 'Automatisch') }}
+        {% elif 'support standby' in titles %}
+          {{ (shift_type | trim) == 'free' }}
+        {% elif 'freischicht' in titles %}
+          {{ (shift_type | trim) == 'free' }}
+        {% elif titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 %}
+          {{ (shift_type | trim) == 'late' and is_state('input_select.work_schedule_mode', 'Automatisch') }}
         {% else %}
-          {{ titles | select('search', '(freischicht|support standby)') | list | length > 0 }}
+          false
         {% endif %}
         {% endif %}
   - condition: template
@@ -3275,9 +3325,17 @@
     response_variable: regional_holiday_calendar
   - variables:
       shift_titles: "{{ shift_calendar.get('calendar.shifts', {}).get('events', [])\n   | map(attribute='summary') | map('lower') | map('trim') | list }}"
-      early_shift_found: "{% set ns = namespace(found=false) %} {% for title in shift_titles %}\n  {% if title in ['frühschicht', 'sv früh', 'svv früh'] %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
-      late_shift_found: "{% set ns = namespace(found=false) %} {% for title in shift_titles %}\n  {% if title in ['spätschicht', 'sv spät', 'svv spät'] %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
-      free_home_day_found: '{% set ns = namespace(found=false) %}{% for title in shift_titles %}{% if title in [''4tw-frei'', ''urlaub''] %}{% set ns.found = true %}{% endif %}{% endfor %}{{ ns.found }}'
+      selected_shift: >-
+        {% if shift_titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 %}Frühschicht
+        {% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby
+        {% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht
+        {% elif shift_titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 %}Spätschicht
+        {% elif shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei
+        {% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
+      early_shift_found: "{{ (selected_shift | trim) == 'Frühschicht' }}"
+      late_shift_found: "{{ (selected_shift | trim) == 'Spätschicht' }}"
+      free_home_day_found: "{{ (selected_shift | trim) in ['4TW-Frei', 'Urlaub'] }}"
       current_minute: '{{ now().hour * 60 + now().minute }}'
       current_weekday: '{{ now().weekday() }}'
       shift_start_minutes: '{% set entity = ''input_datetime.early_shift_start'' if early_shift_found | bool else ''input_datetime.late_shift_start'' %} {% set value = states(entity).split('':'') %} {{ (value[0] | int) * 60 + (value[1] | int) }}'
@@ -3290,7 +3348,7 @@
       alarm_minutes: '{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) }}'
       sleep_on_minutes: '{{ (alarm_minutes | int) - (sleep_lead_minutes | int) }}'
       morning_living_minutes: '{{ (alarm_minutes | int) - (living_lead_minutes | int) }}'
-      free_shift_event_found: '{% set ns = namespace(found=false) %}{% for title in shift_titles %}{% if ''freischicht'' in title or ''support standby'' in title %}{% set ns.found = true %}{% endif %}{% endfor %}{{ ns.found }}'
+      free_shift_event_found: "{{ (selected_shift | trim) in ['Support Standby', 'Freischicht'] }}"
       mode_is_sick: '{{ is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
       mode_is_free_shift: '{{ is_state(''input_select.work_schedule_mode'', ''Freischicht'') }}'
       sick_offset: '{{ states(''input_number.sick_temp_offset'') | float(2) if mode_is_sick | bool else 0 }}'
@@ -3540,7 +3598,20 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_pill_reminder' and 'früh' in title) or (trigger.id == 'late_pill_reminder' and 'spät' in title) or (trigger.id == 'free_pill_reminder' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+      shift_found: >-
+        {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', [])
+           | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if titles | select('search', 'früh') | list | length > 0 %}
+          {{ trigger.id.startswith('early_') }}
+        {% elif titles | select('search', 'support standby') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'freischicht') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'spät') | list | length > 0 %}
+          {{ trigger.id.startswith('late_') }}
+        {% else %}
+          false
+        {% endif %}
   - variables:
       spoken_schedule_name: "{% if trigger.id == 'early_pill_reminder' %}Deine Frühschicht{% elif trigger.id == 'late_pill_reminder' %}Deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}Dein Support Standby{% else %}Deine Freischicht{% endif %}"
   - condition: template
@@ -3590,7 +3661,20 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_bedtime_pill_reminder' and 'früh' in title) or (trigger.id == 'late_bedtime_pill_reminder' and 'spät' in title) or (trigger.id == 'free_bedtime_pill_reminder' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+      shift_found: >-
+        {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', [])
+           | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if titles | select('search', 'früh') | list | length > 0 %}
+          {{ trigger.id.startswith('early_') }}
+        {% elif titles | select('search', 'support standby') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'freischicht') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'spät') | list | length > 0 %}
+          {{ trigger.id.startswith('late_') }}
+        {% else %}
+          false
+        {% endif %}
   - condition: template
     value_template: '{{ shift_found | bool }}'
   - action: script.alexa_output_with_configured_volume
@@ -3701,7 +3785,20 @@
       end_date_time: '{{ calendar_query_end }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_wind_down' and 'früh' in title) or (trigger.id == 'late_wind_down' and 'spät' in title) or (trigger.id == 'free_wind_down' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+      shift_found: >-
+        {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', [])
+           | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if titles | select('search', 'früh') | list | length > 0 %}
+          {{ trigger.id.startswith('early_') }}
+        {% elif titles | select('search', 'support standby') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'freischicht') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'spät') | list | length > 0 %}
+          {{ trigger.id.startswith('late_') }}
+        {% else %}
+          false
+        {% endif %}
   - condition: template
     value_template: '{{ shift_day_weekday | int < 5 }}'
   - condition: template
@@ -3748,7 +3845,20 @@
       end_date_time: '{{ (today_at(''00:00'') + timedelta(days=1)).isoformat() }}'
     response_variable: shift_calendar
   - variables:
-      shift_found: "{% set events = shift_calendar.get('calendar.shifts', {}).get('events', []) %} {% set ns = namespace(found=false, day_off=false) %} {% for event in events %}\n  {% set title = event.summary | default('') | lower | trim %}\n  {% if '4tw-frei' in title or 'urlaub' in title %}\n    {% set ns.day_off = true %}\n  {% endif %}\n  {% if (trigger.id == 'early_shift_start_announcement' and 'früh' in title) or (trigger.id == 'late_shift_start_announcement' and 'spät' in title) or (trigger.id == 'free_shift_start_announcement' and ('freischicht' in title or 'support standby' in title)) %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found and not ns.day_off }}"
+      shift_found: >-
+        {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', [])
+           | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if titles | select('search', 'früh') | list | length > 0 %}
+          {{ trigger.id.startswith('early_') }}
+        {% elif titles | select('search', 'support standby') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'freischicht') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif titles | select('search', 'spät') | list | length > 0 %}
+          {{ trigger.id.startswith('late_') }}
+        {% else %}
+          false
+        {% endif %}
   - variables:
       spoken_shift_name: "{% if trigger.id == 'early_shift_start_announcement' %}deine Frühschicht{% elif trigger.id == 'late_shift_start_announcement' %}deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}dein Support Standby{% else %}deine Freischicht{% endif %}"
   - condition: template
@@ -3808,7 +3918,19 @@
       holiday_events: '{{ holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) }}'
       regional_holiday_events: '{{ regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list }}'
       titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
-      work_shift_found: '{% set event_titles = shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list %}{% if trigger.id.startswith(''early_'') %}{{ ''frühschicht'' in event_titles or ''sv früh'' in event_titles or ''svv früh'' in event_titles }}{% elif trigger.id.startswith(''late_'') %}{{ ''spätschicht'' in event_titles or ''sv spät'' in event_titles or ''svv spät'' in event_titles }}{% else %}{{ (''freischicht'' in event_titles or ''support standby'' in event_titles) and ''4tw-frei'' not in event_titles and ''urlaub'' not in event_titles }}{% endif %}'
+      work_shift_found: >-
+        {% set event_titles = shift_events | map(attribute='summary') | map('lower') | map('trim') | list %}
+        {% if event_titles | select('search', 'früh') | list | length > 0 %}
+          {{ trigger.id.startswith('early_') }}
+        {% elif event_titles | select('search', 'support standby') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif event_titles | select('search', 'freischicht') | list | length > 0 %}
+          {{ trigger.id.startswith('free_') }}
+        {% elif event_titles | select('search', 'spät') | list | length > 0 %}
+          {{ trigger.id.startswith('late_') }}
+        {% else %}
+          false
+        {% endif %}
   - condition: template
     value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
   - if:
@@ -4734,7 +4856,7 @@
       free_day_found: '{{ event_titles | select(''search'', ''(4tw-frei|urlaub)'') | list | length > 0 }}'
       weekday: '{{ now().weekday() < 5 }}'
       holiday_found: "{% set bavaria = holiday_calendar.get('calendar.deutschland_by', {}).get('events', []) %} {% set regional = bavarian_holiday_calendar.get('calendar.feiertage_in_deutschland', {}).get('events', [])\n  | map(attribute='summary') | map('lower') | select('search', 'mariä himmelfahrt') | list %}\n{{ bavaria | length > 0 or regional | length > 0 }}"
-      automatic_profile: "{% if not (weekday | bool) or (free_day_found | bool) %}Urlaub {% elif is_state('input_select.work_schedule_mode', 'Freischicht') %}Freischicht {% elif early_shift_found | bool %}Frühschicht {% elif late_shift_found | bool %}Spätschicht {% elif free_shift_found | bool or (event_titles | length == 0 and not (holiday_found | bool)) %}Freischicht\n{% else %}Deaktiviert{% endif %}"
+      automatic_profile: "{% if not (weekday | bool) %}Urlaub {% elif early_shift_found | bool %}Frühschicht {% elif free_shift_found | bool %}Freischicht {% elif late_shift_found | bool %}Spätschicht {% elif free_day_found | bool %}Urlaub {% elif is_state('input_select.work_schedule_mode', 'Freischicht') %}Freischicht {% elif event_titles | length == 0 and not (holiday_found | bool) %}Freischicht\n{% else %}Deaktiviert{% endif %}"
       effective_profile: '{{ automatic_profile if selected_profile == ''Automatisch'' else selected_profile }}'
       profile_start_entity: '{% if effective_profile == ''Frühschicht'' %}input_datetime.early_shift_start {% elif effective_profile == ''Spätschicht'' %}input_datetime.late_shift_start {% elif effective_profile == ''Freischicht'' %}input_datetime.free_shift_start {% elif effective_profile == ''Urlaub'' %}input_datetime.vacation_wake_time {% else %}input_datetime.early_shift_start{% endif %}'
       profile_start_minutes: '{% set parts = states(profile_start_entity).split('':'') %} {{ (parts[0] | int) * 60 + (parts[1] | int) }}'
@@ -4865,13 +4987,16 @@
   - variables:
       shift_titles: "{{ tomorrow_calendar.get('calendar.shifts', {}).get('events', [])
    | map(attribute='summary') | map('lower') | map('trim') | list }}"
-      early_shift_found: "{{ shift_titles | select('search', 'früh') | list | length > 0 }}"
-      late_shift_found: "{{ shift_titles | select('search', 'spät') | list | length > 0 }}"
-      free_shift_found: "{{ shift_titles | select('search', '(freischicht|support standby)') | list | length > 0 }}"
-      free_day_found: "{{ shift_titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 }}"
       mode_is_sick: "{{ is_state('input_select.work_schedule_mode', 'Krank') }}"
-      shift_start_entity: "{% if shift_titles | select('search', 'früh') | list | length > 0 %}input_datetime.early_shift_start{% elif shift_titles | select('search', 'spät') | list | length > 0 %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
-      shift_label: "{% if shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei{% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub{% elif shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht{% elif shift_titles | select('search', 'spät') | list | length > 0 %}Spätschicht{% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby{% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht{% else %}Kein Schichteintrag{% endif %}"
+      shift_label: >-
+        {% if shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht
+        {% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby
+        {% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht
+        {% elif shift_titles | select('search', 'spät') | list | length > 0 %}Spätschicht
+        {% elif shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei
+        {% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
+      shift_start_entity: "{% if (shift_label | trim) == 'Frühschicht' %}input_datetime.early_shift_start{% elif (shift_label | trim) == 'Spätschicht' %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
   - variables:
       shift_start_minutes: "{% set t = states(shift_start_entity).split(':') %}{{ (t[0] | int) * 60 + (t[1] | int) }}"
       alarm_lead_minutes: "{{ (states('input_number.alarm_offset') | float(1) * 60) | int }}"
@@ -4882,7 +5007,7 @@
       bedtime_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) }}"
       wind_down_raw_minutes: "{{ (shift_start_minutes | int) - (alarm_lead_minutes | int) - (sleep_minutes | int) - (wind_down_minutes | int) }}"
       dnd_raw_minutes: "{{ (bedtime_raw_minutes | int) - (dnd_lead_minutes | int) }}"
-      alarm_is_planned: "{{ (tomorrow_weekday | int < 5) and not (free_day_found | bool) and not (mode_is_sick | bool) and (((early_shift_found | bool or late_shift_found | bool) and is_state('input_select.work_schedule_mode', 'Automatisch')) or (free_shift_found | bool)) }}"
+      alarm_is_planned: "{{ (tomorrow_weekday | int < 5) and not (mode_is_sick | bool) and (((shift_label | trim) in ['Frühschicht', 'Spätschicht'] and is_state('input_select.work_schedule_mode', 'Automatisch')) or ((shift_label | trim) in ['Support Standby', 'Freischicht'])) }}"
       alarm_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(alarm_raw_minutes | int))).strftime('%H:%M') }}"
       bedtime_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(bedtime_raw_minutes | int))).strftime('%H:%M') }}"
       wind_down_display: "{{ (today_at('00:00') + timedelta(days=1, minutes=(wind_down_raw_minutes | int))).strftime('%H:%M') }}"
@@ -4894,16 +5019,16 @@
       value: >-
         {% if tomorrow_weekday | int >= 5 %}
           Wochenende · kein Wecker
-        {% elif free_day_found | bool %}
-          {{ shift_label }} · kein Wecker
-        {% elif mode_is_sick | bool and shift_label != 'Kein Schichteintrag' %}
-          {{ shift_label }} · Krankmodus · kein Wecker
-        {% elif shift_label == 'Kein Schichteintrag' %}
+        {% elif (shift_label | trim) in ['4TW-Frei', 'Urlaub'] %}
+          {{ shift_label | trim }} · kein Wecker
+        {% elif mode_is_sick | bool and (shift_label | trim) != 'Kein Schichteintrag' %}
+          {{ shift_label | trim }} · Krankmodus · kein Wecker
+        {% elif (shift_label | trim) == 'Kein Schichteintrag' %}
           Kein Schichteintrag · kein Wecker
         {% elif not (alarm_is_planned | bool) %}
-          {{ shift_label }} · kein Wecker (Arbeitsmodus {{ states('input_select.work_schedule_mode') }})
+          {{ shift_label | trim }} · kein Wecker (Arbeitsmodus {{ states('input_select.work_schedule_mode') }})
         {% else %}
-          {{ shift_label }} · DND {{ dnd_display }} · Runterfahren {{ wind_down_display }} · Schlafenszeit {{ bedtime_display }} · Wecker {{ alarm_display }}
+          {{ shift_label | trim }} · DND {{ dnd_display }} · Runterfahren {{ wind_down_display }} · Schlafenszeit {{ bedtime_display }} · Wecker {{ alarm_display }}
         {% endif %}
   mode: restart
 
@@ -5001,22 +5126,29 @@
                 end_date_time: '{{ calendar_query_end }}'
               response_variable: shift_calendar
             - variables:
+                selected_shift: >-
+                  {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
+                  {% if titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 %}Frühschicht
+                  {% elif titles | select('search', 'support standby') | list | length > 0 %}Support Standby
+                  {% elif titles | select('search', 'freischicht') | list | length > 0 %}Freischicht
+                  {% elif titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 %}Spätschicht
+                  {% elif titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei
+                  {% elif titles | select('search', 'urlaub') | list | length > 0 %}Urlaub
+                  {% else %}Kein Schichteintrag{% endif %}
                 shift_found: >-
                   {% set weekday = (today_at('00:00') + timedelta(days=calendar_day_offset | int)).weekday() %}
-                  {% set titles = shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | map('trim') | list %}
-                  {% set day_off = titles | select('search', '(4tw-frei|urlaub)') | list | length > 0 %}
-                  {% if weekday >= 5 or day_off %}
+                  {% if weekday >= 5 %}
                     false
                   {% elif trigger.id == 'early_connect' %}
-                    {{ titles | select('search', '(frühschicht|sv früh|svv früh)') | list | length > 0 }}
-                  {% elif trigger.id == 'late_connect' %}
-                    {{ titles | select('search', '(spätschicht|sv spät|svv spät)') | list | length > 0 }}
+                    {{ (selected_shift | trim) == 'Frühschicht' }}
+                  {% elif trigger.id == 'free_connect' %}
+                    {{ (selected_shift | trim) in ['Support Standby', 'Freischicht'] }}
                   {% else %}
-                    {{ titles | select('search', '(freischicht|support standby)') | list | length > 0 }}
+                    {{ (selected_shift | trim) == 'Spätschicht' }}
                   {% endif %}
             - if:
                 - condition: template
                   value_template: "{{ (shift_found | bool) and not is_state('input_select.work_schedule_mode', 'Krank') }}"
               then:
                 - action: script.bedroom_echo_bluetooth_connect
-  mode: single
+  mode: restart
