@@ -67,8 +67,8 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_number.phone_handover_offset` | Phone handover delay | Delay after the handover clock time before announcements, minutes |
 | `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | Minutes before the follow-up announcement; current value 10, range 1–30, step 1 |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Select alarm, bedtime, or fixed-time disconnect |
-| `input_number.bt_disconnect_offset` | BT disconnect lead | Disconnect lead before the alarm, seconds |
-| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | Delay after bedtime, hours |
+| `input_number.bt_disconnect_offset` | BT alarm lead | Disconnect lead before the alarm, seconds |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep delay | Delay after bedtime before Echo Bluetooth disconnects, hours |
 | `input_datetime.bt_disconnect_time` | Fixed disconnect time | Daily disconnect time |
 | `input_number.bt_connect_offset` | BT connect delay | Connect the phone to the bedroom Echo after scheduled Sleep Mode, minutes; default 5, range 0–20 |
 | `input_number.bt_connect_retry_interval` | BT connect retry interval | Minutes between attempts to connect the phone to the bedroom Echo; default 5, range 1–30, step 1 |

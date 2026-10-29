@@ -36,7 +36,7 @@ wind-down        = bedtime - wind-down lead
 DND starts       = bedtime - DND lead
 morning pills    = shift start - morning pill lead
 bedtime pills    = bedtime - bedtime pill lead
-BT disconnect    = selected schedule: alarm - disconnect lead, bedtime + disconnect delay, or fixed time
+BT disconnect    = selected schedule: alarm - BT alarm lead, bedtime + BT sleep delay, or fixed time
 BT connection    = bedtime + BT connect delay; retry until source confirms, within configured attempt limit
 wake lights      = alarm time + wake light delay
 ```
@@ -116,8 +116,8 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Time to act on the prompt; delay before the status follow-up |
 | `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Delay after phone handover time before announcements |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
-| `input_number.bt_disconnect_offset` | BT disconnect lead | 30 s | 0–120 s / 1 s | Disconnect before alarm for `Zum Wecker` |
-| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | 1.5 h | 0–6 h / 0.25 h | Disconnect after bedtime for `Zum Schlafen` |
+| `input_number.bt_disconnect_offset` | BT alarm lead | 30 s | 0–120 s / 1 s | Disconnect before alarm for `Zum Wecker` |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep delay | 1.5 h | 0–6 h / 0.25 h | Disconnect after bedtime for `Zum Schlafen` |
 | `input_datetime.bt_disconnect_time` | Fixed disconnect time | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
 | `input_number.bt_connect_offset` | BT connect delay | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
 | `input_number.bt_connect_retry_interval` | BT connect retry interval | 5 min | 1–30 min / 1 min | Wait between unsuccessful Bluetooth connection attempts |

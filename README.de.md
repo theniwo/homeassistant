@@ -36,7 +36,7 @@ Runterfahren     = Schlafenszeit - Runterfahr-Lead
 DND beginnt      = Schlafenszeit - DND-Lead
 Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Lead
 Abend-Tabletten  = Schlafenszeit - Zubettgeh-Lead
-BT trennen       = gewählter Plan: Wecker - Disconnect-Lead, Schlafenszeit + Disconnect-Delay oder feste Uhrzeit
+BT trennen       = gewählter Plan: Wecker - BT-Alarm-Lead, Schlafenszeit + BT-Sleep-Delay oder feste Uhrzeit
 BT verbinden     = Schlafenszeit + BT-Connect-Delay; bei Bedarf bis zum Versuchslimit erneut versuchen
 Aufwachlicht     = Wecker + Wake-light-Delay
 ```
@@ -116,8 +116,8 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Zeit für die Mobilbox-Aktion; danach Status-Folgeansage |
 | `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Verzögerung nach dem Zeitpunkt der Telefonübergabe |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
-| `input_number.bt_disconnect_offset` | BT disconnect lead | 30 s | 0–120 s / 1 s | Trennung vor dem Wecker bei „Zum Wecker“ |
-| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | 1,5 h | 0–6 h / 0,25 h | Trennung nach Schlafenszeit bei „Zum Schlafen“ |
+| `input_number.bt_disconnect_offset` | BT alarm lead | 30 s | 0–120 s / 1 s | Trennung vor dem Wecker bei „Zum Wecker“ |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep delay | 1,5 h | 0–6 h / 0,25 h | Trennung nach Schlafenszeit bei „Zum Schlafen“ |
 | `input_datetime.bt_disconnect_time` | Fixed disconnect time | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
 | `input_number.bt_connect_offset` | BT connect delay | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
 | `input_number.bt_connect_retry_interval` | BT connect retry interval | 5 min | 1–30 min / 1 min | Wartezeit zwischen erfolglosen Bluetooth-Verbindungsversuchen |
