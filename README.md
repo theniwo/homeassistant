@@ -43,7 +43,7 @@ wake lights      = alarm time + wake light delay
 
 In the Home Assistant UI, `Lead` means before the reference event and `Delay` means after it. The helper stores the time amount; the automation subtracts a lead and adds a delay. Existing entity IDs still contain `_offset` in places so automations remain compatible; those IDs are technical references, not the visible timing direction. `sick_temp_offset` is a temperature difference, and `sleep_duration` remains a duration.
 
-`input_select.bt_disconnect_mode` offers three schedules: `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (default 03:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone. After the configured connection time, Home Assistant checks the Echo's selected source and retries every `bt_connect_retry_interval` minutes until connected or `bt_connect_retry_attempts` total attempts have run.
+`input_select.bt_disconnect_mode` offers three schedules and starts as `Zum Schlafen` after a Home Assistant restart. `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (initial value 00:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone. After the configured connection time, Home Assistant checks the Echo's selected source and retries every `bt_connect_retry_interval` minutes until connected or `bt_connect_retry_attempts` total attempts have run.
 
 ### Sleep Mode and alarm dismissal
 
@@ -115,10 +115,10 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.sick_pill_offset` | Sick meds delay | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
 | `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Time to act on the prompt; delay before the status follow-up |
 | `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Delay after phone handover time before announcements |
-| `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
+| `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Select schedule; startup default after restart is `Zum Schlafen` |
 | `input_number.bt_disconnect_offset` | BT alarm lead | 30 s | 0–120 s / 1 s | Disconnect before alarm for `Zum Wecker` |
 | `input_number.bt_sleep_disconnect_offset_hours` | BT sleep delay | 1.5 h | 0–6 h / 0.25 h | Disconnect after bedtime for `Zum Schlafen` |
-| `input_datetime.bt_disconnect_time` | Fixed disconnect time | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
+| `input_datetime.bt_disconnect_time` | Fixed disconnect time | 00:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
 | `input_number.bt_connect_offset` | BT connect delay | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
 | `input_number.bt_connect_retry_interval` | BT connect retry interval | 5 min | 1–30 min / 1 min | Wait between unsuccessful Bluetooth connection attempts |
 | `input_number.bt_connect_retry_attempts` | BT connect retry attempts | 3 attempts | 1–10 / 1 | Total connection attempts, including the first |

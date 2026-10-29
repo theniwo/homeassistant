@@ -101,6 +101,7 @@ input_text:
 input_select:
   bt_disconnect_mode:
     name: BT disconnect mode
+    initial: Zum Schlafen
     options:
       - Zum Wecker
       - Zum Schlafen
@@ -156,6 +157,7 @@ input_number:
 input_datetime:
   bt_disconnect_time:
     name: BT disconnect time
+    initial: "00:00"
     has_date: false
     has_time: true
     icon: mdi:clock-outline
