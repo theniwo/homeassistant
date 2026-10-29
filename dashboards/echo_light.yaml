@@ -12,23 +12,23 @@ entities:
   - entity: input_number.wake_light_delay
     name: Wake light delay
   - type: section
-    label: Bluetooth
-  - entity: input_select.bt_disconnect_mode
-    name: BT disconnect schedule
+    label: BT Connection
+  - entity: input_text.bt_phone_source
+    name: BT phone source
   - entity: input_number.bt_connect_offset
     name: BT connect delay
-  - type: section
-    label: BT Connection
   - entity: input_number.bt_connect_retry_interval
     name: BT retry interval
   - entity: input_number.bt_connect_retry_attempts
     name: BT retry attempts
+  - type: section
+    label: BT Disconnect
+  - entity: input_select.bt_disconnect_mode
+    name: BT disconnect schedule
   - entity: input_number.bt_disconnect_offset
     name: BT disconnect lead
   - entity: input_number.bt_sleep_disconnect_offset_hours
     name: BT sleep disconnect delay
   - entity: input_datetime.bt_disconnect_time
     name: Fixed disconnect time
-  - entity: input_text.bt_phone_source
-    name: BT phone source
 show_header_toggle: false
