@@ -115,7 +115,7 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_number.pill_morning_offset` | Meds morning lead | 0.25 h (15 min) | 0–2 h / 0.25 h | Morning pill reminder before shift start |
 | `input_number.pill_bedtime_offset` | Meds evening lead | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder before bedtime |
 | `input_number.sick_pill_offset` | Sick meds delay | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
-| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Time to act on the prompt; delay before the status follow-up |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM mailbox prompt timeout | 10 min | 1–30 min / 1 min | Time to act on the prompt; delay before the status follow-up |
 | `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Delay after phone handover time before announcements |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Select schedule; startup default after restart is `Zum Schlafen` |
 | `input_number.bt_disconnect_offset` | BT alarm lead | 30 s | 0–120 s / 1 s | Disconnect before alarm for `Zum Wecker` |

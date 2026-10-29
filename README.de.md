@@ -115,7 +115,7 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_number.pill_morning_offset` | Meds morning lead | 0,25 h (15 min) | 0–2 h / 0,25 h | Erinnerung vor Schichtbeginn |
 | `input_number.pill_bedtime_offset` | Meds evening lead | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
 | `input_number.sick_pill_offset` | Sick meds delay | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
-| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Zeit für die Mobilbox-Aktion; danach Status-Folgeansage |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM mailbox prompt timeout | 10 min | 1–30 min / 1 min | Zeit für die Mailbox-Aktion; danach Status-Folgeansage |
 | `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Verzögerung nach dem Zeitpunkt der Telefonübergabe |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Plan wählen; Startwert nach Neustart ist `Zum Schlafen` |
 | `input_number.bt_disconnect_offset` | BT alarm lead | 30 s | 0–120 s / 1 s | Trennung vor dem Wecker bei „Zum Wecker“ |

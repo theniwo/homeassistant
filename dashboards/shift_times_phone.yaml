@@ -10,9 +10,9 @@ entities:
   - entity: input_datetime.phone_handover_time
   - entity: input_number.phone_handover_offset
   - type: section
-    label: Work SIM voicemail
+    label: Work SIM mailbox
   - entity: input_number.work_sim_voicemail_prompt_timeout
-    name: Voicemail prompt timeout
+    name: Mailbox prompt timeout
     icon: mdi:timer-outline
   - entity: script.work_sim_voicemail_enable_prompt
     name: Prompt to enable voicemail
