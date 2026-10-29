@@ -24,22 +24,24 @@ Mit liebevoller Hochachtung vor [NARKOZ/hacker-scripts](https://github.com/NARKO
 `calendar.shifts` ist die Quelle für geplante Schichten. Einträge können ganztägig sein und sich über mehrere Tage erstrecken. Deshalb fragen die Automationen den konkreten Tag mit `calendar.get_events` ab, statt sich nur auf den aktuellen Kalenderzustand zu verlassen.
 
 Der Arbeitsmodus steht derzeit auf **Automatisch**. An Werktagen steuern konkrete Kalendereinträge `Frühschicht` und `Spätschicht` den Arbeitsmodus des Smartphones und den Schichtablauf. Einträge `Freischicht` und `Support Standby` verwenden die Freischichtzeiten für Wecker, Schlaf-/DND-Zeitplan, Tablettenerinnerungen und Schichtbeginn-Ansage. Die Samsung-Work-Mode-Automation selbst behandelt derzeit nur Früh- und Spätschichten. `4TW-Frei` und `Urlaub` gelten als freie Tage. Samstags und sonntags wird kein Arbeitswecker gestellt. Ein bayerischer Feiertag unterdrückt keine ausdrücklich eingetragene Schicht. Ohne Schichteintrag wird kein Alexa-Wecker gestellt. An einem normalen, nicht anderweitig markierten Werktag kann die Heizung dennoch dem Freischichtplan folgen; Wochenende, freie Kalendertage, Feiertage und Krankmodus haben eigene Heizregeln. Im Modus `Krank` löscht Home Assistant aktive Alexa-Wecker und plant keinen neuen. Außerdem unterdrückt `Krank` kalendergesteuerten Sleep Mode und neue automatische DND-Aktivierungen sowie Work-Mode-Starts und arbeitsbezogene Ansagen. Ein bereits aktiver DND-Zustand wird im Krank-Modus nicht ungefragt abgeschaltet. Manuelle Sleep-Mode- und DND-Steuerung sowie das Krank-Heizprofil bleiben davon unberührt.
-Bei jeder Änderung von `input_boolean.work_mode_state` sagen alle Echos an, ob die sofortige Mobilbox-Weiterleitung ein- oder ausgeschaltet werden soll und wie viele Minuten dafür bleiben. Zusätzlich erhält das S25 eine Ja/Nein-Meldung. „Ja“ öffnet den Wähler mit dem passenden Steuercode; dort müssen Arbeits-SIM und Anruf noch bestätigt werden. „Nein“ lässt die Netzeinstellung unverändert. `input_number.work_sim_voicemail_prompt_timeout` steuert sowohl den Ablauf der Meldung als auch die Verzögerung bis zur Folgeansage (Standard 5 Minuten, 1–30 Minuten in 1-Minuten-Schritten). Danach melden die Echos, dass der Status nicht bestätigt werden kann, und nennen den Prüfcode `*#21#`. Home Assistant kann die MMI-Antwort des Telefonwählers nicht auslesen und behauptet deshalb nicht, die Weiterleitung sei ein- oder ausgeschaltet.
+Bei jeder Änderung von `input_boolean.work_mode_state` sagen alle Echos an, ob die sofortige Mobilbox-Weiterleitung ein- oder ausgeschaltet werden soll und wie viele Minuten dafür bleiben. Zusätzlich erhält das S25 eine Ja/Nein-Meldung. „Ja“ öffnet den Wähler mit dem passenden Steuercode; dort müssen Arbeits-SIM und Anruf noch bestätigt werden. „Nein“ lässt die Netzeinstellung unverändert. `input_number.work_sim_voicemail_prompt_timeout` steuert sowohl den Ablauf der Meldung als auch die Verzögerung bis zur Folgeansage (aktuell 10 Minuten, 1–30 Minuten in 1-Minuten-Schritten). Danach melden die Echos, dass der Status nicht bestätigt werden kann, und nennen den Prüfcode `*#21#`. Home Assistant kann die MMI-Antwort des Telefonwählers nicht auslesen und behauptet deshalb nicht, die Weiterleitung sei ein- oder ausgeschaltet.
 Die Karte „Schichtzeiten & Telefon“ im Dashboard **Home 🏠** bietet außerdem getrennte Aktionen zum manuellen Ein- und Ausschalten der Weiterleitung. Sie ändern den Work Mode nicht, sondern senden eine zeitlich begrenzte Handy-Meldung, die den Wähler erst nach Bestätigung öffnet.
 
 Die wichtigsten Zeitberechnungen lauten:
 
 ```text
-Wecker           = Schichtbeginn - Wecker-Offset
+Wecker           = Schichtbeginn - Wecker-Lead
 Schlafenszeit    = Wecker - Schlafdauer
-Runterfahren     = Schlafenszeit - Runterfahr-Offset
-DND beginnt     = Schlafenszeit - DND-Offset
-Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Offset
-Abend-Tabletten = Schlafenszeit - Zubettgeh-Tabletten-Offset
-BT trennen       = gewählter Plan: Wecker - Offset, Schlafenszeit + Offset oder feste Uhrzeit
-BT verbinden      = Schlafenszeit + BT-Verbindungs-Offset; bei Bedarf bis zum Versuchslimit erneut versuchen
+Runterfahren     = Schlafenszeit - Runterfahr-Lead
+DND beginnt      = Schlafenszeit - DND-Lead
+Morgen-Tabletten = Schichtbeginn - Morgen-Tabletten-Lead
+Abend-Tabletten  = Schlafenszeit - Zubettgeh-Lead
+BT trennen       = gewählter Plan: Wecker - Disconnect-Lead, Schlafenszeit + Disconnect-Delay oder feste Uhrzeit
+BT verbinden     = Schlafenszeit + BT-Connect-Delay; bei Bedarf bis zum Versuchslimit erneut versuchen
 Aufwachlicht     = Wecker + Wake-light-Delay
 ```
+
+In der Home-Assistant-Oberfläche bedeutet `Lead`, dass ein Ereignis vor dem Bezugspunkt liegt, und `Delay`, dass es danach liegt. Der Helper speichert den Zeitbetrag; die Automation zieht einen Lead ab und addiert einen Delay. Bestehende Entity-IDs enthalten teils weiterhin `_offset`, damit die Automationen kompatibel bleiben; sie sind technische Referenzen und geben nicht die sichtbare Zeitrichtung an. `sick_temp_offset` ist ein Temperaturunterschied und `sleep_duration` eine Dauer.
 
 `input_select.bt_disconnect_mode` bietet drei Pläne: `Zum Wecker` verwendet Weckerzeit minus `bt_disconnect_offset`; `Zum Schlafen` verwendet Schlafenszeit plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` verwendet täglich `bt_disconnect_time` (Standard 03:00). Die ersten beiden folgen dem Kalender für Frühschicht, Spätschicht und Freischicht/Support Standby; Wochenende, `4TW-Frei`, `Urlaub` und Krankmodus lösen dort keinen kalendergesteuerten Disconnect aus. Die feste Uhrzeit läuft täglich, außer im Krankmodus. Home Assistant weist das Schlafzimmer-Echo an, auf `Local Speaker` umzuschalten. Die HA-App kann eine einzelne gekoppelte Bluetooth-Verbindung nicht direkt trennen und schaltet auch nicht das Bluetooth am Smartphone aus. Nach dem geplanten Verbindungszeitpunkt prüft Home Assistant die ausgewählte Echo-Quelle und wiederholt den Verbindungsversuch bis zur Verbindung oder bis das eingestellte Versuchslimit erreicht ist.
 
@@ -61,12 +63,12 @@ flowchart LR
 ```mermaid
 flowchart LR
     C[Schichtkalender] --> S[Helper Schichtbeginn]
-    S --> A[Wecker = Beginn - Wecker-Offset]
+    S --> A[Wecker = Beginn - Wecker-Lead]
     A --> B[Schlafenszeit = Wecker - Schlafdauer]
     A --> L[Aufwachlicht = Wecker + Wake-light-Delay]
-    B --> W[Runterfahren = Schlafenszeit - Runterfahr-Offset]
-    B --> D[DND = Schlafenszeit - DND-Offset]
-    B --> BC[BT verbinden = Schlafenszeit + BT-Offset]
+    B --> W[Runterfahren = Schlafenszeit - Runterfahr-Lead]
+    B --> D[DND = Schlafenszeit - DND-Lead]
+    B --> BC[BT verbinden = Schlafenszeit + BT-Connect-Delay]
     A --> BD[BT-Trennplan: Wecker, Schlafenszeit oder feste Uhrzeit]
     S --> M[Work Mode bei Beginn an, bei Schichtende aus]
 ```
@@ -100,28 +102,28 @@ Alle Werte dieser Tabellen lassen sich in Home Assistant ändern. Einstellbereic
 | `input_datetime.echo_quiet_time` | 22:00 | Beginn der Echo-Ruhezeit |
 | `input_datetime.echo_fallback_time` | 12:00 | Tagsüber-Lautstärke, falls heute kein Wecker geplant ist |
 
-### Relative Offsets
+### Relative Zeit-Helper
 
-| Helper | Aktueller Wert | Bereich / Schritt | Verwendung |
-| --- | ---: | --- | --- |
-| `input_number.alarm_offset` | 1 h | 0–3 h / 0,25 h | Wecker vor Schichtbeginn |
-| `input_number.sleep_duration` | 9 h | 6–12 h / 0,25 h | Schlafenszeit relativ zum Wecker |
-| `input_number.wind_down_offset` | 3 h | 0–6 h / 0,25 h | Ansage zum Runterfahren vor der Schlafenszeit |
-| `input_number.dnd_offset` | 3 h | 0–4 h / 0,25 h | DND beginnt vor der berechneten Schlafenszeit |
-| `input_number.pill_morning_offset` | 0,25 h (15 min) | 0–2 h / 0,25 h | Erinnerung vor Schichtbeginn |
-| `input_number.pill_bedtime_offset` | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
-| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
-| `input_number.work_sim_voicemail_prompt_timeout` | 5 min | 1–30 min / 1 min | Zeit für die Mobilbox-Aktion; Verzögerung bis zur Status-Folgeansage |
-| `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Verzögerung vor Telefonansagen |
-| `input_select.bt_disconnect_mode` | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
-| `input_number.bt_disconnect_offset` | 30 s | 0–120 s / 1 s | Abstand vor dem Wecker bei „Zum Wecker“ |
-| `input_number.bt_sleep_disconnect_offset_hours` | 1,25 h | 0–6 h / 0,25 h | Abstand nach Schlafenszeit bei „Zum Schlafen“ |
-| `input_datetime.bt_disconnect_time` | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
-| `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
-| `input_number.bt_connect_retry_interval` | 5 min | 1–30 min / 1 min | Wartezeit zwischen erfolglosen Bluetooth-Verbindungsversuchen |
-| `input_number.bt_connect_retry_attempts` | 3 Versuche | 1–10 / 1 | Gesamtzahl der Verbindungsversuche einschließlich des ersten |
+| Helper | GUI-Name | Aktueller Wert | Bereich / Schritt | Verwendung |
+| --- | --- | ---: | --- | --- |
+| `input_number.alarm_offset` | Alarm lead | 1 h | 0–3 h / 0,25 h | Wecker vor Schichtbeginn |
+| `input_number.sleep_duration` | Sleep duration | 9 h | 6–12 h / 0,25 h | Schlafenszeit relativ zum Wecker |
+| `input_number.wind_down_offset` | Wind-down lead | 3 h | 0–6 h / 0,25 h | Ansage zum Runterfahren vor der Schlafenszeit |
+| `input_number.dnd_offset` | DND lead | 3 h | 0–4 h / 0,25 h | DND beginnt vor der berechneten Schlafenszeit |
+| `input_number.pill_morning_offset` | Meds morning lead | 0,25 h (15 min) | 0–2 h / 0,25 h | Erinnerung vor Schichtbeginn |
+| `input_number.pill_bedtime_offset` | Meds evening lead | 0,5 h (30 min) | 0–2 h / 0,25 h | Tablettenerinnerung vor dem Zubettgehen |
+| `input_number.sick_pill_offset` | Sick meds delay | 2 h | 0–6 h / 0,25 h | Krank-Tablettenerinnerung nach Freischichtbeginn |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Zeit für die Mobilbox-Aktion; danach Status-Folgeansage |
+| `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Verzögerung nach dem Zeitpunkt der Telefonübergabe |
+| `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | BT-Trennzeit auswählen |
+| `input_number.bt_disconnect_offset` | BT disconnect lead | 30 s | 0–120 s / 1 s | Trennung vor dem Wecker bei „Zum Wecker“ |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | 1,5 h | 0–6 h / 0,25 h | Trennung nach Schlafenszeit bei „Zum Schlafen“ |
+| `input_datetime.bt_disconnect_time` | Fixed disconnect time | 03:00 | Uhrzeit | Feste tägliche Trennzeit bei „Zur Uhrzeit“ |
+| `input_number.bt_connect_offset` | BT connect delay | 5 min | 0–20 min / 1 min | Gekoppeltes Smartphone nach der Schlafenszeit verbinden |
+| `input_number.bt_connect_retry_interval` | BT connect retry interval | 5 min | 1–30 min / 1 min | Wartezeit zwischen erfolglosen Bluetooth-Verbindungsversuchen |
+| `input_number.bt_connect_retry_attempts` | BT connect retry attempts | 3 Versuche | 1–10 / 1 | Gesamtzahl der Verbindungsversuche einschließlich des ersten |
 
-Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn beziehungsweise zur Schlafenszeit; er deaktiviert die Erinnerung nicht.
+Ein Tabletten-Lead von null bedeutet „jetzt ansagen“ zum geplanten Beginn beziehungsweise zur Schlafenszeit; er deaktiviert die Erinnerung nicht.
 
 ### Heizungs-, Echo- und Licht-Helper
 
@@ -132,8 +134,8 @@ Ein Tabletten-Offset von null bedeutet „jetzt ansagen“ zum geplanten Beginn 
 | `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Komforttemperatur Schlafzimmer |
 | `input_number.heating_min_temp` | 16 °C | 4–18 °C / 0,5 °C | Grundtemperatur außerhalb der Komfortfenster bei geschlossenem Fenster |
 | `input_number.window_open_temp` | 4 °C | 4–5 °C / 1 °C | Sollwert bei offenem Fenster; 4 °C bedeutet aus |
-| `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0,25 h | Heizvorlauf vor einem Planereignis |
-| `input_number.heating_cooldown_offset` | 0,5 h | 0–2 h / 0,25 h | Vorzeitiges Absenken vor Schichtende |
+| `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0,25 h | Heizvorlauf (Lead) vor einem Planereignis |
+| `input_number.heating_cooldown_offset` | 0,5 h | 0–2 h / 0,25 h | Abkühlbeginn (Lead) vor Schichtende |
 | `input_number.sick_temp_offset` | 2 °C | 0–5 °C / 0,5 °C | Zusätzlicher Heizaufschlag im Krankmodus |
 | `input_number.echo_announcement_volume` | 5 / 10 | 0–10 / 0,1 | Temporäre Lautstärke für Ansagen |
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0,5 | Tageslautstärke aller Echo-Geräte |
@@ -174,14 +176,14 @@ Die Beispiele verwenden die aktuellen Werte oben. Runterfahren und DND beginnen 
 | Tablettenerinnerung vor dem Zubettgehen | 21:30 | 23:00 | 22:30 |
 | Handy verbindet sich mit Schlafzimmer-Echo | 22:05 | 23:35 | 23:05 |
 | Weitere Bluetooth-Versuche bei Bedarf | 22:10, 22:15 | 23:40, 23:45 | 23:10, 23:15 |
-| Bluetooth-Disconnect (aktuelle Auswahl) | 23:15 (Vorabend) | 00:45 | 00:15 |
+| Bluetooth-Disconnect (aktuelle Auswahl) | 23:30 (Vorabend) | 01:00 | 00:30 |
 | Schlafzimmer-Aufwachlicht | 07:01 | 08:31 | 08:01 |
 | Morgen-Tablettenerinnerung | 07:45 | 09:15 | 08:45 |
 | Ansage zum Schichtbeginn | 07:55 | 09:25 | 08:55 |
 | Telefoncheck am Morgen | 08:05 (nur Frühschicht) | — | — |
 | Telefonübergabe-Check | 13:05 | 13:05 | — |
 
-Im Modus `Krank` richtet sich die Tablettenerinnerung ausschließlich nach `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: bei den aktuellen Werten 09:00 + 2 h also **11:00 Uhr**. Ein Offset von 0 löst sie genau zum Freischichtbeginn aus. Auch ein Ergebnis nach Mitternacht wird auf die Uhrzeit des Folgetags abgebildet. Dafür ist kein Kalendereintrag erforderlich; es wird kein Arbeitswecker angelegt.
+Im Modus `Krank` richtet sich die Tablettenerinnerung ausschließlich nach `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: bei den aktuellen Werten 09:00 + 2 h also **11:00 Uhr**. Ein Delay von 0 löst sie genau zum Freischichtbeginn aus. Auch ein Ergebnis nach Mitternacht wird auf die Uhrzeit des Folgetags abgebildet. Dafür ist kein Kalendereintrag erforderlich; es wird kein Arbeitswecker angelegt.
 
 Die Verzögerung für das Aufwachlicht beträgt standardmäßig eine Minute; bei null gehen die Lampen direkt zur berechneten Weckerzeit an. Die Ansage zum Schichtbeginn liegt derzeit fest fünf Minuten vor dem Beginn im YAML. Samsung Work Mode wird bei Früh- und Spätschicht zum Schichtbeginn aktiviert und am konfigurierten Ende deaktiviert. Bei der Frühschicht folgt der morgendliche Telefoncheck fünf Minuten später; bei der Spätschicht gibt es keinen vergleichbaren Check um 09:35. Die Telefonübergabe wird nur bei Früh- und Spätschicht um 13:05 angesagt. An Freischicht- und Support-Standby-Tagen gibt es keine Telefonübergabe-Ansage.
 
@@ -204,7 +206,7 @@ gantt
     Handy verbindet mit Schlafzimmer-Echo (Versuch 1) :milestone, 2026-10-27 22:05, 0m
     BT-Wiederholung 2 falls nötig :milestone, 2026-10-27 22:10, 0m
     BT-Wiederholung 3 falls nötig :milestone, 2026-10-27 22:15, 0m
-    Echo-Bluetooth trennt (1 h 15 min nach Schlafenszeit) :milestone, 2026-10-27 23:15, 0m
+    Echo-Bluetooth trennt (1 h 30 min nach Schlafenszeit) :milestone, 2026-10-27 23:30, 0m
     section Morgen
     Wohnzimmer morgens vorheizen :active, 2026-10-28 06:00, 120m
     Arbeitszimmer Vorheizen beginnt :active, 2026-10-28 07:00, 540m
@@ -227,10 +229,10 @@ Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster gesch
 ## Heizungen und Geräte
 
 - Home Assistant steuert die TRV-Zeitfenster; die alten Shelly-Profil-Automationen sind deaktiviert. Die aktiven Rückkehr- und Wohnzimmer-Sleep-Profile berechnen Sollwerte aus Kalender, Moduswahl, Uhrzeit, Anwesenheit und Fenstersensoren.
-- An Schichttagen liegen die Komfortfenster für Wohnzimmer und Arbeitszimmer rund um Schichtbeginn und Schichtende. Das Arbeitszimmer heizt vor Arbeitsbeginn und senkt vor Schichtende ab; das Wohnzimmer wärmt vor dem morgendlichen Übergang und vor Feierabend vor. `heating_preheat_offset` und `heating_cooldown_offset` bestimmen diese Fenster.
+- An Schichttagen liegen die Komfortfenster für Wohnzimmer und Arbeitszimmer rund um Schichtbeginn und Schichtende. Das Arbeitszimmer heizt vor Arbeitsbeginn und senkt vor Schichtende ab; das Wohnzimmer wärmt vor dem morgendlichen Übergang und vor Feierabend vor. Die Helper `Preheat lead` und `Cooldown lead` bestimmen diese Fenster.
 - Außerhalb der Komfortfenster nutzen Räume bei geschlossenen Fenstern `heating_min_temp`. Ein geöffnetes Fenster setzt den betroffenen TRV auf `window_open_temp` (4 °C). Das Schlafzimmer nutzt während Sleep Mode und im berechneten Vorheizfenster seine Komforttemperatur.
 - Am Wochenende und an expliziten `4TW-Frei`-/`Urlaub`-Tagen verwendet das automatische Wohnzimmerprofil die Urlaubs-Aufstehzeit. Das Schlafzimmer bleibt an Sleep Mode gekoppelt. An einem normalen Werktag ohne Kalendereintrag kann die Heizung dem Freischichtprofil folgen, ohne einen Wecker zu stellen; Feiertage sind von diesem Rückfall ausgenommen.
-- Im Modus `Krank` löscht die Weckerautomation Alexa-Wecker und stellt keinen neuen; außerdem wird der Krankaufschlag auf die Heizsollwerte addiert. Das Wohnzimmer heizt tagsüber auch bei aktivem Sleep Mode weiter. Kalendergesteuerter Sleep Mode und neue DND-Aktivierungen sowie Work-Mode-Starts und arbeitsbezogene Ansagen werden unterdrückt. Ein bereits aktiver DND-Zustand wird nicht automatisch ausgeschaltet. Manuelle Sleep-Mode- und DND-Steuerung bleiben verfügbar. Die Tablettenerinnerung wird unabhängig vom Kalender bei Freischichtbeginn plus Krank-Offset ausgelöst.
+- Im Modus `Krank` löscht die Weckerautomation Alexa-Wecker und stellt keinen neuen; außerdem wird der Krankaufschlag auf die Heizsollwerte addiert. Das Wohnzimmer heizt tagsüber auch bei aktivem Sleep Mode weiter. Kalendergesteuerter Sleep Mode und neue DND-Aktivierungen sowie Work-Mode-Starts und arbeitsbezogene Ansagen werden unterdrückt. Ein bereits aktiver DND-Zustand wird nicht automatisch ausgeschaltet. Manuelle Sleep-Mode- und DND-Steuerung bleiben verfügbar. Die Tablettenerinnerung wird unabhängig vom Kalender bei Freischichtbeginn plus Krank-Delay ausgelöst.
 - Shelly-TRV-Befehle laufen über Retry-Skripte, die den Sollwert pollen und den Befehl wiederholen, bis das Gerät den Zielwert meldet. Fenstersensoren wirken auf die Heizentscheidung ein; ein nicht erreichbarer Sensor ist keine Pflichtbedingung.
 - Bewegungslicht hält Küche sowie vorderen und hinteren Flur getrennt eingeschaltet, solange Bewegung erkannt wird. Zum zweiminütigen Nachlauf kommt eine zehnminütige Flur-Sicherheitsabschaltung.
 - `Home Leave - All` schaltet konfigurierte Lampen und Geräte außerhalb der geschützten Arbeitsumgebung ab. PC, Server und die separat gesteuerten Arbeitszimmer-Kreise sind von dieser Abwesenheitsabschaltung ausgenommen.

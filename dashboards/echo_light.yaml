@@ -16,7 +16,7 @@ entities:
   - entity: input_select.bt_disconnect_mode
     name: BT disconnect schedule
   - entity: input_number.bt_connect_offset
-    name: BT connect offset
+    name: BT connect delay
   - type: section
     label: BT Connection
   - entity: input_number.bt_connect_retry_interval
@@ -24,9 +24,9 @@ entities:
   - entity: input_number.bt_connect_retry_attempts
     name: BT retry attempts
   - entity: input_number.bt_disconnect_offset
-    name: Alarm disconnect offset
+    name: BT disconnect lead
   - entity: input_number.bt_sleep_disconnect_offset_hours
-    name: Bedtime disconnect offset
+    name: BT sleep disconnect delay
   - entity: input_datetime.bt_disconnect_time
     name: Fixed disconnect time
   - entity: input_text.bt_phone_source

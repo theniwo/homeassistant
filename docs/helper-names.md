@@ -1,6 +1,6 @@
 # Home Assistant helper names
 
-GUI helper names use concise English labels. Temperature helpers use the room name alone; their radiator icon identifies them. `Offset` means a relative duration; Home Assistant shows the helper's unit beside its value. Clock values use `time`.
+GUI helper names use concise English labels. Temperature helpers use the room name alone; their radiator icon identifies them. For time controls, `Lead` means the action is scheduled before its reference event, and `Delay` means it is scheduled after. Existing entity IDs containing `offset` are retained so current automations keep working; `Sick temp offset` is a temperature difference, not a time control. Clock values use `time`.
 
 ## State and mode
 
@@ -36,8 +36,8 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_number.sz_target_temp` | Schlafzimmer | Bedroom comfort target, °C |
 | `input_number.heating_min_temp` | Heating min temp | Base target with windows closed, °C |
 | `input_number.window_open_temp` | Window open temp | Target while a window is open, °C |
-| `input_number.heating_preheat_offset` | Heating preheat offset | Preheat duration before an event, hours |
-| `input_number.heating_cooldown_offset` | Heating cooldown offset | Early shutoff duration before shift end, hours |
+| `input_number.heating_preheat_offset` | Preheat lead | Start heating before a schedule event, hours |
+| `input_number.heating_cooldown_offset` | Cooldown lead | Begin cooling before shift end, hours |
 | `input_number.sick_temp_offset` | Sick temp offset | Additional heating in sick mode, °C |
 
 ## Schedule, reminders, and DND
@@ -50,27 +50,27 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_datetime.late_shift_end` | Late shift end | Late shift end time |
 | `input_datetime.free_shift_start` | Free shift start | Start time for free-shift profile |
 | `input_datetime.vacation_wake_time` | Vacation wake time | Wake time for the vacation profile |
-| `input_number.alarm_offset` | Alarm offset | Hours before shift start |
+| `input_number.alarm_offset` | Alarm lead | Hours before shift start |
 | `input_datetime.alarm_setup_time` | Alarm check time | Daily time for the next-day calendar check |
 | `input_number.sleep_duration` | Sleep duration | Sleep duration, hours |
-| `input_number.wind_down_offset` | Wind-down offset | Hours before sleep time |
-| `input_number.dnd_offset` | DND offset | Hours before calculated bedtime |
-| `input_number.pill_morning_offset` | Pill morning offset | Morning reminder offset, hours |
-| `input_number.pill_bedtime_offset` | Pill bedtime offset | Bedtime reminder offset, hours |
-| `input_number.sick_pill_offset` | Sick pill offset | Sick-mode reminder offset, hours |
+| `input_number.wind_down_offset` | Wind-down lead | Hours before sleep time |
+| `input_number.dnd_offset` | DND lead | Hours before calculated bedtime |
+| `input_number.pill_morning_offset` | Meds morning lead | Hours before shift start |
+| `input_number.pill_bedtime_offset` | Meds evening lead | Hours before bedtime |
+| `input_number.sick_pill_offset` | Sick meds delay | Hours after the free-shift reference time |
 
 ## Phone and Echo
 
 | Entity ID | GUI name | Purpose / unit |
 | --- | --- | --- |
 | `input_datetime.phone_handover_time` | Phone handover time | Phone handover clock time |
-| `input_number.phone_handover_offset` | Phone handover offset | Announcement delay, minutes |
-| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | Minutes before the follow-up announcement; default 5, range 1–30, step 1 |
+| `input_number.phone_handover_offset` | Phone handover delay | Delay after the handover clock time before announcements, minutes |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | Minutes before the follow-up announcement; current value 10, range 1–30, step 1 |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Select alarm, bedtime, or fixed-time disconnect |
-| `input_number.bt_disconnect_offset` | Alarm disconnect offset | Disconnect lead before the alarm, seconds |
-| `input_number.bt_sleep_disconnect_offset_hours` | Bedtime disconnect offset | Delay after bedtime, hours |
+| `input_number.bt_disconnect_offset` | BT disconnect lead | Disconnect lead before the alarm, seconds |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | Delay after bedtime, hours |
 | `input_datetime.bt_disconnect_time` | Fixed disconnect time | Daily disconnect time |
-| `input_number.bt_connect_offset` | BT connect offset | Connect the phone to the bedroom Echo after scheduled Sleep Mode, minutes; default 5, range 0–20 |
+| `input_number.bt_connect_offset` | BT connect delay | Connect the phone to the bedroom Echo after scheduled Sleep Mode, minutes; default 5, range 0–20 |
 | `input_number.bt_connect_retry_interval` | BT connect retry interval | Minutes between attempts to connect the phone to the bedroom Echo; default 5, range 1–30, step 1 |
 | `input_number.bt_connect_retry_attempts` | BT connect retry attempts | Maximum total connection attempts, including the first; default 3, range 1–10, step 1 |
 | `input_text.bt_phone_source` | BT phone source | Paired phone source name used by the bedroom Echo |

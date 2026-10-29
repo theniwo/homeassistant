@@ -24,22 +24,24 @@ With affectionate admiration for [NARKOZ/hacker-scripts](https://github.com/NARK
 `calendar.shifts` is the source of truth for scheduled shifts. Calendar events may be all-day or span multiple days, so the automations query the relevant date with `calendar.get_events` instead of relying only on the current calendar state.
 
 The work schedule mode is currently **Automatisch**. On weekdays, explicit `Frühschicht` and `Spätschicht` events drive the work-phone mode and shift schedule. Explicit `Freischicht` and `Support Standby` events use the free-shift clock for the alarm, sleep/DND schedule, pill reminders, and shift-start announcement; the Samsung Work Mode automation itself currently handles only early and late shifts. `4TW-Frei` and `Urlaub` are days off. Saturdays and Sundays never get a work alarm. A Bavarian public holiday does not suppress a shift that is explicitly present in the shift calendar. With no shift event, no Alexa alarm is set. An ordinary unmarked weekday may use the free-shift heating schedule, but weekends, marked days off, public holidays, and sick mode follow their own heating rules. In `Krank` mode, Home Assistant cancels active Alexa alarms and does not schedule a new one. It also suppresses calendar-driven Sleep Mode and new automatic DND activations, Work Mode starts, and work-related announcements. An existing DND state is not turned off automatically. Manual Sleep Mode and DND controls and the sick heating profile remain available.
-When `input_boolean.work_mode_state` changes, every Echo announces whether to enable or disable immediate voicemail forwarding and how many minutes are available. The S25 also receives a Yes/No prompt; Yes opens the dialer with the matching MMI code, where the work SIM and call must still be confirmed. No leaves the carrier setting unchanged. `input_number.work_sim_voicemail_prompt_timeout` controls both the notification expiry and the follow-up announcement delay (default 5 minutes, 1–30 minutes in 1-minute steps). After the delay, Echo reports that the forwarding status is unconfirmed and gives the `*#21#` status code. Home Assistant cannot read the dialer's MMI response, so it does not claim that forwarding is on or off.
+When `input_boolean.work_mode_state` changes, every Echo announces whether to enable or disable immediate voicemail forwarding and how many minutes are available. The S25 also receives a Yes/No prompt; Yes opens the dialer with the matching MMI code, where the work SIM and call must still be confirmed. No leaves the carrier setting unchanged. `input_number.work_sim_voicemail_prompt_timeout` controls both the notification expiry and the follow-up announcement delay (currently 10 minutes, 1–30 minutes in 1-minute steps). After the delay, Echo reports that the forwarding status is unconfirmed and gives the `*#21#` status code. Home Assistant cannot read the dialer's MMI response, so it does not claim that forwarding is on or off.
 The **Home 🏠** dashboard's Shift times & phone card also provides separate actions to request enabling or disabling forwarding manually. These actions do not change Work Mode; they send a timed phone prompt that opens the dialer only after confirmation.
 
 The main time calculations are:
 
 ```text
-alarm time       = shift start - alarm offset
+alarm time       = shift start - alarm lead
 bedtime          = alarm time - sleep duration
-wind-down        = bedtime - wind-down offset
-DND starts       = bedtime - DND offset
-morning pills    = shift start - morning pill offset
-bedtime pills    = bedtime - bedtime pill offset
-BT disconnect    = selected schedule: alarm - offset, bedtime + offset, or fixed time
-BT connection    = bedtime + BT connect offset; retry until source confirms, within configured attempt limit
+wind-down        = bedtime - wind-down lead
+DND starts       = bedtime - DND lead
+morning pills    = shift start - morning pill lead
+bedtime pills    = bedtime - bedtime pill lead
+BT disconnect    = selected schedule: alarm - disconnect lead, bedtime + disconnect delay, or fixed time
+BT connection    = bedtime + BT connect delay; retry until source confirms, within configured attempt limit
 wake lights      = alarm time + wake light delay
 ```
+
+In the Home Assistant UI, `Lead` means before the reference event and `Delay` means after it. The helper stores the time amount; the automation subtracts a lead and adds a delay. Existing entity IDs still contain `_offset` in places so automations remain compatible; those IDs are technical references, not the visible timing direction. `sick_temp_offset` is a temperature difference, and `sleep_duration` remains a duration.
 
 `input_select.bt_disconnect_mode` offers three schedules: `Zum Wecker` uses alarm time minus `bt_disconnect_offset`; `Zum Schlafen` uses bedtime plus `bt_sleep_disconnect_offset_hours`; `Zur Uhrzeit` uses the daily `bt_disconnect_time` (default 03:00). The first two follow the calendar for early, late, and free shifts/Support Standby; weekends, `4TW-Frei`, `Urlaub`, and Sick mode do not trigger those calendar-based disconnects. The fixed-time option runs daily except in Sick mode. Home Assistant tells the bedroom Echo to switch to `Local Speaker`. The HA app cannot directly disconnect one paired Bluetooth device and does not switch Bluetooth off on the phone. After the configured connection time, Home Assistant checks the Echo's selected source and retries every `bt_connect_retry_interval` minutes until connected or `bt_connect_retry_attempts` total attempts have run.
 
@@ -61,12 +63,12 @@ flowchart LR
 ```mermaid
 flowchart LR
     C[Shift calendar] --> S[Shift start helper]
-    S --> A[Alarm = start - alarm offset]
+    S --> A[Alarm = start - alarm lead]
     A --> B[Bedtime = alarm - sleep duration]
     A --> L[Wake lights = alarm + wake light delay]
-    B --> W[Wind-down = bedtime - wind-down offset]
-    B --> D[DND = bedtime - DND offset]
-    B --> BC[BT connect = bedtime + connect offset]
+    B --> W[Wind-down = bedtime - wind-down lead]
+    B --> D[DND = bedtime - DND lead]
+    B --> BC[BT connect = bedtime + connect delay]
     A --> BD[BT disconnect schedule: alarm, bedtime, or fixed time]
     S --> M[Work Mode on at start, off at shift end]
 ```
@@ -100,28 +102,28 @@ All values in these tables are editable in Home Assistant. Ranges and steps are 
 | `input_datetime.echo_quiet_time` | 22:00 | Start of Echo quiet hours |
 | `input_datetime.echo_fallback_time` | 12:00 | Restore daytime Echo volume if no alarm is scheduled today |
 
-### Relative offsets
+### Relative timing helpers
 
-| Helper | Current value | Range / step | Used for |
-| --- | ---: | --- | --- |
-| `input_number.alarm_offset` | 1 h | 0–3 h / 0.25 h | Alarm before shift start |
-| `input_number.sleep_duration` | 9 h | 6–12 h / 0.25 h | Bedtime relative to the alarm |
-| `input_number.wind_down_offset` | 3 h | 0–6 h / 0.25 h | Wind-down announcement before bedtime |
-| `input_number.dnd_offset` | 3 h | 0–4 h / 0.25 h | DND starts before calculated bedtime |
-| `input_number.pill_morning_offset` | 0.25 h (15 min) | 0–2 h / 0.25 h | Morning pill reminder before shift start |
-| `input_number.pill_bedtime_offset` | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder |
-| `input_number.sick_pill_offset` | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
-| `input_number.work_sim_voicemail_prompt_timeout` | 5 min | 1–30 min / 1 min | Time to act on the work SIM voicemail prompt; delay before the status follow-up |
-| `input_number.phone_handover_offset` | 5 min | 0–15 min / 1 min | Delay before phone handover announcements |
-| `input_select.bt_disconnect_mode` | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
-| `input_number.bt_disconnect_offset` | 30 s | 0–120 s / 1 s | Lead before alarm for `Zum Wecker` |
-| `input_number.bt_sleep_disconnect_offset_hours` | 1.25 h | 0–6 h / 0.25 h | Delay after bedtime for `Zum Schlafen` |
-| `input_datetime.bt_disconnect_time` | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
-| `input_number.bt_connect_offset` | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
-| `input_number.bt_connect_retry_interval` | 5 min | 1–30 min / 1 min | Wait between unsuccessful Bluetooth connection attempts |
-| `input_number.bt_connect_retry_attempts` | 3 attempts | 1–10 / 1 | Total connection attempts, including the first |
+| Helper | GUI name | Current value | Range / step | Used for |
+| --- | --- | ---: | --- | --- |
+| `input_number.alarm_offset` | Alarm lead | 1 h | 0–3 h / 0.25 h | Alarm before shift start |
+| `input_number.sleep_duration` | Sleep duration | 9 h | 6–12 h / 0.25 h | Bedtime relative to the alarm |
+| `input_number.wind_down_offset` | Wind-down lead | 3 h | 0–6 h / 0.25 h | Wind-down announcement before bedtime |
+| `input_number.dnd_offset` | DND lead | 3 h | 0–4 h / 0.25 h | DND starts before calculated bedtime |
+| `input_number.pill_morning_offset` | Meds morning lead | 0.25 h (15 min) | 0–2 h / 0.25 h | Morning pill reminder before shift start |
+| `input_number.pill_bedtime_offset` | Meds evening lead | 0.5 h (30 min) | 0–2 h / 0.25 h | Bedtime pill reminder before bedtime |
+| `input_number.sick_pill_offset` | Sick meds delay | 2 h | 0–6 h / 0.25 h | Sick-mode pill reminder after free-shift start |
+| `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | 10 min | 1–30 min / 1 min | Time to act on the prompt; delay before the status follow-up |
+| `input_number.phone_handover_offset` | Phone handover delay | 5 min | 0–15 min / 1 min | Delay after phone handover time before announcements |
+| `input_select.bt_disconnect_mode` | BT disconnect mode | Zum Schlafen | Zum Wecker / Zum Schlafen / Zur Uhrzeit | Choose the BT disconnect schedule |
+| `input_number.bt_disconnect_offset` | BT disconnect lead | 30 s | 0–120 s / 1 s | Disconnect before alarm for `Zum Wecker` |
+| `input_number.bt_sleep_disconnect_offset_hours` | BT sleep disconnect delay | 1.5 h | 0–6 h / 0.25 h | Disconnect after bedtime for `Zum Schlafen` |
+| `input_datetime.bt_disconnect_time` | Fixed disconnect time | 03:00 | Time of day | Daily fixed disconnect time for `Zur Uhrzeit` |
+| `input_number.bt_connect_offset` | BT connect delay | 5 min | 0–20 min / 1 min | Connect the paired phone after bedtime |
+| `input_number.bt_connect_retry_interval` | BT connect retry interval | 5 min | 1–30 min / 1 min | Wait between unsuccessful Bluetooth connection attempts |
+| `input_number.bt_connect_retry_attempts` | BT connect retry attempts | 3 attempts | 1–10 / 1 | Total connection attempts, including the first |
 
-An offset of zero for a pill reminder means “announce now” at the scheduled start/bedtime; it does not disable the reminder.
+A lead of zero for a pill reminder means “announce now” at the scheduled start/bedtime; it does not disable the reminder.
 
 ### Heating, Echo, and lighting helpers
 
@@ -132,8 +134,8 @@ An offset of zero for a pill reminder means “announce now” at the scheduled 
 | `input_number.sz_target_temp` | 18 °C | 4–31 °C / 1 °C | Bedroom comfort target |
 | `input_number.heating_min_temp` | 16 °C | 4–18 °C / 0.5 °C | Base target outside comfort windows with windows closed |
 | `input_number.window_open_temp` | 4 °C | 4–5 °C / 1 °C | Target while a window is open; 4 °C is the off setting |
-| `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0.25 h | Heating lead before a schedule event |
-| `input_number.heating_cooldown_offset` | 0.5 h | 0–2 h / 0.25 h | Early heating cooldown before shift end |
+| `input_number.heating_preheat_offset` | 1 h | 0–2 h / 0.25 h | Preheat lead before a schedule event |
+| `input_number.heating_cooldown_offset` | 0.5 h | 0–2 h / 0.25 h | Cooldown lead before shift end |
 | `input_number.sick_temp_offset` | 2 °C | 0–5 °C / 0.5 °C | Additional heating in sick mode |
 | `input_number.echo_announcement_volume` | 5 / 10 | 0–10 / 0.1 | Temporary volume for announcements |
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0.5 | Daytime volume for all Echo devices |
@@ -174,14 +176,14 @@ These examples use the live values above. Wind-down and DND start on the previou
 | Bedtime pill reminder | 21:30 | 23:00 | 22:30 |
 | Phone connects to bedroom Echo | 22:05 | 23:35 | 23:05 |
 | Additional Bluetooth attempts if needed | 22:10, 22:15 | 23:40, 23:45 | 23:10, 23:15 |
-| Bluetooth disconnect (current selector) | 23:15 (previous day) | 00:45 | 00:15 |
+| Bluetooth disconnect (current selector) | 23:30 (previous day) | 01:00 | 00:30 |
 | Bedroom wake lights | 07:01 | 08:31 | 08:01 |
 | Morning pill reminder | 07:45 | 09:15 | 08:45 |
 | Shift-start announcement | 07:55 | 09:25 | 08:55 |
 | Phone morning check | 08:05 (early only) | — | — |
 | Phone handover check | 13:05 | 13:05 | — |
 
-In `Krank` mode, the pill reminder uses only `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: with the current values, 09:00 + 2 h gives **11:00**. An offset of 0 triggers exactly at the free-shift start. Times after midnight wrap to the following clock time. No calendar event is required, and this reference time does not create a work alarm.
+In `Krank` mode, the pill reminder uses only `input_datetime.free_shift_start` plus `input_number.sick_pill_offset`: with the current values, 09:00 + 2 h gives **11:00**. A delay of 0 triggers exactly at the free-shift start. Times after midnight wrap to the following clock time. No calendar event is required, and this reference time does not create a work alarm.
 
 The wake-light delay is one minute by default; setting it to zero turns the lamps on at the calculated alarm time. The shift-start announcement currently has a fixed five-minute lead in YAML. Samsung Work Mode turns on at the early/late shift start and turns off at its configured end. At the early start, the phone morning check follows five minutes later; there is no equivalent phone check at the late-shift start. Phone handover is announced at 13:05 only for early and late shifts; free-shift and Support Standby days never receive that phone-service reminder.
 
@@ -204,7 +206,7 @@ gantt
     Phone connects to bedroom Echo (attempt 1) :milestone, 2026-10-27 22:05, 0m
     BT retry 2 if needed :milestone, 2026-10-27 22:10, 0m
     BT retry 3 if needed :milestone, 2026-10-27 22:15, 0m
-    Echo Bluetooth disconnects (1 h 15 min after bedtime) :milestone, 2026-10-27 23:15, 0m
+    Echo Bluetooth disconnects (1 h 30 min after bedtime) :milestone, 2026-10-27 23:30, 0m
     section Morning
     Living room morning preheat :active, 2026-10-28 06:00, 120m
     Office preheat starts :active, 2026-10-28 07:00, 540m
@@ -227,10 +229,10 @@ Heating bars assume you are home and the relevant windows are closed. The office
 ## Heating and device behavior
 
 - Home Assistant owns TRV scheduling; legacy Shelly profile automations are disabled. The active return-sync and Sleep Mode profile automations calculate targets from the calendar, mode selectors, time helpers, presence, and window sensors.
-- During shift days, the living room and office use comfort windows around shift start and end. The office starts before work and cools down before shift end; the living room warms before the morning transition and before the end of work. `heating_preheat_offset` and `heating_cooldown_offset` set those windows.
+- During shift days, the living room and office use comfort windows around shift start and end. The office starts before work and cools down before shift end; the living room warms before the morning transition and before the end of work. The `Preheat lead` and `Cooldown lead` helpers set those windows.
 - Outside comfort windows, closed-window rooms use `heating_min_temp`. An open window sets the affected TRV to `window_open_temp` (4 °C). The bedroom uses its comfort target during Sleep Mode and its calculated preheat window.
 - On weekends and explicit `4TW-Frei`/`Urlaub` days, the automatic living room profile uses the vacation wake helper. The bedroom is still governed by Sleep Mode. On an ordinary unmarked weekday, heating can follow the free-shift schedule even though no alarm is set; public holidays are excluded from this fallback.
-- In `Krank`, the alarm automation cancels Alexa alarms and does not schedule another one, and the sick temperature offset is added to heating targets. The living room continues its daytime heating behavior even with Sleep Mode on. Calendar-driven Sleep Mode and new automatic DND activations, Work Mode starts, and work-related announcements are suppressed. An existing DND state is not turned off automatically. Manual Sleep Mode and DND controls remain available. The sick-mode pill reminder runs independently of the calendar at free-shift start plus the configured offset.
+- In `Krank`, the alarm automation cancels Alexa alarms and does not schedule another one, and the sick temperature offset is added to heating targets. The living room continues its daytime heating behavior even with Sleep Mode on. Calendar-driven Sleep Mode and new automatic DND activations, Work Mode starts, and work-related announcements are suppressed. An existing DND state is not turned off automatically. Manual Sleep Mode and DND controls remain available. The sick-mode pill reminder runs independently of the calendar at free-shift start plus the configured delay.
 - Shelly TRV commands use retry scripts that poll for the requested temperature and repeat until the device reports the target. Window sensors are optional inputs to the heat decision; a sensor that is unavailable is not a required gate.
 - Motion lighting keeps the kitchen and separate front/rear hallway zones on while motion is detected. A two-minute off delay is supplemented by the ten-minute hallway fail-safe.
 - `Home Leave - All` switches off the configured lights and non-workspace equipment while keeping PC/server and the protected workspace controls out of the away shutdown.
