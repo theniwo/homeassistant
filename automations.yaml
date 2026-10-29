@@ -4735,7 +4735,7 @@
       timeout_minutes: "{{ states('input_number.work_sim_voicemail_prompt_timeout') | int(5) }}"
       notification_title: "{{ 'Arbeitsbeginn: Mobilbox-Weiterleitung aus?' if trigger.id == 'work_start' else 'Feierabend: Mobilbox sofort aktivieren?' }}"
       notification_message: "{{ 'Die Arbeits-SIM soll wieder normal klingeln. Ja öffnet den Wähler mit ##21#.' if trigger.id == 'work_start' else 'Anrufe auf die Arbeits-SIM sollen sofort zur Mobilbox. Ja öffnet den Wähler mit **21*3311*11#.' }}"
-      dialer_uri: "{{ 'deep-link://tel:##21%23' if trigger.id == 'work_start' else 'deep-link://tel:**21*3311*11%23' }}"
+      dialer_uri: "{{ 'deep-link://tel:%23%2321%23' if trigger.id == 'work_start' else 'deep-link://tel:**21*3311*11%23' }}"
       initial_announcement: "{{ 'Work Mode ist aktiv. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM aus. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' if trigger.id == 'work_start' else 'Work Mode ist beendet. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM ein. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' }}"
   - action: script.alexa_output_with_configured_volume
     data:

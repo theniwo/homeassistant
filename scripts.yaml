@@ -550,7 +550,7 @@ work_sim_voicemail_disable_prompt:
         actions:
         - action: URI
           title: Ja
-          uri: deep-link://tel:##21%23
+          uri: deep-link://tel:%23%2321%23
         - action: NO
           title: Abbrechen
 master_dnd_override_on:
