@@ -34,11 +34,11 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_number.whz_target_temp` | Wohnzimmer | Living room comfort target, °C |
 | `input_number.az_target_temp` | Arbeitszimmer | Office comfort target, °C |
 | `input_number.sz_target_temp` | Schlafzimmer | Bedroom comfort target, °C |
-| `input_number.heating_min_temp` | Heating min temp | Base target with windows closed, °C |
+| `input_number.heating_min_temp` | Min temp | Base target with windows closed, °C |
 | `input_number.window_open_temp` | Window open temp | Target while a window is open, °C |
 | `input_number.heating_preheat_offset` | Preheat lead | Start heating before a schedule event, hours |
 | `input_number.heating_cooldown_offset` | Cooldown lead | Begin cooling before shift end, hours |
-| `input_number.sick_temp_offset` | Sick temp offset | Additional heating in sick mode, °C |
+| `input_number.sick_temp_offset` | Sick temp Increase | Additional heating in sick mode, °C |
 
 ## Schedule, reminders, and DND
 
