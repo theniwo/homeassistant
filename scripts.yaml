@@ -609,8 +609,7 @@ work_mode_toggle:
         entity_id: input_boolean.work_mode_state
 sleep_mode_now:
   alias: Sleep Mode jetzt
-  description: Activates Samsung Sleep mode, Snom DND, FRITZ!Box answering machines, sleep heating, bedtime announcements,
-    and the bedroom display state.
+  description: Activates Samsung Sleep mode, Snom DND, FRITZ!Box answering machines, sleep heating, and the bedroom display state without a voice announcement.
   mode: single
   sequence:
   - condition: state
@@ -641,17 +640,6 @@ sleep_mode_now:
     - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.fritz_ab_state
-  - action: script.alexa_output_with_configured_volume
-    data:
-      output_type: announce
-      output_target: media_player.uberall
-      volume_targets:
-      - media_player.schlafzimmer
-      - media_player.arbeitszimmer
-      - media_player.kuche
-      - media_player.wohnzimmer
-      - media_player.badezimmer
-      message: Es ist Zeit, schlafen zu gehen.
 sleep_mode_end_now:
   alias: Sleep Mode beenden
   description: Turns off Samsung Sleep mode and releases scheduled DND and answering-machine states when sickness or the master
