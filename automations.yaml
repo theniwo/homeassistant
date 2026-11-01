@@ -2629,34 +2629,105 @@
   max: 10
 - id: '1791378679790'
   alias: Calendar - Shifts - Alexa Bluetooth disconnect
-  description: Disconnects the bedroom Echo from the phone using the selected alarm, bedtime, or fixed-time schedule.
+  description: Disconnects before the planned alarm or fixed time, or after Sleep Mode is enabled manually or by the calendar.
   triggers:
   - trigger: time_pattern
     seconds: /1
     id: second_tick
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_state
+    from: 'off'
+    to: 'on'
+    id: sleep_mode_on
+  - trigger: state
+    entity_id: input_boolean.sleep_mode_state
+    from: 'on'
+    to: 'off'
+    id: sleep_mode_off
   conditions:
   - condition: template
-    value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+    value_template: "{{ trigger.id == 'sleep_mode_off' or not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - condition: template
     value_template: >-
       {% set mode = states('input_select.bt_disconnect_mode') %}
-      {% if mode == 'Zur Uhrzeit' %}
+      {% if trigger.id == 'sleep_mode_on' %}
+        {{ mode == 'Zum Schlafen' }}
+      {% elif trigger.id == 'sleep_mode_off' %}
+        true
+      {% elif mode == 'Zur Uhrzeit' %}
         {{ now().strftime('%H:%M:%S') == states('input_datetime.bt_disconnect_time') }}
-      {% else %}
+      {% elif mode == 'Zum Schlafen' %}
+        false
+      {% elif mode == 'Zum Wecker' %}
       {% set alarm_lead_minutes = (states('input_number.alarm_offset') | float(1) * 60) | int %}
-      {% set alarm_lead_seconds = states('input_number.bt_disconnect_offset') | int(60) if mode == 'Zum Wecker' else 0 %}
-      {% set sleep_minutes = (states('input_number.sleep_duration') | float(9) * 60) | int if mode == 'Zum Schlafen' else 0 %}
-      {% set sleep_disconnect_minutes = (states('input_number.bt_sleep_disconnect_offset_hours') | float(1) * 60) | int if mode == 'Zum Schlafen' else 0 %}
+      {% set alarm_lead_seconds = states('input_number.bt_disconnect_offset') | int(60) %}
       {% set current_key = now().strftime('%Y-%m-%d %H:%M:%S') %}
       {% set start_entities = ['input_datetime.early_shift_start', 'input_datetime.late_shift_start', 'input_datetime.free_shift_start'] %}
       {% set candidates = namespace(keys=[]) %}
       {% for entity in start_entities %}
-        {% set target = today_at(states(entity)) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %}
+        {% set target = today_at(states(entity)) - timedelta(minutes=alarm_lead_minutes, seconds=alarm_lead_seconds) %}
         {% set candidates.keys = candidates.keys + [target.strftime('%Y-%m-%d %H:%M:%S'), (target + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')] %}
       {% endfor %}
       {{ current_key in candidates.keys }}
+      {% else %}
+        false
       {% endif %}
   actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: sleep_mode_off
+      sequence:
+      - stop: Sleep Mode was disabled; cancel the pending Bluetooth disconnect.
+    - conditions:
+      - condition: trigger
+        id: sleep_mode_on
+      sequence:
+      - delay:
+          seconds: "{{ (states('input_number.bt_sleep_disconnect_offset_hours') | float(1) * 3600) | int }}"
+      - condition: state
+        entity_id: input_boolean.sleep_mode_state
+        state: 'on'
+      - condition: state
+        entity_id: input_select.bt_disconnect_mode
+        state: Zum Schlafen
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
+        value_template: "{{ state_attr('media_player.schlafzimmer', 'source') != 'Local Speaker' }}"
+      - variables:
+          previous_mute_state: "{{ state_attr('media_player.schlafzimmer', 'is_volume_muted') | default(false) | bool }}"
+      - if:
+        - condition: template
+          value_template: "{{ not (previous_mute_state | bool) }}"
+        then:
+        - action: media_player.volume_mute
+          target:
+            entity_id: media_player.schlafzimmer
+          data:
+            is_volume_muted: true
+          continue_on_error: true
+        - delay:
+            seconds: 1
+      - action: media_player.select_source
+        target:
+          entity_id: media_player.schlafzimmer
+        data:
+          source: Local Speaker
+        continue_on_error: true
+      - if:
+        - condition: template
+          value_template: "{{ not (previous_mute_state | bool) }}"
+        then:
+        - delay:
+            seconds: 3
+        - action: media_player.volume_mute
+          target:
+            entity_id: media_player.schlafzimmer
+          data:
+            is_volume_muted: '{{ previous_mute_state | bool }}'
+          continue_on_error: true
+      - stop: Bluetooth disconnect after Sleep Mode completed.
   - variables:
       current_time_key: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
       early_today_key: '{% set mode = states(''input_select.bt_disconnect_mode'') %} {% set alarm_lead_minutes = ((states(''input_number.alarm_offset'') | float(1) * 60) | int) if mode == ''Zum Wecker'' else ((states(''input_number.alarm_offset'') | float(1) * 60) | int) %} {% set alarm_lead_seconds = states(''input_number.bt_disconnect_offset'') | int(60) if mode == ''Zum Wecker'' else 0 %} {% set sleep_minutes = (states(''input_number.sleep_duration'') | float(9) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set sleep_disconnect_minutes = (states(''input_number.bt_sleep_disconnect_offset_hours'') | float(1) * 60) | int if mode == ''Zum Schlafen'' else 0 %} {% set target = today_at(states(''input_datetime.early_shift_start'')) - timedelta(minutes=alarm_lead_minutes + sleep_minutes - sleep_disconnect_minutes, seconds=alarm_lead_seconds) %} {{ target.strftime(''%Y-%m-%d %H:%M:%S'') }}'
@@ -2722,6 +2793,8 @@
         {% endif %}
   - condition: template
     value_template: '{{ shift_found | bool }}'
+  - condition: template
+    value_template: "{{ state_attr('media_player.schlafzimmer', 'source') != 'Local Speaker' }}"
   - if:
     - condition: template
       value_template: '{{ (bluetooth_lead_seconds | int) > 5 and not (previous_mute_state | bool) }}'
@@ -2752,7 +2825,7 @@
       data:
         is_volume_muted: '{{ previous_mute_state | bool }}'
       continue_on_error: true
-  mode: single
+  mode: restart
 - id: calendar_shifts_heating_profile_today_20261007
   alias: Calendar - Shifts - Shelly-Zeitpläne deaktivieren
   description: Keeps native Shelly weekly schedules disabled so Home Assistant owns radiator timing.
