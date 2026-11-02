@@ -4,6 +4,13 @@ entities:
   - entity: input_number.echo_day_volume
   - entity: input_number.echo_night_volume
   - entity: input_number.echo_announcement_volume
+  - type: section
+    label: Wake Volume
+  - entity: input_number.echo_wake_start_volume
+  - entity: input_number.echo_wake_target_volume
+  - entity: input_number.echo_wake_ramp_duration
+  - entity: input_number.echo_wake_ramp_steps
+  - entity: input_number.echo_wake_music_timeout
   - entity: input_datetime.echo_quiet_time
   - entity: input_datetime.echo_fallback_time
   - entity: input_number.motion_off_delay

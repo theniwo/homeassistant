@@ -41,6 +41,7 @@ Abend-Tabletten  = Schlafenszeit - Zubettgeh-Lead
 BT trennen       = gewählter Plan: Wecker - BT-Alarm-Lead, Schlafenszeit + BT-Sleep-Delay oder feste Uhrzeit
 BT verbinden     = Schlafenszeit + BT-Connect-Delay; bei Bedarf bis zum Versuchslimit erneut versuchen
 Aufwachlicht     = Wecker + Wake-light-Delay
+Weckmusik        = Beim vom Schlafzimmer-Echo gemeldeten Wecker: Startlautstärke bis Ziellautstärke über Dauer und Lautstärkeschritte
 ```
 
 In der Home-Assistant-Oberfläche bedeutet `Lead`, dass ein Ereignis vor dem Bezugspunkt liegt, und `Delay`, dass es danach liegt. Der Helper speichert den Zeitbetrag; die Automation zieht einen Lead ab und addiert einen Delay. Bestehende Entity-IDs enthalten teils weiterhin `_offset`, damit die Automationen kompatibel bleiben; sie sind technische Referenzen und geben nicht die sichtbare Zeitrichtung an. `sick_temp_offset` ist ein Temperaturunterschied und `sleep_duration` eine Dauer.
@@ -81,7 +82,7 @@ Die Weckerautomation prüft täglich um **18:00** den Kalender für morgen, aktu
 
 ![Home-Assistant-Dashboard mit Overrides, Morgenübersicht, Status, Echo- und Lichtsteuerung, Schlaf- und Wecker-Helpern, Heizprofilen und Schichtzeiten](docs/images/home-assistant-dashboard-2026-10.png)
 
-Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält das Auswahlmenü für den Bluetooth-Disconnect sowie Verbindungs- und Wiederholungswerte. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
+Der Screenshot zeigt die Live-Ansicht Home vom 28.10.2026. Die Karte „Echo & Licht“ enthält Lautstärkeregler, das Auswahlmenü für den Bluetooth-Disconnect sowie Verbindungs- und Wiederholungswerte. Die übrigen Karten gruppieren Overrides, den morgigen Ablauf, Gerätestatus, Sleep Mode und Erinnerungen, Heizprofile sowie Schichtzeiten. In dieser Aufnahme ist „Zum Schlafen“ ausgewählt.
 
 Die DND-Kachel zeigt die globale DND-Anforderung und die einzelnen Geräteschalter. Gedrückthalten eines Schalters für GNOME, Snom oder Samsung S25 setzt dessen Richtlinie auf `Follow global` zurück. Die Echo-Schalter bleiben unabhängig steuerbar.
 
@@ -142,6 +143,11 @@ Ein Tabletten-Lead von null bedeutet „jetzt ansagen“ zum geplanten Beginn be
 | `input_number.echo_announcement_volume` | 5 / 10 | 0–10 / 0,1 | Temporäre Lautstärke für Ansagen |
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0,5 | Tageslautstärke aller Echo-Geräte |
 | `input_number.echo_night_volume` | 3 / 10 | 0–10 / 0,5 | Lautstärke aller Echos während der Ruhezeit |
+| `input_number.echo_wake_start_volume` | 1 / 10 | 0–10 / 0,5 | Startlautstärke der Musik beim nächsten Schlafzimmer-Echo-Wecker |
+| `input_number.echo_wake_target_volume` | 2,5 / 10 | 0–10 / 0,5 | Ziellautstärke der Weckmusik im Schlafzimmer |
+| `input_number.echo_wake_ramp_duration` | 10 Min. | 1–30 Min. / 1 Min. | Dauer des Lautstärkeanstiegs der Weckmusik |
+| `input_number.echo_wake_ramp_steps` | 10 | 1–30 / 1 | Anzahl der Lautstärkeschritte |
+| `input_number.echo_wake_music_timeout` | 3 Min. | 1–10 Min. / 1 Min. | Maximale Wartezeit auf neue Weckmusik |
 | `input_number.echo_wake_delay` | 15 s | 0–120 s / 5 s | Verzögerung bis zum Einschalten des Schlafzimmer-Echo-Displays nach Weckerende |
 | `input_number.wake_light_delay` | 1 min | 0–10 min / 1 min | Verzögerung nach der berechneten Weckerzeit bis Nachttisch- und Stehlampe angehen |
 | `input_number.motion_off_delay` | 2 min | 1–15 min / 1 min | Nachlauf der Bewegungsbeleuchtung |
@@ -212,7 +218,8 @@ gantt
     section Morgen
     Wohnzimmer morgens vorheizen :active, 2026-10-28 06:00, 120m
     Arbeitszimmer Vorheizen beginnt :active, 2026-10-28 07:00, 540m
-    Alexa-Wecker und Tageslautstärke :milestone, 2026-10-28 07:00, 0m
+    Alexa-Wecker und Tageslautstärke übriger Echos :milestone, 2026-10-28 07:00, 0m
+    Spotify-Lautstärkerampe Schlafzimmer (Standard 10 Min.) :active, 2026-10-28 07:00, 10m
     Schlafzimmer-Aufwachlicht (1 min Verzögerung) :milestone, 2026-10-28 07:01, 0m
     Morgen-Tablettenerinnerung :milestone, 2026-10-28 07:45, 0m
     Ansage zum Schichtbeginn :milestone, 2026-10-28 07:55, 0m
@@ -238,7 +245,7 @@ Die Heizungsbalken gelten, wenn du zuhause bist und die jeweiligen Fenster gesch
 - Shelly-TRV-Befehle laufen über Retry-Skripte, die den Sollwert pollen und den Befehl wiederholen, bis das Gerät den Zielwert meldet. Fenstersensoren wirken auf die Heizentscheidung ein; ein nicht erreichbarer Sensor ist keine Pflichtbedingung.
 - Bewegungslicht hält Küche sowie vorderen und hinteren Flur getrennt eingeschaltet, solange Bewegung erkannt wird. Zum zweiminütigen Nachlauf kommt eine zehnminütige Flur-Sicherheitsabschaltung.
 - `Home Leave - All` schaltet konfigurierte Lampen und Geräte außerhalb der geschützten Arbeitsumgebung ab. PC, Server und die separat gesteuerten Arbeitszimmer-Kreise sind von dieser Abwesenheitsabschaltung ausgenommen.
-- Die Echo-Lautstärke sinkt um 22:00. Beim Alexa-Wecker steigt sie wieder; ohne Wecker für den Tag greift mittags die Fallback-Zeit. Sleep Mode hält das Nachtlautstärkeverhalten aktiv. Ansagen verwenden die eingestellte Ansagelautstärke.
+- Die Echo-Lautstärke sinkt um 22:00. Sobald Alexa einen Wecker im Schlafzimmer meldet, startet die Musik mit der eingestellten Startlautstärke und wird in konfigurierten Schritten angehoben; die übrigen Echos folgen weiter der bisherigen Tageslautstärke-Regel. Ist Sleep Mode aus, wird die normale Schlafzimmer-Lautstärke nach Ende der Rampe wiederhergestellt. Ohne Wecker für den Tag greift mittags die Fallback-Zeit. Sleep Mode hält das Nachtlautstärkeverhalten aktiv. Ansagen verwenden die eingestellte Ansagelautstärke und gehören nicht zur Weckrampe.
 - Nachttisch- und Stehlampe schalten sich mit `wake_light_delay` ein (aktuell eine Minute nach der berechneten Weckerzeit). Separat davon schaltet sich das Schlafzimmer-Echo-Display 15 Sekunden nach dem Beenden des Weckers ein.
 - Sleep Mode bittet das Echo im Arbeitszimmer, die Popotan-Steckdose „Mückenlampe“ auszuschalten. Außerhalb von Sleep Mode sendet dasselbe Echo den Einschaltbefehl. Die Steckdose wird über Alexa-Custom-Befehle und nicht über einen nativen Home-Assistant-Schalter gesteuert. Das Display des Schlafzimmer-Echos wird rund um Sleep Mode und beim Home-Assistant-Start ebenfalls per Alexa-Befehl geschaltet.
 - Fehlgeschlagene Backups melden sich über Telegram.

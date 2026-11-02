@@ -153,6 +153,45 @@ input_number:
     unit_of_measurement: h
     mode: slider
     icon: mdi:timer-outline
+  echo_wake_start_volume:
+    name: Echo wake start volume
+    min: 0
+    max: 10
+    step: 0.5
+    unit_of_measurement: /10
+    mode: slider
+    icon: mdi:volume-low
+  echo_wake_target_volume:
+    name: Echo wake target volume
+    min: 0
+    max: 10
+    step: 0.5
+    unit_of_measurement: /10
+    mode: slider
+    icon: mdi:volume-high
+  echo_wake_ramp_duration:
+    name: Echo wake ramp duration
+    min: 1
+    max: 30
+    step: 1
+    unit_of_measurement: min
+    mode: slider
+    icon: mdi:timer-outline
+  echo_wake_ramp_steps:
+    name: Echo wake ramp steps
+    min: 1
+    max: 30
+    step: 1
+    mode: slider
+    icon: mdi:stairs
+  echo_wake_music_timeout:
+    name: Echo wake music timeout
+    min: 1
+    max: 10
+    step: 1
+    unit_of_measurement: min
+    mode: slider
+    icon: mdi:timer-sand
 
 input_datetime:
   bt_disconnect_time:
