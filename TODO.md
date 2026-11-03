@@ -7,3 +7,4 @@
 - [ ] Keep the mailbox reminder announcement after shift start for both early and late shifts.
 - [ ] Add a master toggle for automatic voicemail forwarding.
 - [ ] Clarify whether `Zum Wecker` should use Alexa's actual next-alarm sensor instead of the calculated shift alarm, accounting for delayed sensor updates.
+- [ ] Add a configurable break timer and its Home Assistant helper.
