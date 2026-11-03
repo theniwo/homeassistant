@@ -2,24 +2,11 @@
   alias: Fenster Arbeitszimmer auf
   description: Sets the office radiator to the configured no-heating target while either office window is open.
   trigger:
-  - type: opened
-    platform: device
-    device_id: 62101cf63c7a4d92239cfa5f3b086c93
-    entity_id: b26faf2245e7c7f1570aeab004438d5a
-    domain: binary_sensor
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
-  - type: opened
-    platform: device
-    device_id: 4f24d1515f49e74f8d489d82edeab448
-    entity_id: 32802619e7e99def1dd8eb6f46832b52
-    domain: binary_sensor
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 0
+  - platform: state
+    entity_id:
+    - binary_sensor.shellydw2_aa9da4_door
+    - binary_sensor.shellydw2_6c3e7e_door
+    to: 'on'
   condition:
   - condition: template
     value_template: "{{ is_state('binary_sensor.shellydw2_aa9da4_door', 'on') or is_state('binary_sensor.shellydw2_6c3e7e_door', 'on') }}"
