@@ -1852,7 +1852,7 @@
   mode: single
 - id: '1741472366856'
   alias: Licht Ein/Aus - Schlafzimmer
-  description: Short press turns the bedside and standing lamps on or off without affecting other bedroom lights.
+  description: Short press turns the bedside and standing lamps on or off; turning them off also switches off the bedroom ceiling light.
   trigger:
   - device_id: f6800626e7ce2d89f297417e20fd1fb4
     domain: zha
@@ -1888,6 +1888,9 @@
           entity_id:
           - light.nachttischlampe_licht
           - light.stehlampe_schlafzimmer_licht
+      - service: switch.turn_off
+        target:
+          entity_id: switch.shellyplus1pm_80646fc78098_switch_0
   mode: single
 - id: '1761790107591'
   alias: Licht Ein/Aus - Flur
