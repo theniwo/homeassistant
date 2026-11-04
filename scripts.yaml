@@ -416,7 +416,7 @@ echo_spotify_wake_volume_ramp:
 
 alexa_output_with_configured_volume:
   alias: Alexa - Output at configured volume
-  description: Applies the configured announcement volume to every target Echo, then restores the previous or scheduled volume.
+  description: Applies the configured announcement volume to every target Echo, then restores the previous or scheduled volume. Spoken announcements are skipped while Nils is away.
   mode: queued
   max: 10
   fields:
@@ -456,6 +456,8 @@ alexa_output_with_configured_volume:
         text:
           multiline: true
   sequence:
+  - condition: template
+    value_template: "{{ output_type != 'announce' or is_state('person.niwo', 'home') }}"
   - variables:
       previous_volumes: >-
         {% set ns = namespace(values=[]) %}
