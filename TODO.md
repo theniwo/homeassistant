@@ -8,3 +8,4 @@
 - [ ] Add a master toggle for automatic voicemail forwarding.
 - [ ] Clarify whether `Zum Wecker` should use Alexa's actual next-alarm sensor instead of the calculated shift alarm, accounting for delayed sensor updates.
 - [ ] Add a configurable break timer and its Home Assistant helper.
+- [x] Verify that each radiator reaches the configured open-window off setpoint (`input_number.window_open_temp`); retry checks using configurable helpers (3 attempts, 15-second interval) and send an alert if it still fails. Keep the retry helpers off the dashboard.

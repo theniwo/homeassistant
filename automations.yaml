@@ -3629,6 +3629,180 @@
             target_temperature: '{{ minimum_temperature | float(4) }}'
   mode: queued
   max: 20
+- id: heating_window_target_alert_living_room
+  alias: Heating - Open window target alert - Living room
+  description: Checks the living room TRV after a window opens and alerts if it never reaches the configured open-window target.
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.shellydw2_07a36f_door
+    - binary_sensor.shellydw2_a4cf12f4307a_door
+    to: 'on'
+    id: window_open
+    for:
+      seconds: 10
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - variables:
+      check_attempts: "{{ states('input_number.window_open_check_attempts') | int(3) }}"
+      check_interval_seconds: "{{ states('input_number.window_open_check_interval') | int(15) }}"
+      window_open_temperature: "{{ states('input_number.window_open_temp') | float(none) }}"
+      window_is_open: >-
+        {% set sensor_states = [states('binary_sensor.shellydw2_07a36f_door'), states('binary_sensor.shellydw2_a4cf12f4307a_door')] %}
+        {{ 'on' in sensor_states or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}
+      target_confirmed: >-
+        {% set mode = states('climate.shellytrv_8cf68118891f') %}
+        {% set target = state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(1000) %}
+        {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+  - condition: template
+    value_template: "{{ (window_is_open | bool) and not (target_confirmed | bool) }}"
+  - repeat:
+      count: "{{ check_attempts | int(3) }}"
+      sequence:
+      - delay:
+          seconds: "{{ check_interval_seconds | int(15) }}"
+      - variables:
+          window_is_open: >-
+            {% set sensor_states = [states('binary_sensor.shellydw2_07a36f_door'), states('binary_sensor.shellydw2_a4cf12f4307a_door')] %}
+            {{ 'on' in sensor_states or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}
+          target_confirmed: >-
+            {% set mode = states('climate.shellytrv_8cf68118891f') %}
+            {% set target = state_attr('climate.shellytrv_8cf68118891f', 'temperature') | float(1000) %}
+            {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+      - if:
+        - condition: template
+          value_template: "{{ not (window_is_open | bool) or (target_confirmed | bool) }}"
+        then:
+        - stop: The window closed or the radiator target was confirmed.
+  - variables:
+      alert_message: >-
+        Wohnzimmer: Das Fenster ist noch offen, aber der Heizkörper meldet
+        {{ state_attr('climate.shellytrv_8cf68118891f', 'temperature') if state_attr('climate.shellytrv_8cf68118891f', 'temperature') is not none else 'unbekannt' }} °C
+        statt {{ window_open_temperature }} °C. Geprüft {{ check_attempts }}-mal im Abstand von {{ check_interval_seconds }} Sekunden.
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: Fenster-Heizung nicht abgesenkt
+      message: "{{ alert_message }}"
+  - action: telegram_bot.send_message
+    data:
+      message: "{{ alert_message }}"
+  mode: restart
+- id: heating_window_target_alert_office
+  alias: Heating - Open window target alert - Office
+  description: Checks the office TRV after a window opens and alerts if it never reaches the configured open-window target.
+  triggers:
+  - trigger: state
+    entity_id:
+    - binary_sensor.shellydw2_aa9da4_door
+    - binary_sensor.shellydw2_6c3e7e_door
+    to: 'on'
+    id: window_open
+    for:
+      seconds: 10
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - variables:
+      check_attempts: "{{ states('input_number.window_open_check_attempts') | int(3) }}"
+      check_interval_seconds: "{{ states('input_number.window_open_check_interval') | int(15) }}"
+      window_open_temperature: "{{ states('input_number.window_open_temp') | float(none) }}"
+      window_is_open: >-
+        {% set sensor_states = [states('binary_sensor.shellydw2_aa9da4_door'), states('binary_sensor.shellydw2_6c3e7e_door')] %}
+        {{ 'on' in sensor_states or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}
+      target_confirmed: >-
+        {% set mode = states('climate.shellytrv_8cf681e113d0') %}
+        {% set target = state_attr('climate.shellytrv_8cf681e113d0', 'temperature') | float(1000) %}
+        {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+  - condition: template
+    value_template: "{{ (window_is_open | bool) and not (target_confirmed | bool) }}"
+  - repeat:
+      count: "{{ check_attempts | int(3) }}"
+      sequence:
+      - delay:
+          seconds: "{{ check_interval_seconds | int(15) }}"
+      - variables:
+          window_is_open: >-
+            {% set sensor_states = [states('binary_sensor.shellydw2_aa9da4_door'), states('binary_sensor.shellydw2_6c3e7e_door')] %}
+            {{ 'on' in sensor_states or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}
+          target_confirmed: >-
+            {% set mode = states('climate.shellytrv_8cf681e113d0') %}
+            {% set target = state_attr('climate.shellytrv_8cf681e113d0', 'temperature') | float(1000) %}
+            {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+      - if:
+        - condition: template
+          value_template: "{{ not (window_is_open | bool) or (target_confirmed | bool) }}"
+        then:
+        - stop: The window closed or the radiator target was confirmed.
+  - variables:
+      alert_message: >-
+        Arbeitszimmer: Das Fenster ist noch offen, aber der Heizkörper meldet
+        {{ state_attr('climate.shellytrv_8cf681e113d0', 'temperature') if state_attr('climate.shellytrv_8cf681e113d0', 'temperature') is not none else 'unbekannt' }} °C
+        statt {{ window_open_temperature }} °C. Geprüft {{ check_attempts }}-mal im Abstand von {{ check_interval_seconds }} Sekunden.
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: Fenster-Heizung nicht abgesenkt
+      message: "{{ alert_message }}"
+  - action: telegram_bot.send_message
+    data:
+      message: "{{ alert_message }}"
+  mode: restart
+- id: heating_window_target_alert_bedroom
+  alias: Heating - Open window target alert - Bedroom
+  description: Checks the bedroom TRV after its window opens and alerts if it never reaches the configured open-window target.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.shellydw2_08f9e051afef_door
+    to: 'on'
+    id: window_open
+    for:
+      seconds: 10
+  - trigger: homeassistant
+    event: start
+    id: startup
+  actions:
+  - variables:
+      check_attempts: "{{ states('input_number.window_open_check_attempts') | int(3) }}"
+      check_interval_seconds: "{{ states('input_number.window_open_check_interval') | int(15) }}"
+      window_open_temperature: "{{ states('input_number.window_open_temp') | float(none) }}"
+      window_is_open: "{{ is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}"
+      target_confirmed: >-
+        {% set mode = states('climate.shellytrv_842e14ffcba2') %}
+        {% set target = state_attr('climate.shellytrv_842e14ffcba2', 'temperature') | float(1000) %}
+        {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+  - condition: template
+    value_template: "{{ (window_is_open | bool) and not (target_confirmed | bool) }}"
+  - repeat:
+      count: "{{ check_attempts | int(3) }}"
+      sequence:
+      - delay:
+          seconds: "{{ check_interval_seconds | int(15) }}"
+      - variables:
+          window_is_open: "{{ is_state('binary_sensor.shellydw2_08f9e051afef_door', 'on') or (trigger.id == 'window_open' and states(trigger.entity_id) in ['unknown', 'unavailable']) }}"
+          target_confirmed: >-
+            {% set mode = states('climate.shellytrv_842e14ffcba2') %}
+            {% set target = state_attr('climate.shellytrv_842e14ffcba2', 'temperature') | float(1000) %}
+            {{ mode == 'off' or (mode == 'heat' and window_open_temperature is not none and target <= (window_open_temperature | float) + 0.1) }}
+      - if:
+        - condition: template
+          value_template: "{{ not (window_is_open | bool) or (target_confirmed | bool) }}"
+        then:
+        - stop: The window closed or the radiator target was confirmed.
+  - variables:
+      alert_message: >-
+        Schlafzimmer: Das Fenster ist noch offen, aber der Heizkörper meldet
+        {{ state_attr('climate.shellytrv_842e14ffcba2', 'temperature') if state_attr('climate.shellytrv_842e14ffcba2', 'temperature') is not none else 'unbekannt' }} °C
+        statt {{ window_open_temperature }} °C. Geprüft {{ check_attempts }}-mal im Abstand von {{ check_interval_seconds }} Sekunden.
+  - action: notify.mobile_app_sm_s931b
+    data:
+      title: Fenster-Heizung nicht abgesenkt
+      message: "{{ alert_message }}"
+  - action: telegram_bot.send_message
+    data:
+      message: "{{ alert_message }}"
+  mode: restart
 - id: calendar_shifts_pill_reminder_20261008
   alias: Calendar - Shifts - Pill reminder
   description: Announces a pill reminder before a scheduled shift or free-shift calendar event.

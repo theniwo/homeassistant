@@ -193,6 +193,24 @@ input_number:
     mode: slider
     icon: mdi:timer-sand
 
+  window_open_check_attempts:
+    name: Window open check attempts
+    min: 1
+    max: 10
+    step: 1
+    initial: 3
+    mode: slider
+    icon: mdi:counter
+  window_open_check_interval:
+    name: Window open check interval
+    min: 5
+    max: 60
+    step: 5
+    initial: 15
+    unit_of_measurement: s
+    mode: slider
+    icon: mdi:timer-outline
+
 input_datetime:
   bt_disconnect_time:
     name: BT disconnect time
