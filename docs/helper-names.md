@@ -75,11 +75,6 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_number.bt_connect_retry_attempts` | BT connect retry attempts | Maximum total connection attempts, including the first; default 3, range 1–10, step 1 |
 | `input_text.bt_phone_source` | BT phone source | Paired phone source name used by the bedroom Echo |
 | `input_number.echo_announcement_volume` | Echo announcement volume | Announcement volume on a 0–10 scale |
-| `input_number.echo_wake_start_volume` | Echo wake start volume | Starting volume for scheduled bedroom alarm music; default 1 / 10 |
-| `input_number.echo_wake_target_volume` | Echo wake target volume | Target volume for scheduled bedroom alarm music; default 2.5 / 10 |
-| `input_number.echo_wake_ramp_duration` | Echo wake ramp duration | Minutes for the scheduled bedroom music to reach target; default 10 |
-| `input_number.echo_wake_ramp_steps` | Echo wake ramp steps | Number of gradual volume changes; default 10 |
-| `input_number.echo_wake_music_timeout` | Echo wake music timeout | Minutes to wait for new alarm music before ending the ramp attempt; default 3 |
 | `input_number.echo_wake_delay` | Echo wake delay | Delay after the bedroom alarm is dismissed, seconds; default 15 |
 | `input_number.echo_day_volume` | Echo day volume | Daytime volume on a 0–10 scale |
 | `input_number.echo_night_volume` | Echo night volume | Nighttime volume on a 0–10 scale |

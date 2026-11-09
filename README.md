@@ -41,7 +41,6 @@ bedtime pills    = bedtime - bedtime pill lead
 BT disconnect    = selected schedule: alarm - BT alarm lead, bedtime + BT sleep delay, or fixed time
 BT connection    = bedtime + BT connect delay; retry until source confirms, within configured attempt limit
 wake lights      = alarm time + wake light delay
-wake music       = on the bedroom Echo alarm reported by Alexa, start volume to target volume over configured duration and steps
 ```
 
 In the Home Assistant UI, `Lead` means before the reference event and `Delay` means after it. The helper stores the time amount; the automation subtracts a lead and adds a delay. Existing entity IDs still contain `_offset` in places so automations remain compatible; those IDs are technical references, not the visible timing direction. `sick_temp_offset` is a temperature difference, and `sleep_duration` remains a duration.
@@ -145,11 +144,6 @@ A lead of zero for a pill reminder means “announce now” at the scheduled sta
 | `input_number.echo_announcement_volume` | 5 / 10 | 0–10 / 0.1 | Temporary volume for announcements |
 | `input_number.echo_day_volume` | 4 / 10 | 0–10 / 0.5 | Daytime volume for all Echo devices |
 | `input_number.echo_night_volume` | 3 / 10 | 0–10 / 0.5 | Quiet-hours volume for all Echo devices |
-| `input_number.echo_wake_start_volume` | 1 / 10 | 0–10 / 0.5 | Starting volume for music at the next bedroom Echo alarm |
-| `input_number.echo_wake_target_volume` | 2.5 / 10 | 0–10 / 0.5 | Target volume for bedroom alarm music |
-| `input_number.echo_wake_ramp_duration` | 10 min | 1–30 min / 1 min | Time to raise bedroom alarm music to the target volume |
-| `input_number.echo_wake_ramp_steps` | 10 | 1–30 / 1 | Number of volume increases during the ramp |
-| `input_number.echo_wake_music_timeout` | 3 min | 1–10 min / 1 min | Maximum wait for new alarm music before restoring the normal schedule volume |
 | `input_number.echo_wake_delay` | 15 s | 0–120 s / 5 s | Delay before the bedroom Echo display turns on after alarm dismissal |
 | `input_number.wake_light_delay` | 1 min | 0–10 min / 1 min | Delay after calculated wake time before bedside and standing lights turn on |
 | `input_number.motion_off_delay` | 2 min | 1–15 min / 1 min | Motion-light off delay |
@@ -220,8 +214,7 @@ gantt
     section Morning
     Living room morning preheat :active, 2026-10-28 06:00, 120m
     Office preheat starts :active, 2026-10-28 07:00, 540m
-    Alexa alarm and non-bedroom day volume :milestone, 2026-10-28 07:00, 0m
-    Bedroom Spotify volume ramp (10 min default) :active, 2026-10-28 07:00, 10m
+    Alexa alarm and day volume :milestone, 2026-10-28 07:00, 0m
     Bedroom wake lights (1 min delay) :milestone, 2026-10-28 07:01, 0m
     Morning pill reminder :milestone, 2026-10-28 07:45, 0m
     Shift-start announcement :milestone, 2026-10-28 07:55, 0m
@@ -247,7 +240,7 @@ Heating bars assume you are home and the relevant windows are closed. The office
 - Shelly TRV commands use retry scripts that poll for the requested temperature and repeat until the device reports the target. When a window is open, a separate monitor checks the affected radiator using the two helpers above. If the reported target remains above `window_open_temp` after the configured checks, Home Assistant sends an alert to the Samsung phone and through Telegram. These check helpers are not shown on the dashboard. Window sensors are optional inputs to the heat decision; a sensor that is unavailable is not a required gate.
 - Motion lighting keeps the kitchen and separate front/rear hallway zones on while motion is detected. A two-minute off delay is supplemented by the ten-minute hallway fail-safe.
 - `Home Leave - All` switches off the configured lights and non-workspace equipment while keeping PC/server and the protected workspace controls out of the away shutdown.
-- Echo volume drops at 22:00. When Alexa reports a bedroom alarm, the bedroom Echo starts at the configured wake volume and raises its volume in steps while new music is playing; other Echoes follow the existing day-volume rule. The regular bedroom volume is restored when the ramp ends if Sleep Mode is off. If no alarm is scheduled for that day, noon is the fallback. Sleep Mode keeps the night-volume behavior. Announcements use the configured announcement volume and are not part of the wake ramp.
+- Echo volume drops at 22:00. When Alexa reports the bedroom alarm, all Echo devices switch to configured day volume unless Sleep Mode is active. If no alarm is scheduled for that day, noon is the fallback. Sleep Mode keeps the night-volume behavior. Announcements use the configured announcement volume.
 - Spoken Alexa announcements use the shared output script and run only while `person.niwo` is `home`. When away or when presence is unknown, announcements are skipped before Echo volume or DND is changed; Alexa custom commands used for device control remain available.
 - The bedroom bedside and standing lights turn on after `wake_light_delay` (currently one minute after the calculated alarm time). Separately, the bedroom Echo display turns on 15 seconds after alarm dismissal.
 - Sleep Mode asks the office Echo to switch off the Popotan “Mückenlampe”; outside Sleep Mode it asks the same Echo to switch it on. The plug is controlled through Alexa custom commands rather than a native Home Assistant switch entity. The bedroom Echo display is switched off/on through Alexa commands around Sleep Mode and Home Assistant startup.

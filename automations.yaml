@@ -4235,7 +4235,7 @@
   mode: single
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
-  description: Lowers all Echo volumes at 22:00, applies daytime volume to non-bedroom Echos when the bedroom alarm rings, and uses noon when no alarm is scheduled for today. Bedroom alarm music uses its own gradual volume ramp.
+  description: Lowers all Echo volumes at 22:00, raises them when the bedroom Alexa alarm rings, and uses noon when no alarm is scheduled for today.
   triggers:
   - trigger: time
     id: quiet_22
@@ -4275,21 +4275,20 @@
     - conditions:
       - condition: trigger
         id: alexa_alarm
+      - condition: state
+        entity_id: input_boolean.sleep_mode_state
+        state: 'off'
       sequence:
-      - if:
-        - condition: state
-          entity_id: input_boolean.sleep_mode_state
-          state: 'off'
-        then:
-        - action: media_player.volume_set
-          target:
-            entity_id:
-            - media_player.arbeitszimmer
-            - media_player.kuche
-            - media_player.wohnzimmer
-            - media_player.badezimmer
-          data:
-            volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+      - action: media_player.volume_set
+        target:
+          entity_id:
+          - media_player.schlafzimmer
+          - media_player.arbeitszimmer
+          - media_player.kuche
+          - media_player.wohnzimmer
+          - media_player.badezimmer
+        data:
+          volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
     - conditions:
       - condition: trigger
         id: fallback_noon
@@ -4330,6 +4329,7 @@
       - action: media_player.volume_set
         target:
           entity_id:
+          - media_player.schlafzimmer
           - media_player.arbeitszimmer
           - media_player.kuche
           - media_player.wohnzimmer
@@ -4344,72 +4344,7 @@
             {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
             {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
             {{ day_volume if scheduled_day else night_volume }}
-      - if:
-        - condition: state
-          entity_id: script.echo_spotify_wake_volume_ramp
-          state: 'off'
-        then:
-        - action: media_player.volume_set
-          target:
-            entity_id: media_player.schlafzimmer
-          data:
-            volume_level: >-
-              {% set quiet_time = today_at(states('input_datetime.echo_quiet_time')) %}
-              {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
-              {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
-              {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
-              {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
-              {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
-              {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
-              {{ day_volume if scheduled_day else night_volume }}
   mode: single
-- id: calendar_shifts_echo_spotify_wake_volume_ramp
-  alias: Calendar - Shifts - Echo Spotify wake volume ramp
-  description: Starts the bedroom Echo at the configured wake volume and gradually raises new music playback when Alexa's next-alarm sensor fires.
-  triggers:
-  - trigger: time
-    at: sensor.schlafzimmer_next_alarm
-  actions:
-  - variables:
-      previous_media_id: "{{ state_attr('media_player.schlafzimmer', 'media_content_id') | string }}"
-      previous_media_title: "{{ state_attr('media_player.schlafzimmer', 'media_title') | string }}"
-  - action: media_player.volume_set
-    target:
-      entity_id: media_player.schlafzimmer
-    data:
-      volume_level: '{{ (states(''input_number.echo_wake_start_volume'') | float(1)) / 10 }}'
-  - action: script.echo_spotify_wake_volume_ramp
-    data:
-      previous_media_id: '{{ previous_media_id }}'
-      previous_media_title: '{{ previous_media_title }}'
-  mode: single
-- id: calendar_shifts_echo_restore_volume_after_wake_ramp
-  alias: Calendar - Shifts - Restore Echo volume after wake ramp
-  description: Restores the scheduled bedroom Echo volume after the wake-music ramp ends, unless Sleep Mode is still active.
-  triggers:
-  - trigger: state
-    entity_id: script.echo_spotify_wake_volume_ramp
-    from: 'on'
-    to: 'off'
-  conditions:
-  - condition: state
-    entity_id: input_boolean.sleep_mode_state
-    state: 'off'
-  actions:
-  - action: media_player.volume_set
-    target:
-      entity_id: media_player.schlafzimmer
-    data:
-      volume_level: >-
-        {% set quiet_time = today_at(states('input_datetime.echo_quiet_time')) %}
-        {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
-        {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
-        {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
-        {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
-        {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
-        {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
-        {{ day_volume if scheduled_day else night_volume }}
-  mode: restart
 - id: calendar_shifts_freischicht_dynamic_heating
   alias: Calendar - Shifts - Freischicht-Heizzeiten
   initial_state: false
