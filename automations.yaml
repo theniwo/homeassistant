@@ -2619,7 +2619,7 @@
   max: 10
 - id: '1791378679790'
   alias: Calendar - Shifts - Alexa Bluetooth disconnect
-  description: Disconnects before the planned alarm or fixed time, or after Sleep Mode is enabled manually or by the calendar.
+  description: Disconnects before the planned alarm or fixed time, or after Sleep Mode is enabled; reconnecting the configured phone restarts the Sleep Mode delay.
   triggers:
   - trigger: time_pattern
     seconds: /1
@@ -2634,13 +2634,20 @@
     from: 'on'
     to: 'off'
     id: sleep_mode_off
+  - trigger: template
+    id: bt_phone_reconnected
+    value_template: >-
+      {{ is_state('input_boolean.sleep_mode_state', 'on')
+         and is_state('input_select.bt_disconnect_mode', 'Zum Schlafen')
+         and (states('input_text.bt_phone_source') | trim) not in ['', 'unknown', 'unavailable']
+         and state_attr('media_player.schlafzimmer', 'source') == (states('input_text.bt_phone_source') | trim) }}
   conditions:
   - condition: template
     value_template: "{{ trigger.id == 'sleep_mode_off' or not is_state('input_select.work_schedule_mode', 'Krank') }}"
   - condition: template
     value_template: >-
       {% set mode = states('input_select.bt_disconnect_mode') %}
-      {% if trigger.id == 'sleep_mode_on' %}
+      {% if trigger.id in ['sleep_mode_on', 'bt_phone_reconnected'] %}
         {{ mode == 'Zum Schlafen' }}
       {% elif trigger.id == 'sleep_mode_off' %}
         true
@@ -2670,8 +2677,8 @@
       sequence:
       - stop: Sleep Mode was disabled; cancel the pending Bluetooth disconnect.
     - conditions:
-      - condition: trigger
-        id: sleep_mode_on
+      - condition: template
+        value_template: "{{ trigger.id in ['sleep_mode_on', 'bt_phone_reconnected'] }}"
       sequence:
       - delay:
           seconds: "{{ (states('input_number.bt_sleep_disconnect_offset_hours') | float(1) * 3600) | int }}"
