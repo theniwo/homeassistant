@@ -4235,7 +4235,7 @@
   mode: single
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
-  description: Lowers all Echo volumes at 22:00, raises them when the bedroom Alexa alarm rings, and uses noon when no alarm is scheduled for today.
+  description: Applies day volume at the bedroom alarm when Sleep Mode is off or after the alarm is dismissed, and uses noon as the no-alarm fallback.
   triggers:
   - trigger: time
     id: quiet_22
@@ -4340,7 +4340,8 @@
             {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
             {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
             {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
-            {% set scheduled_day = (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
+            {% set alarm_has_passed = is_state("sensor.alexa_wecker_status", "Weckerzeit vorbei") %}
+            {% set scheduled_day = alarm_has_passed or (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
             {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
             {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
             {{ day_volume if scheduled_day else night_volume }}
