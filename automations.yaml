@@ -1894,7 +1894,7 @@
   mode: single
 - id: '1761790107591'
   alias: Licht Ein/Aus - Flur
-  description: The short off button turns off the hallway lights and both kitchen Shelly outputs.
+  description: ''
   trigger:
   - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
     domain: zha
@@ -1927,11 +1927,6 @@
         target:
           area_id: flur
         data: {}
-      - service: switch.turn_off
-        target:
-          entity_id:
-          - switch.deckenlicht_kuche_switch_0
-          - switch.deckenlicht_kuche_switch_1
   mode: single
 - id: '1761790944649'
   alias: Licht Ein/Aus - Alle
