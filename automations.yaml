@@ -1930,7 +1930,7 @@
   mode: single
 - id: '1761790944649'
   alias: Licht Ein/Aus - Alle
-  description: The right button turns off the area lights and configured Shelly relay outputs by their current entity IDs.
+  description: Both buttons control every available light entity and the current Shelly relay outputs for the ceiling lights, extractor hood, and LED controller.
   trigger:
   - device_id: 5e5597a5ae88e29eea797ae5db61dcb1
     domain: zha
@@ -1946,6 +1946,8 @@
     id: left
   condition: []
   action:
+  - variables:
+      available_apartment_lights: "{{ states.light | rejectattr('state', 'eq', 'unavailable') | map(attribute='entity_id') | list }}"
   - choose:
     - conditions:
       - condition: trigger
@@ -1954,22 +1956,21 @@
       sequence:
       - service: light.turn_on
         target:
-          area_id:
-          - flur
-          - arbeitszimmer
-          - esszimmer
-          - bedroom
-          - living_room
+          entity_id: "{{ available_apartment_lights }}"
         data: {}
+        continue_on_error: true
       - service: switch.turn_on
         target:
-          device_id:
-          - e5167606926273f55f80720480b43e08
-          - bfcf823a17869380e6a35e9f0098e411
-          - 2b41c51801b307be0bf73d4498484c00
-          - e97d3f653e6c5d09e90a92feafbd61a4
-          - 239283e625e56a02ed879f70ef7ab1f9
+          entity_id:
+          - switch.shellyplus1pm_80646fc77f7c_switch_0
+          - switch.deckenlicht_kuche_switch_0
+          - switch.deckenlicht_kuche_switch_1
+          - switch.shellyplus1pm_80646fc78098_switch_0
+          - switch.deckenlicht_wohnzimmer_switch_0
+          - switch.deckenlicht_wohnzimmer_switch_1
+          - switch.shellyplusplugs_a0a3b3e84e1c_switch_0
         data: {}
+        continue_on_error: true
       - delay:
           hours: 0
           minutes: 0
@@ -1977,9 +1978,10 @@
           milliseconds: 0
       - service: select.select_option
         target:
-          entity_id: light.wled
+          entity_id: select.wled_voreinstellung
         data:
           option: Weisses Licht
+        continue_on_error: true
     - conditions:
       - condition: trigger
         id:
@@ -1987,12 +1989,7 @@
       sequence:
       - service: light.turn_off
         target:
-          area_id:
-          - flur
-          - arbeitszimmer
-          - esszimmer
-          - bedroom
-          - living_room
+          entity_id: "{{ available_apartment_lights }}"
         data: {}
         continue_on_error: true
       - service: switch.turn_off
@@ -2006,7 +2003,7 @@
           - switch.deckenlicht_wohnzimmer_switch_1
           - switch.shellyplusplugs_a0a3b3e84e1c_switch_0
         continue_on_error: true
-  mode: single
+  mode: restart
 - id: '1761791451254'
   alias: Licht Dim Up & Down - Flur
   description: ''
