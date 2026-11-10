@@ -3,6 +3,7 @@
 !.gitignore
 !README.md
 !README.de.md
+!CHANGELOG.md
 !configuration.yaml
 !automations.yaml
 !scripts.yaml
