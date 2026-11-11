@@ -1,0 +1,12 @@
+- type: button
+  name: Heute prüfen
+  icon: mdi:calendar-today
+  show_name: true
+  show_icon: true
+  tap_action:
+    action: call-service
+    service: automation.trigger
+    target:
+      entity_id: automation.calendar_shifts_today_status_panel
+    data:
+      skip_condition: true

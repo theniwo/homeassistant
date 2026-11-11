@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-11
+
+- 🐛 Fixed shift status summaries so Sick mode overrides overlapping shift titles, and added a dedicated **Heute prüfen** dashboard action that refreshes today's read-only calendar summary.
+
 ## 2026-11-10
 
 - 🐛 Fixed the hallway “All Off” action to target current Shelly relay entities directly, including both kitchen channels (ceiling light and extractor hood) and both living-room outputs.

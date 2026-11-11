@@ -92,6 +92,11 @@ shell_command:
     python3 /config/scripts/fritzbox_tam_control.py --enabled "{{ enabled }}"
 
 input_text:
+  today_shift_status:
+    name: Today shift status
+    max: 255
+    initial: "Status wird aktualisiert"
+    icon: mdi:calendar-today
   tomorrow_shift_status:
     name: Tomorrow shift status
     max: 255

@@ -5216,6 +5216,7 @@
       shift_titles: "{{ tomorrow_calendar.get('calendar.shifts', {}).get('events', [])
    | map(attribute='summary') | map('lower') | map('trim') | list }}"
       mode_is_sick: "{{ is_state('input_select.work_schedule_mode', 'Krank') }}"
+      sick_calendar_event: "{{ shift_titles | select('search', 'krank') | list | length > 0 }}"
       shift_label: >-
         {% if shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht
         {% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby
@@ -5245,18 +5246,88 @@
       entity_id: input_text.tomorrow_shift_status
     data:
       value: >-
-        {% if tomorrow_weekday | int >= 5 %}
+        {% if mode_is_sick | bool %}
+          Krank · kein Wecker
+        {% elif sick_calendar_event | bool %}
+          Krank im Kalender · Arbeitsmodus {{ states('input_select.work_schedule_mode') }}
+        {% elif tomorrow_weekday | int >= 5 %}
           Wochenende · kein Wecker
         {% elif (shift_label | trim) in ['4TW-Frei', 'Urlaub'] %}
           {{ shift_label | trim }} · kein Wecker
-        {% elif mode_is_sick | bool and (shift_label | trim) != 'Kein Schichteintrag' %}
-          {{ shift_label | trim }} · Krankmodus · kein Wecker
         {% elif (shift_label | trim) == 'Kein Schichteintrag' %}
           Kein Schichteintrag · kein Wecker
         {% elif not (alarm_is_planned | bool) %}
           {{ shift_label | trim }} · kein Wecker (Arbeitsmodus {{ states('input_select.work_schedule_mode') }})
         {% else %}
           {{ shift_label | trim }} · DND {{ dnd_display }} · Runterfahren {{ wind_down_display }} · Schlafenszeit {{ bedtime_display }} · Wecker {{ alarm_display }}
+        {% endif %}
+  mode: restart
+
+
+- id: calendar_shifts_today_status_panel
+  alias: Calendar - Shifts - Today status panel
+  description: Refreshes today's read-only schedule summary from the shift calendar.
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: startup
+  - trigger: time
+    at: "00:01:00"
+    id: daily_refresh
+  - trigger: state
+    entity_id: input_select.work_schedule_mode
+    id: schedule_mode_changed
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id: calendar.shifts
+  - delay:
+      seconds: 5
+  - variables:
+      today_start: '{{ today_at("00:00").isoformat() }}'
+      tomorrow_start: '{{ (today_at("00:00") + timedelta(days=1)).isoformat() }}'
+      today_weekday: '{{ today_at("00:00").weekday() }}'
+  - action: calendar.get_events
+    target:
+      entity_id: calendar.shifts
+    data:
+      start_date_time: '{{ today_start }}'
+      end_date_time: '{{ tomorrow_start }}'
+    response_variable: today_calendar
+  - variables:
+      shift_titles: "{{ today_calendar.get('calendar.shifts', {}).get('events', [])
+   | map(attribute='summary') | map('lower') | map('trim') | list }}"
+      mode_is_sick: "{{ is_state('input_select.work_schedule_mode', 'Krank') }}"
+      sick_calendar_event: "{{ shift_titles | select('search', 'krank') | list | length > 0 }}"
+      shift_label: >-
+        {% if shift_titles | select('search', 'früh') | list | length > 0 %}Frühschicht
+        {% elif shift_titles | select('search', 'support standby') | list | length > 0 %}Support Standby
+        {% elif shift_titles | select('search', 'freischicht') | list | length > 0 %}Freischicht
+        {% elif shift_titles | select('search', 'spät') | list | length > 0 %}Spätschicht
+        {% elif shift_titles | select('search', '4tw-frei') | list | length > 0 %}4TW-Frei
+        {% elif shift_titles | select('search', 'urlaub') | list | length > 0 %}Urlaub
+        {% else %}Kein Schichteintrag{% endif %}
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.today_shift_status
+    data:
+      value: >-
+        {% if mode_is_sick | bool %}
+          Krank · kein Wecker
+        {% elif sick_calendar_event | bool %}
+          Krank im Kalender · Arbeitsmodus {{ states('input_select.work_schedule_mode') }}
+        {% elif today_weekday | int >= 5 %}
+          Wochenende · kein Wecker
+        {% elif (shift_label | trim) in ['4TW-Frei', 'Urlaub'] %}
+          {{ shift_label | trim }} · kein Wecker
+        {% elif (shift_label | trim) == 'Kein Schichteintrag' %}
+          Kein Schichteintrag · kein Wecker
+        {% elif (shift_label | trim) == 'Frühschicht' %}
+          Frühschicht · {{ states('input_datetime.early_shift_start')[:5] }}–{{ states('input_datetime.early_shift_end')[:5] }}
+        {% elif (shift_label | trim) == 'Spätschicht' %}
+          Spätschicht · {{ states('input_datetime.late_shift_start')[:5] }}–{{ states('input_datetime.late_shift_end')[:5] }}
+        {% else %}
+          {{ shift_label | trim }} · {{ states('input_datetime.free_shift_start')[:5] }}
         {% endif %}
   mode: restart
 
