@@ -252,6 +252,10 @@ Die Krank-Tablettenerinnerung liest `input_number.sick_pill_offset` und verwende
 
 ## Prüfung und Vibe-Coding-Hinweis
 
-YAML-Änderungen sollten vor dem Neuladen mit der Home-Assistant-Konfigurationsprüfung validiert werden. Änderungen an Live-Geräten sollten außerdem anhand des HA-Zustands und des physischen Geräts geprüft werden.
+Prüfe YAML-Änderungen vor dem Neuladen mit der Home-Assistant-Konfigurationsprüfung. Kontrolliere Änderungen an Live-Geräten zusätzlich anhand des HA-Zustands und der tatsächlichen Reaktion des Geräts.
 
-**Vibe-Coding-Hinweis:** Dieses Projekt wurde schrittweise mit KI-gestütztem Programmieren und menschlicher Steuerung entwickelt. Generiertes YAML und Erklärungen können weiterhin Fehler enthalten. Änderungen prüfen, die Home-Assistant-Konfiguration validieren und Geräteverhalten kontrollieren, bevor man sich auf neue Automationen verlässt. Dieses Repository ist eine persönliche Konfiguration und kein allgemeines Home-Assistant-Paket.
+**Vibe-Coding-Hinweis:** Dieses Projekt entstand mit menschlicher Steuerung, KI-Unterstützung und einer nicht ganz kleinen Prise digitalem Voodoo. Die KI kann überzeugend formatierten Unsinn erzeugen; Menschen übersehen ihn gelegentlich trotzdem. Lies das YAML, prüfe die Home-Assistant-Konfiguration und beobachte, was die Geräte tatsächlich tun, bevor du dein Zuhause einer Automation anvertraust.
+
+Nutzung auf eigene Gefahr. Erstelle vorher ein Backup deiner Home-Assistant-Installation. API-Keys, Accounts und Desktop-Zugriffe bleiben unter deiner Kontrolle und gehören nicht blind in generierten Code. Keine Garantie, keine Haftung. Wenn etwas piept, heizt oder anderweitig improvisiert, prüfe erst Konfiguration und Gerät, bevor du den Kalender verdächtigst. Das hier ist eine persönliche Konfiguration und kein allgemeines Home-Assistant-Paket.
+
+**Kurz gesagt:** No warranty. No liability. Just vibes.

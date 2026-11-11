@@ -254,4 +254,8 @@ The sick-mode pill reminder reads `input_number.sick_pill_offset` and uses `inpu
 
 Validate YAML changes with Home Assistant's configuration check before reloading them. Changes to live devices should also be checked against Home Assistant state and the physical device response.
 
-**Vibe-coding disclaimer:** This project has been developed iteratively with AI-assisted coding and human direction. Generated YAML and explanations can still contain mistakes; review changes, run the Home Assistant configuration check, and verify device behavior before relying on a new automation. This repository is a personal configuration, not a general-purpose Home Assistant package.
+**Vibe-coding disclaimer:** This project was built with human direction, AI assistance, and a non-zero amount of digital voodoo. The AI can produce beautifully formatted nonsense, and the human can still miss it. Review the YAML, run the Home Assistant configuration check, and verify what the actual devices do before trusting an automation with your home.
+
+Use this configuration at your own risk. Back up your Home Assistant setup first. Keep API keys, accounts, and desktop access under your control; do not hand them to generated code on faith. There is no warranty and no liability. If something starts beeping, heating, or otherwise improvising, check the configuration and the device before blaming the calendar. This is a personal setup, not a general-purpose Home Assistant package.
+
+**Kurz gesagt:** No warranty. No liability. Just vibes.
