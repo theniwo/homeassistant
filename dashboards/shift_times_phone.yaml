@@ -11,6 +11,9 @@ entities:
   - entity: input_number.phone_handover_offset
   - type: section
     label: Work SIM mailbox
+  - entity: input_number.work_sim_voicemail_disable_lead
+    name: Mailbox off lead
+    icon: mdi:timer-outline
   - entity: input_number.work_sim_voicemail_prompt_timeout
     name: Mailbox prompt timeout
     icon: mdi:timer-outline

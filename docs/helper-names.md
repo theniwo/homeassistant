@@ -66,6 +66,7 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_datetime.phone_handover_time` | Phone handover time | Phone handover clock time |
 | `input_number.phone_handover_offset` | Phone handover delay | Delay after the handover clock time before announcements, minutes |
 | `input_number.work_sim_voicemail_prompt_timeout` | Work SIM voicemail prompt timeout | Minutes before the follow-up announcement; current value 10, range 1–30, step 1 |
+| `input_number.work_sim_voicemail_disable_lead` | Work SIM mailbox off lead | Lead before an early or late shift to prompt disabling immediate voicemail forwarding; default 3 minutes, range 0–10, step 1 |
 | `input_select.bt_disconnect_mode` | BT disconnect mode | Select alarm, bedtime, or fixed-time disconnect; starts as `Zum Schlafen` after Home Assistant restarts |
 | `input_number.bt_disconnect_offset` | BT alarm lead | Disconnect lead before the alarm, seconds |
 | `input_number.bt_sleep_disconnect_offset_hours` | BT sleep delay | Delay after bedtime before Echo Bluetooth disconnects, hours |

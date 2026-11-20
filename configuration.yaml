@@ -150,6 +150,15 @@ input_number:
     unit_of_measurement: min
     mode: slider
     icon: mdi:voicemail
+  work_sim_voicemail_disable_lead:
+    name: Work SIM mailbox off lead
+    min: 0
+    max: 10
+    step: 1
+    initial: 3
+    unit_of_measurement: min
+    mode: slider
+    icon: mdi:timer-outline
   bt_sleep_disconnect_offset_hours:
     name: BT sleep delay
     min: 0

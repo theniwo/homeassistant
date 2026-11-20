@@ -2244,7 +2244,7 @@
   mode: single
 - id: '1790775343784'
   alias: Calendar - Shifts - Samsung Work mode
-  description: Controls Samsung Work mode for early and late shifts; phone handover announcements are limited to those two shift types and never run for free shift or Support Standby.
+  description: Controls Samsung Work mode for early and late shifts and schedules the Work SIM mailbox-off prompt before shift start.
   triggers:
   - trigger: time
     at: input_datetime.early_shift_start
@@ -2252,6 +2252,22 @@
   - trigger: time
     at: input_datetime.late_shift_start
     id: late_start
+  - trigger: template
+    id: early_mailbox_off_lead
+    value_template: >-
+      {% set raw = states('input_datetime.early_shift_start') %}
+      {% set parts = raw.split(':') if raw not in ['unknown', 'unavailable', ''] else ['0', '0'] %}
+      {% set start = (parts[0] | int(0)) * 60 + (parts[1] | int(0)) %}
+      {% set lead = states('input_number.work_sim_voicemail_disable_lead') | int(3) %}
+      {{ raw not in ['unknown', 'unavailable', ''] and lead > 0 and now().hour * 60 + now().minute == (start - lead) % 1440 }}
+  - trigger: template
+    id: late_mailbox_off_lead
+    value_template: >-
+      {% set raw = states('input_datetime.late_shift_start') %}
+      {% set parts = raw.split(':') if raw not in ['unknown', 'unavailable', ''] else ['0', '0'] %}
+      {% set start = (parts[0] | int(0)) * 60 + (parts[1] | int(0)) %}
+      {% set lead = states('input_number.work_sim_voicemail_disable_lead') | int(3) %}
+      {{ raw not in ['unknown', 'unavailable', ''] and lead > 0 and now().hour * 60 + now().minute == (start - lead) % 1440 }}
   - trigger: time
     at: input_datetime.phone_handover_time
     id: phone_handover
@@ -2282,6 +2298,34 @@
   - choose:
     - conditions:
       - condition: trigger
+        id: early_mailbox_off_lead
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
+        value_template: "{{ (selected_shift | trim) == 'Frühschicht' }}"
+      - condition: state
+        entity_id: input_boolean.work_mode_state
+        state: 'off'
+      sequence:
+      - action: script.work_sim_voicemail_work_start_prompt
+        data:
+          lead_minutes: "{{ states('input_number.work_sim_voicemail_disable_lead') | int(3) }}"
+    - conditions:
+      - condition: trigger
+        id: late_mailbox_off_lead
+      - condition: template
+        value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: template
+        value_template: "{{ (selected_shift | trim) == 'Spätschicht' }}"
+      - condition: state
+        entity_id: input_boolean.work_mode_state
+        state: 'off'
+      sequence:
+      - action: script.work_sim_voicemail_work_start_prompt
+        data:
+          lead_minutes: "{{ states('input_number.work_sim_voicemail_disable_lead') | int(3) }}"
+    - conditions:
+      - condition: trigger
         id: early_start
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
@@ -2302,6 +2346,13 @@
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.work_mode_state
+      - if:
+        - condition: template
+          value_template: "{{ states('input_number.work_sim_voicemail_disable_lead') | int(3) == 0 }}"
+        then:
+        - action: script.work_sim_voicemail_work_start_prompt
+          data:
+            lead_minutes: 0
       - delay:
           minutes: '{{ states(''input_number.phone_handover_offset'') | int(5) }}'
       - delay: 00:00:01
@@ -2336,6 +2387,13 @@
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.work_mode_state
+      - if:
+        - condition: template
+          value_template: "{{ states('input_number.work_sim_voicemail_disable_lead') | int(3) == 0 }}"
+        then:
+        - action: script.work_sim_voicemail_work_start_prompt
+          data:
+            lead_minutes: 0
     - conditions:
       - condition: trigger
         id: phone_handover
@@ -4922,14 +4980,11 @@
   mode: single
 - id: calendar_shifts_work_sim_voicemail_prompt
   alias: Calendar - Shifts - Work SIM voicemail prompt
-  description: Announces the requested work SIM change and sends a timed Yes/No notification without a post-timeout Alexa announcement.
+  description: Prompts to enable the Work SIM voicemail when Work Mode ends; shift-start disable prompts run before the shift.
   triggers:
   - trigger: state
     entity_id: input_boolean.work_mode_state
-    to: 'on'
-    id: work_start
-  - trigger: state
-    entity_id: input_boolean.work_mode_state
+    from: 'on'
     to: 'off'
     id: work_end
   actions:
@@ -4938,7 +4993,17 @@
       notification_title: "{{ 'Arbeitsbeginn: Mobilbox-Weiterleitung aus?' if trigger.id == 'work_start' else 'Feierabend: Mobilbox sofort aktivieren?' }}"
       notification_message: "{{ 'Die Arbeits-SIM soll wieder normal klingeln. Ja öffnet den Wähler mit ##21#.' if trigger.id == 'work_start' else 'Anrufe auf die Arbeits-SIM sollen sofort zur Mobilbox. Ja öffnet den Wähler mit **21*3311*11#.' }}"
       dialer_uri: "{{ 'deep-link://tel:%23%2321%23' if trigger.id == 'work_start' else 'deep-link://tel:**21*3311*11%23' }}"
-      initial_announcement: "{{ 'Work Mode ist aktiv. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM aus. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' if trigger.id == 'work_start' else 'Work Mode ist beendet. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM ein. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' }}"
+      initial_announcement: "{{ 'Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM aus. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' if trigger.id == 'work_start' else 'Work Mode ist beendet. Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM ein. Du hast ' ~ timeout_minutes ~ ' Minuten Zeit.' }}"
+  - condition: template
+    value_template: >-
+      {{ (trigger.id == 'work_start'
+          and trigger.from_state is not none
+          and trigger.from_state.state == 'off'
+          and is_state('input_boolean.work_mode_state', 'on'))
+         or (trigger.id == 'work_end'
+          and trigger.from_state is not none
+          and trigger.from_state.state == 'on'
+          and is_state('input_boolean.work_mode_state', 'off')) }}
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce

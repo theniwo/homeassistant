@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-20
+
+- ✨ Added a configurable 0–10 minute lead for the Work SIM voicemail-off prompt before early and late shifts; the default is three minutes and the helper is available in the Home dashboard.
+
 ## 2026-11-11
 
 - 🐛 Fixed shift status summaries so Sick mode overrides overlapping shift titles, and added a dedicated **Heute prüfen** dashboard action that refreshes today's read-only calendar summary.

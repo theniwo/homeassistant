@@ -555,6 +555,43 @@ work_sim_voicemail_disable_prompt:
           uri: deep-link://tel:%23%2321%23
         - action: NO
           title: Abbrechen
+work_sim_voicemail_work_start_prompt:
+  alias: Work SIM - Prompt before shift start
+  description: Announces the upcoming shift start and sends the timed phone prompt to disable immediate voicemail forwarding.
+  icon: mdi:voicemail
+  mode: single
+  fields:
+    lead_minutes:
+      name: Lead minutes
+      description: Minutes remaining until the scheduled shift start; omitted for manual Work Mode starts.
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          unit_of_measurement: min
+  variables:
+    timeout_minutes: "{{ states('input_number.work_sim_voicemail_prompt_timeout') | int(10) }}"
+  sequence:
+  - action: script.alexa_output_with_configured_volume
+    data:
+      output_type: announce
+      output_target: media_player.uberall
+      volume_targets:
+      - media_player.schlafzimmer
+      - media_player.arbeitszimmer
+      - media_player.kuche
+      - media_player.wohnzimmer
+      - media_player.badezimmer
+      message: >-
+        {% if lead_minutes is defined %}
+          {% set lead = lead_minutes | int(0) %}
+          {% if lead > 0 %}In {{ lead }} Minuten beginnt deine Schicht. {% else %}Deine Schicht beginnt jetzt. {% endif %}
+        {% endif %}
+        Bitte schalte die sofortige Mobilbox-Weiterleitung für die Arbeits-SIM aus. Du hast {{ timeout_minutes }} Minuten Zeit.
+  - action: script.work_sim_voicemail_disable_prompt
+
 master_dnd_override_on:
   alias: Master DND override ON
   sequence:
@@ -609,6 +646,7 @@ work_mode_toggle:
     - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.work_mode_state
+    - action: script.work_sim_voicemail_work_start_prompt
 sleep_mode_now:
   alias: Sleep Mode jetzt
   description: Activates Sleep Mode components without a voice announcement, only while person.niwo is home.
