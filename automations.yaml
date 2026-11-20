@@ -2475,7 +2475,7 @@
   mode: single
 - id: '1791356584531'
   alias: Calendar - Shifts - Samsung Sleep mode
-  description: Coordinates Samsung Sleep mode and Snom DND with calendar shifts, checking actual phone DND state to avoid toggling manual choices.
+  description: Coordinates calendar Sleep Mode and Snom DND; Sleep Mode activates only while person.niwo is home.
   triggers:
   - trigger: template
     id: early_sleep_on
@@ -2579,6 +2579,9 @@
         value_template: '{{ trigger.id in [''early_sleep_on'', ''late_sleep_on'', ''free_sleep_on''] and (shift_found | bool) }}'
       - condition: template
         value_template: "{{ not is_state('input_select.work_schedule_mode', 'Krank') }}"
+      - condition: state
+        entity_id: person.niwo
+        state: home
       - condition: state
         entity_id: input_boolean.sleep_mode_state
         state: 'off'
@@ -4121,74 +4124,28 @@
   mode: single
 - id: calendar_shifts_echo_clock_display
   alias: Calendar - Shifts - Bedroom wake lights
-  description: Turns on the bedside and standing lamps during the calculated wake window for shifts and eligible free weekdays.
+  description: Turns on the bedside and standing lamps after the bedroom Alexa alarm is dismissed, with a configurable delay.
   triggers:
-  - trigger: template
-    id: early_wake
-    value_template: '{% set t = states(''input_datetime.early_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
-  - trigger: template
-    id: late_wake
-    value_template: '{% set t = states(''input_datetime.late_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
-  - trigger: template
-    id: free_wake
-    value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set lead = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ now().hour * 60 + now().minute == (start - lead) % 1440 }}'
+  - trigger: event
+    event_type: alexa_media_alarm_dismissal_event
   actions:
   - variables:
-      shift_start_entity: '{{ ''input_datetime.early_shift_start'' if trigger.id.startswith(''early_'') else (''input_datetime.late_shift_start'' if trigger.id.startswith(''late_'') else ''input_datetime.free_shift_start'') }}'
-      shift_day_offset: '{% set t = states(shift_start_entity).split('':'') %} {% set start = (t[0] | int) * 60 + (t[1] | int) %} {% set alarm = (states(''input_number.alarm_offset'') | float(0) * 60) | int %} {{ 1 if start - alarm < 0 else 0 }}'
-  - action: calendar.get_events
-    target:
-      entity_id: calendar.shifts
-    data:
-      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
-      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
-    response_variable: shift_calendar
-  - action: calendar.get_events
-    target:
-      entity_id: calendar.deutschland_by
-    data:
-      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
-      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
-    response_variable: holiday_calendar
-  - action: calendar.get_events
-    target:
-      entity_id: calendar.feiertage_in_deutschland
-    data:
-      start_date_time: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).isoformat() }}'
-      end_date_time: '{{ (today_at(''00:00'') + timedelta(days=(shift_day_offset | int) + 1)).isoformat() }}'
-    response_variable: regional_holiday_calendar
-  - variables:
-      shift_events: '{{ shift_calendar.get(''calendar.shifts'', {}).get(''events'', []) }}'
-      holiday_events: '{{ holiday_calendar.get(''calendar.deutschland_by'', {}).get(''events'', []) }}'
-      regional_holiday_events: '{{ regional_holiday_calendar.get(''calendar.feiertage_in_deutschland'', {}).get(''events'', []) | map(attribute=''summary'') | map(''lower'') | select(''search'', ''mariä himmelfahrt'') | list }}'
-      titles: '{{ shift_events | map(attribute=''summary'') | map(''lower'') | map(''trim'') | list }}'
-      work_shift_found: >-
-        {% set event_titles = shift_events | map(attribute='summary') | map('lower') | map('trim') | list %}
-        {% if event_titles | select('search', 'früh') | list | length > 0 %}
-          {{ trigger.id.startswith('early_') }}
-        {% elif event_titles | select('search', 'support standby') | list | length > 0 %}
-          {{ trigger.id.startswith('free_') }}
-        {% elif event_titles | select('search', 'freischicht') | list | length > 0 %}
-          {{ trigger.id.startswith('free_') }}
-        {% elif event_titles | select('search', 'spät') | list | length > 0 %}
-          {{ trigger.id.startswith('late_') }}
-        {% else %}
-          false
-        {% endif %}
+      bedroom_serial: "{{ device_attr(device_id('media_player.schlafzimmer'), 'serial_number') }}"
+      dismissed_serial: "{{ trigger.event.data.get('device', {}).get('id', '') }}"
+      alarm_event: "{{ trigger.event.data.get('event', {}) }}"
   - condition: template
-    value_template: '{{ (today_at(''00:00'') + timedelta(days=shift_day_offset | int)).weekday() < 5 and work_shift_found | bool and not is_state(''input_select.work_schedule_mode'', ''Krank'') }}'
-  - if:
-    - condition: template
-      value_template: '{{ trigger.id.endswith(''_wake'') }}'
-    then:
-    - delay:
-        minutes: '{{ states(''input_number.wake_light_delay'') | int(1) }}'
-    - action: light.turn_on
-      target:
-        entity_id:
-        - light.nachttischlampe_licht
-        - light.stehlampe_schlafzimmer_licht
-      continue_on_error: true
+    value_template: >-
+      {{ bedroom_serial not in [none, '', 'unknown']
+         and dismissed_serial == bedroom_serial
+         and alarm_event.get('snoozedToTime') is none }}
+  - delay:
+      minutes: "{{ states('input_number.wake_light_delay') | int(1) }}"
+  - action: light.turn_on
+    target:
+      entity_id:
+      - light.nachttischlampe_licht
+      - light.stehlampe_schlafzimmer_licht
+    continue_on_error: true
   mode: single
 - id: calendar_shifts_sleep_mode_end_after_alarm_dismissal
   alias: Calendar - Shifts - End Sleep mode after alarm dismissal

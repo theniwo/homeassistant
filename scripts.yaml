@@ -611,12 +611,15 @@ work_mode_toggle:
         entity_id: input_boolean.work_mode_state
 sleep_mode_now:
   alias: Sleep Mode jetzt
-  description: Activates Samsung Sleep mode, Snom DND, FRITZ!Box answering machines, sleep heating, and the bedroom display state without a voice announcement.
+  description: Activates Sleep Mode components without a voice announcement, only while person.niwo is home.
   mode: single
   sequence:
   - condition: state
     entity_id: input_boolean.sleep_mode_state
     state: 'off'
+  - condition: state
+    entity_id: person.niwo
+    state: home
   - action: notify.mobile_app_sm_s931b
     data:
       message: command_activity
