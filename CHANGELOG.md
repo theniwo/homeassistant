@@ -2,6 +2,7 @@
 
 ## 2026-11-21
 
+- 🐛 The tomorrow overview now retains the scheduled shift label while marking Sick mode as suppressing the alarm.
 - 🐛 Suppressed shift-start and morning pill announcements when Samsung Work Mode is already active.
 - 🐛 Work-Mode-only DND now stays on the Snom; Samsung follows scheduled or global DND and Sleep Mode without inheriting the Work Mode request.
 

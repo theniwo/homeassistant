@@ -5279,14 +5279,16 @@
       entity_id: input_text.tomorrow_shift_status
     data:
       value: >-
-        {% if mode_is_sick | bool %}
-          Krank · kein Wecker
-        {% elif sick_calendar_event | bool %}
-          Krank im Kalender · Arbeitsmodus {{ states('input_select.work_schedule_mode') }}
-        {% elif tomorrow_weekday | int >= 5 %}
+        {% if tomorrow_weekday | int >= 5 %}
           Wochenende · kein Wecker
         {% elif (shift_label | trim) in ['4TW-Frei', 'Urlaub'] %}
           {{ shift_label | trim }} · kein Wecker
+        {% elif mode_is_sick | bool and (shift_label | trim) != 'Kein Schichteintrag' %}
+          {{ shift_label | trim }} · Krankmodus · kein Wecker
+        {% elif mode_is_sick | bool %}
+          Krank · kein Wecker
+        {% elif sick_calendar_event | bool %}
+          Krank im Kalender · Arbeitsmodus {{ states('input_select.work_schedule_mode') }}
         {% elif (shift_label | trim) == 'Kein Schichteintrag' %}
           Kein Schichteintrag · kein Wecker
         {% elif not (alarm_is_planned | bool) %}
