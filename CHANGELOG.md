@@ -2,6 +2,7 @@
 
 ## 2026-11-21
 
+- 🐛 Suppressed shift-start and morning pill announcements when Samsung Work Mode is already active.
 - 🐛 Work-Mode-only DND now stays on the Snom; Samsung follows scheduled or global DND and Sleep Mode without inheriting the Work Mode request.
 
 ## 2026-11-20

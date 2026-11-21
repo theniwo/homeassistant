@@ -3873,7 +3873,7 @@
   mode: restart
 - id: calendar_shifts_pill_reminder_20261008
   alias: Calendar - Shifts - Pill reminder
-  description: Announces a pill reminder before a scheduled shift or free-shift calendar event.
+  description: Announces a morning pill reminder before a scheduled shift or free-shift event only while Samsung Work Mode is inactive.
   triggers:
   - trigger: template
     id: early_pill_reminder
@@ -3885,6 +3885,9 @@
     id: free_pill_reminder
     value_template: '{% set shift_start = states(''input_datetime.free_shift_start'').split('':'') %} {% set shift_minutes = (shift_start[0] | int) * 60 + (shift_start[1] | int) %} {% set pill_lead_minutes = ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) %} {{ now().hour * 60 + now().minute == (shift_minutes - pill_lead_minutes) % 1440 }}'
   actions:
+  - condition: state
+    entity_id: input_boolean.work_mode_state
+    state: 'off'
   - variables:
       shift_start_entity: "{% if trigger.id == 'early_pill_reminder' %}input_datetime.early_shift_start{% elif trigger.id == 'late_pill_reminder' %}input_datetime.late_shift_start{% else %}input_datetime.free_shift_start{% endif %}"
       pill_lead_minutes: '{{ ((states(''input_number.pill_morning_offset'') | float(0.25) * 60) | int) }}'
@@ -3921,6 +3924,9 @@
       spoken_schedule_name: "{% if trigger.id == 'early_pill_reminder' %}Deine Frühschicht{% elif trigger.id == 'late_pill_reminder' %}Deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}Dein Support Standby{% else %}Deine Freischicht{% endif %}"
   - condition: template
     value_template: '{{ shift_found | bool }}'
+  - condition: state
+    entity_id: input_boolean.work_mode_state
+    state: 'off'
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
@@ -4130,7 +4136,7 @@
   mode: single
 - id: calendar_shifts_shift_start_announcement
   alias: Calendar - Shifts - Schichtbeginn-Ansage
-  description: Announces five minutes before scheduled early, late, free-shift, or support-standby starts on all Echo devices.
+  description: Announces five minutes before scheduled shift starts on all Echo devices only while Samsung Work Mode is inactive.
   triggers:
   - trigger: template
     id: early_shift_start_announcement
@@ -4142,6 +4148,9 @@
     id: free_shift_start_announcement
     value_template: '{% set t = states(''input_datetime.free_shift_start'').split('':'') %} {% set start_minutes = (t[0] | int) * 60 + (t[1] | int) %} {{ now().hour * 60 + now().minute == (start_minutes - 5) % 1440 }}'
   actions:
+  - condition: state
+    entity_id: input_boolean.work_mode_state
+    state: 'off'
   - action: calendar.get_events
     target:
       entity_id: calendar.shifts
@@ -4167,7 +4176,7 @@
   - variables:
       spoken_shift_name: "{% if trigger.id == 'early_shift_start_announcement' %}deine Frühschicht{% elif trigger.id == 'late_shift_start_announcement' %}deine Spätschicht{% elif shift_calendar.get('calendar.shifts', {}).get('events', []) | map(attribute='summary') | map('lower') | select('search', 'support standby') | list | length > 0 %}dein Support Standby{% else %}deine Freischicht{% endif %}"
   - condition: template
-    value_template: "{{ now().weekday() < 5 and shift_found | bool and not is_state('input_select.work_schedule_mode', 'Krank') }}"
+    value_template: "{{ now().weekday() < 5 and shift_found | bool and not is_state('input_select.work_schedule_mode', 'Krank') and is_state('input_boolean.work_mode_state', 'off') }}"
   - action: script.alexa_output_with_configured_volume
     data:
       output_type: announce
