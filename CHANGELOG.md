@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-21
+
+- 🐛 Work-Mode-only DND now stays on the Snom; Samsung follows scheduled or global DND and Sleep Mode without inheriting the Work Mode request.
+
 ## 2026-11-20
 
 - ✨ Added a configurable 0–10 minute lead for the Work SIM voicemail-off prompt before early and late shifts; the default is three minutes and the helper is available in the Home dashboard.

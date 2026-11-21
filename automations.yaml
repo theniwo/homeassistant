@@ -4787,13 +4787,14 @@
   mode: single
 - id: calendar_shifts_phone_dnd_policy
   alias: Calendar - Shifts - Phone DND policies
-  description: Applies the Follow global, Force on, or Force off policy to Snom and Samsung S25 while leaving Echo DND independent.
+  description: Applies per-device DND policies. With Follow global, Samsung follows scheduled DND, Sleep Mode, and the master override but ignores the Snom-only Work Mode request.
   triggers:
   - trigger: state
     entity_id:
     - input_boolean.sleep_mode_state
     - input_boolean.dnd_override
     - input_boolean.snom_dnd_state
+    - input_boolean.work_mode_state
     - input_select.snom_dnd_policy
     - input_select.samsung_s25_dnd_policy
     - input_boolean.snom_dnd_status
@@ -4805,10 +4806,11 @@
   actions:
   - variables:
       global_dnd_requested: "{{ is_state('input_boolean.sleep_mode_state', 'on') or is_state('input_boolean.dnd_override', 'on') or is_state('input_boolean.snom_dnd_state', 'on') }}"
+      samsung_global_dnd_requested: "{{ is_state('input_boolean.sleep_mode_state', 'on') or is_state('input_boolean.dnd_override', 'on') or (is_state('input_boolean.snom_dnd_state', 'on') and is_state('input_boolean.work_mode_state', 'off')) }}"
       snom_policy: "{{ states('input_select.snom_dnd_policy') }}"
       samsung_policy: "{{ states('input_select.samsung_s25_dnd_policy') }}"
       snom_should_be_on: "{{ snom_policy == 'Force on' or (snom_policy == 'Follow global' and (global_dnd_requested | bool)) }}"
-      samsung_should_be_on: "{{ samsung_policy == 'Force on' or (samsung_policy == 'Follow global' and (global_dnd_requested | bool)) }}"
+      samsung_should_be_on: "{{ samsung_policy == 'Force on' or (samsung_policy == 'Follow global' and (samsung_global_dnd_requested | bool)) }}"
       samsung_actual_state: "{{ states('sensor.samsung_s25_sm_s931b_do_not_disturb_sensor') }}"
   - if:
     - condition: template
