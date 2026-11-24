@@ -193,3 +193,9 @@ input_datetime:
     has_date: false
     has_time: true
     icon: mdi:clock-outline
+  echo_quiet_end_time:
+    name: Echo quiet end
+    initial: "07:00"
+    has_date: false
+    has_time: true
+    icon: mdi:clock-outline

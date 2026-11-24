@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-24
+
+- 🐛 Echo announcements and volume scheduling now respect a configurable night window from 22:00 to 07:00 by default; the night level cannot be raised during it.
+
 ## 2026-11-21
 
 - 🐛 The tomorrow overview now retains the scheduled shift label while marking Sick mode as suppressing the alarm.

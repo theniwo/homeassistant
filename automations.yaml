@@ -4266,11 +4266,25 @@
   mode: single
 - id: calendar_shifts_echo_volume_schedule
   alias: Calendar - Shifts - Echo volume schedule
-  description: Applies day volume at the bedroom alarm when Sleep Mode is off or after the alarm is dismissed, and uses noon as the no-alarm fallback.
+  description: Keeps Echoes at night volume throughout the configured quiet window, then follows the alarm, Sleep Mode, and no-alarm fallback schedule.
   triggers:
+  - trigger: homeassistant
+    event: start
+    id: startup
   - trigger: time
     id: quiet_22
     at: input_datetime.echo_quiet_time
+  - trigger: time
+    id: quiet_end
+    at: input_datetime.echo_quiet_end_time
+  - trigger: state
+    entity_id:
+    - input_datetime.echo_quiet_time
+    - input_datetime.echo_quiet_end_time
+    - input_datetime.echo_fallback_time
+    - input_number.echo_day_volume
+    - input_number.echo_night_volume
+    id: volume_schedule_changed
   - trigger: time
     id: alexa_alarm
     at: sensor.schlafzimmer_next_alarm
@@ -4288,6 +4302,32 @@
     to: 'off'
     id: sleep_mode_off
   actions:
+  - variables:
+      day_volume: "{{ (states('input_number.echo_day_volume') | float(4.5)) / 10 }}"
+      night_volume: "{{ (states('input_number.echo_night_volume') | float(3)) / 10 }}"
+      quiet_hours: >-
+        {% set quiet_start_raw = states('input_datetime.echo_quiet_time') %}
+        {% set quiet_end_raw = states('input_datetime.echo_quiet_end_time') %}
+        {% set quiet_start = today_at(quiet_start_raw if quiet_start_raw not in ['unknown', 'unavailable', 'none', ''] else '22:00') %}
+        {% set quiet_end = today_at(quiet_end_raw if quiet_end_raw not in ['unknown', 'unavailable', 'none', ''] else '07:00') %}
+        {{ (quiet_start > quiet_end and (now() >= quiet_start or now() < quiet_end))
+           or (quiet_start < quiet_end and now() >= quiet_start and now() < quiet_end) }}
+      scheduled_volume: >-
+        {% set quiet_start_raw = states('input_datetime.echo_quiet_time') %}
+        {% set quiet_end_raw = states('input_datetime.echo_quiet_end_time') %}
+        {% set quiet_start = today_at(quiet_start_raw if quiet_start_raw not in ['unknown', 'unavailable', 'none', ''] else '22:00') %}
+        {% set quiet_end = today_at(quiet_end_raw if quiet_end_raw not in ['unknown', 'unavailable', 'none', ''] else '07:00') %}
+        {% set quiet_hours = (quiet_start > quiet_end and (now() >= quiet_start or now() < quiet_end))
+           or (quiet_start < quiet_end and now() >= quiet_start and now() < quiet_end) %}
+        {% set fallback_time_raw = states('input_datetime.echo_fallback_time') %}
+        {% set fallback_time = today_at(fallback_time_raw if fallback_time_raw not in ['unknown', 'unavailable', 'none', ''] else '12:00') %}
+        {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
+        {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
+        {% set alarm_has_passed = is_state('sensor.alexa_wecker_status', 'Weckerzeit vorbei') %}
+        {% set scheduled_day = alarm_has_passed or (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_start) %}
+        {% set day = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
+        {% set night = (states('input_number.echo_night_volume') | float(3)) / 10 %}
+        {{ night if quiet_hours or not scheduled_day else day }}
   - choose:
     - conditions:
       - condition: trigger
@@ -4302,7 +4342,7 @@
           - media_player.wohnzimmer
           - media_player.badezimmer
         data:
-          volume_level: '{{ (states(''input_number.echo_night_volume'') | float(2)) / 10 }}'
+          volume_level: '{{ night_volume }}'
     - conditions:
       - condition: trigger
         id: alexa_alarm
@@ -4319,7 +4359,7 @@
           - media_player.wohnzimmer
           - media_player.badezimmer
         data:
-          volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+          volume_level: '{{ night_volume if (quiet_hours | bool) else day_volume }}'
     - conditions:
       - condition: trigger
         id: fallback_noon
@@ -4338,7 +4378,7 @@
           - media_player.wohnzimmer
           - media_player.badezimmer
         data:
-          volume_level: '{{ (states(''input_number.echo_day_volume'') | float(4.5)) / 10 }}'
+          volume_level: '{{ scheduled_volume }}'
     - conditions:
       - condition: trigger
         id: sleep_mode_on
@@ -4352,10 +4392,14 @@
           - media_player.wohnzimmer
           - media_player.badezimmer
         data:
-          volume_level: '{{ (states(''input_number.echo_night_volume'') | float(3)) / 10 }}'
+          volume_level: '{{ night_volume }}'
     - conditions:
       - condition: trigger
-        id: sleep_mode_off
+        id:
+        - startup
+        - quiet_end
+        - volume_schedule_changed
+        - sleep_mode_off
       sequence:
       - action: media_player.volume_set
         target:
@@ -4366,16 +4410,7 @@
           - media_player.wohnzimmer
           - media_player.badezimmer
         data:
-          volume_level: >-
-            {% set quiet_time = today_at(states('input_datetime.echo_quiet_time')) %}
-            {% set fallback_time = today_at(states('input_datetime.echo_fallback_time')) %}
-            {% set next_alarm = states('sensor.schlafzimmer_next_alarm') | as_datetime(default=none) %}
-            {% set alarm_today = next_alarm is not none and next_alarm.date() == now().date() %}
-            {% set alarm_has_passed = is_state("sensor.alexa_wecker_status", "Weckerzeit vorbei") %}
-            {% set scheduled_day = alarm_has_passed or (alarm_today and now() >= next_alarm) or (not alarm_today and now() >= fallback_time and now() < quiet_time) %}
-            {% set day_volume = (states('input_number.echo_day_volume') | float(4.5)) / 10 %}
-            {% set night_volume = (states('input_number.echo_night_volume') | float(3)) / 10 %}
-            {{ day_volume if scheduled_day else night_volume }}
+          volume_level: '{{ night_volume if is_state("input_boolean.sleep_mode_state", "on") else scheduled_volume }}'
   mode: single
 - id: calendar_shifts_freischicht_dynamic_heating
   alias: Calendar - Shifts - Freischicht-Heizzeiten
