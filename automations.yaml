@@ -5530,7 +5530,7 @@
       event_type: alexa_media_voice_command
   actions:
     - variables:
-        voice_command: "{{ trigger.event.data.get('summary', '') | lower | trim }}"
+        voice_command: "{{ ((trigger.event.data.get('summary') or '') ~ ' ' ~ (trigger.event.data.get('response') or '')) | lower | trim }}"
         source_name: >-
           {% set entity_id = trigger.event.data.get('entity_id', '') %}
           {{ (state_attr(entity_id, 'friendly_name') if entity_id else none)

@@ -2,7 +2,7 @@
 
 ## 2026-11-25
 
-- ✨ Added a Samsung S25 warning when a spoken Alexa alarm-setting command specifies a time inside the configured Echo quiet hours; the warning names the Echo that heard it.
+- ✨ Added a Samsung S25 warning when a spoken Alexa alarm-setting command specifies a time inside the configured Echo quiet hours; it checks both transcript fields and names the Echo that heard it.
 
 ## 2026-11-24
 
