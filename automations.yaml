@@ -5521,3 +5521,100 @@
               then:
                 - action: script.bedroom_echo_bluetooth_connect
   mode: restart
+
+- id: alexa_manual_alarm_quiet_hours_warning
+  alias: Alexa - Alarm - Warn about manual night alarms
+  description: Warns the phone when Alexa hears a spoken alarm-setting command for a time inside the configured quiet hours.
+  triggers:
+    - trigger: event
+      event_type: alexa_media_voice_command
+  actions:
+    - variables:
+        voice_command: "{{ trigger.event.data.get('summary', '') | lower | trim }}"
+        source_name: >-
+          {% set entity_id = trigger.event.data.get('entity_id', '') %}
+          {{ (state_attr(entity_id, 'friendly_name') if entity_id else none)
+             or trigger.event.data.get('name') or 'unbekannter Echo' }}
+    - variables:
+        is_alarm_request: >-
+          {{ (('wecker' in voice_command or 'alarm' in voice_command)
+              and (voice_command | regex_search('(^|\\s)(stell\\w*|setz\\w*|set|creat\\w*|erstell\\w*|mach\\w*|schedule|programm\\w*)(\\s|$)')))
+             or 'weck mich' in voice_command or 'wake me' in voice_command }}
+        alarm_time_match: >-
+          {% set matches = voice_command | regex_findall('(?:um|gegen|auf|für|for|at)\\s+(?:[01]?\\d|2[0-3])(?::[0-5]\\d)?\\s*(?:uhr|a\\.?m\\.?|p\\.?m\\.?)?') %}
+          {{ matches[0] | trim if matches | length > 0 else '' }}
+    - condition: template
+      value_template: "{{ is_alarm_request | bool(false) and alarm_time_match | trim != '' }}"
+    - variables:
+        alarm_time: >-
+          {%- set parts = alarm_time_match | regex_findall('[0-9]+') -%}
+          {%- if parts | length > 0 -%}
+            {%- set raw_hour = parts[0] | int(0) -%}
+            {%- set minute = parts[1] | int(0) if parts | length > 1 else 0 -%}
+            {%- set phrase = alarm_time_match | lower -%}
+            {%- if 'pm' in phrase or 'p.m.' in phrase -%}
+              {%- set hour = (raw_hour % 12) + 12 -%}
+            {%- elif ('am' in phrase or 'a.m.' in phrase) and raw_hour == 12 -%}
+              {%- set hour = 0 -%}
+            {%- else -%}
+              {%- set hour = raw_hour -%}
+            {%- endif -%}
+            {{ '%02d:%02d' | format(hour, minute) }}
+          {%- else -%}
+            {{ '' }}
+          {%- endif -%}
+    - variables:
+        quiet_window_match: >-
+          {%- set start_state = states('input_datetime.echo_quiet_time') -%}
+          {%- set end_state = states('input_datetime.echo_quiet_end_time') -%}
+          {%- set alarm_parts = alarm_time.split(':') if alarm_time else [] -%}
+          {%- if start_state in ['unknown', 'unavailable', 'none', '']
+                or end_state in ['unknown', 'unavailable', 'none', '']
+                or alarm_parts | length < 2 -%}
+            false
+          {%- else -%}
+            {%- set start_parts = start_state.split(':') -%}
+            {%- set end_parts = end_state.split(':') -%}
+            {%- if start_parts | length < 2 or end_parts | length < 2 -%}
+              false
+            {%- else -%}
+              {%- set start_hour = start_parts[0] | int(-1) -%}
+              {%- set start_minute = start_parts[1] | int(-1) -%}
+              {%- set end_hour = end_parts[0] | int(-1) -%}
+              {%- set end_minute = end_parts[1] | int(-1) -%}
+              {%- set alarm_hour = alarm_parts[0] | int(-1) -%}
+              {%- set alarm_minute = alarm_parts[1] | int(-1) -%}
+              {%- if start_hour < 0 or start_hour > 23 or start_minute < 0 or start_minute > 59
+                    or end_hour < 0 or end_hour > 23 or end_minute < 0 or end_minute > 59
+                    or alarm_hour < 0 or alarm_hour > 23 or alarm_minute < 0 or alarm_minute > 59 -%}
+                false
+              {%- else -%}
+                {%- set start = start_hour * 60 + start_minute -%}
+                {%- set end = end_hour * 60 + end_minute -%}
+                {%- set alarm = alarm_hour * 60 + alarm_minute -%}
+                {%- if start == end -%}
+                  false
+                {%- elif start > end -%}
+                  {{ alarm >= start or alarm < end }}
+                {%- else -%}
+                  {{ start <= alarm < end }}
+                {%- endif -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endif -%}
+        quiet_start: >-
+          {% set parts = states('input_datetime.echo_quiet_time').split(':') %}
+          {{ '%02d:%02d' | format(parts[0] | int(0), parts[1] | int(0)) if parts | length > 1 else 'unbekannt' }}
+        quiet_end: >-
+          {% set parts = states('input_datetime.echo_quiet_end_time').split(':') %}
+          {{ '%02d:%02d' | format(parts[0] | int(0), parts[1] | int(0)) if parts | length > 1 else 'unbekannt' }}
+    - condition: template
+      value_template: "{{ quiet_window_match | trim | bool(false) }}"
+    - action: notify.mobile_app_sm_s931b
+      data:
+        title: Alexa-Wecker in der Nachtruhe
+        message: >-
+          Auf {{ source_name }} wurde ein Alexa-Sprachbefehl für einen Wecker um {{ alarm_time }} Uhr erkannt.
+          Diese Zeit liegt in deiner Nachtruhe ({{ quiet_start }}–{{ quiet_end }}). Bitte prüfe den Wecker.
+  mode: queued
+  max: 10

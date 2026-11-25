@@ -53,6 +53,12 @@ Der Sleep Mode bleibt aktiv, wenn der Alexa-Wecker zur geplanten Zeit zu klingel
 
 Alexa Media Player liefert ein Ereignis für das Beenden eines Weckers, aber keine verlässliche Angabe dazu, ob der Befehl per Sprache oder in einer App gegeben wurde. Im üblichen Ablauf löst „Alexa, Wecker aus“ die Automation aus; ein anderweitig beendeter Wecker im Schlafzimmer kann sie ebenfalls auslösen. Der Echo-Wecker muss beendet sein und darf nicht nur auf Snooze stehen.
 
+### Manuell gesprochene Alexa-Wecker während der Nachtruhe
+
+Die Automation `Alexa - Alarm - Warn about manual night alarms` hört auf das Ereignis `alexa_media_voice_command` von Alexa Media Player. Sie erkennt gesprochene Weckerbefehle mit numerischer Uhrzeit, vergleicht die Uhrzeit mit `input_datetime.echo_quiet_time` und `input_datetime.echo_quiet_end_time` und sendet bei einem Wecker innerhalb dieses Zeitraums eine Warnung an das S25. Die Meldung nennt den Echo, der den Befehl gehört hat. Zeiträume über Mitternacht werden berücksichtigt; der Beginn zählt dazu, das Ende nicht.
+
+Erfasst werden Sprachbefehle, die Alexa Media Player in der Sprachhistorie meldet. Ein ausschließlich in der Alexa-App angelegter Wecker, ein von Alexa nicht in der Sprachhistorie bereitgestellter Befehl oder ein nicht unterstütztes gesprochenes Zeitformat kann unentdeckt bleiben. Das Ereignis bestätigt, dass Alexa den Befehl gehört hat, nicht dass Amazon den Wecker angenommen oder gespeichert hat. Die Meldung fordert daher zur Prüfung des Weckers auf.
+
 ```mermaid
 flowchart LR
     A[Wecker klingelt] --> B[Sleep Mode bleibt aktiv]

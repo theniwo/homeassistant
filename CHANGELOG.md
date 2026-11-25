@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-25
+
+- ✨ Added a Samsung S25 warning when a spoken Alexa alarm-setting command specifies a time inside the configured Echo quiet hours; the warning names the Echo that heard it.
+
 ## 2026-11-24
 
 - 🐛 Echo announcements and volume scheduling now respect a configurable night window from 22:00 to 07:00 by default; the night level cannot be raised during it.

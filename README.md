@@ -53,6 +53,12 @@ Sleep Mode stays active when the Alexa alarm starts ringing at its scheduled tim
 
 Alexa Media Player reports that an alarm was dismissed, but does not reliably identify whether dismissal came from a voice command or an app. In the normal flow, “Alexa, stop the alarm” triggers this automation; dismissing the bedroom alarm another way can also trigger it. The alarm must be dismissed, not snoozed.
 
+### Manually spoken Alexa alarms during quiet hours
+
+The `Alexa - Alarm - Warn about manual night alarms` automation listens for Alexa Media Player's `alexa_media_voice_command` event. It recognizes spoken alarm-setting phrases with a numeric time, compares that time with `input_datetime.echo_quiet_time` and `input_datetime.echo_quiet_end_time`, and sends a warning to the S25 if the alarm falls inside that interval. The message includes the Echo that heard the command. The interval supports crossing midnight; its start is included and its end is excluded.
+
+This covers voice commands recorded by Alexa Media Player. An alarm created only in the Alexa app, a command Alexa does not expose in voice history, or a spoken time format the template cannot parse may not be detected. The event confirms that Alexa heard the command, not that Amazon accepted or saved the alarm, so the notification asks you to verify it.
+
 ```mermaid
 flowchart LR
     A[Alarm rings] --> B[Sleep Mode stays active]
