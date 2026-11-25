@@ -12,6 +12,9 @@ entities:
   - entity: input_datetime.echo_quiet_end
     name: Quiet hours end
     icon: mdi:weather-sunrise
+  - entity: input_boolean.alexa_alarm_quiet_override
+    name: Allow alarms during quiet hours
+    icon: mdi:alarm-check
   - entity: input_datetime.echo_fallback_time
   - entity: input_number.motion_off_delay
   - type: section

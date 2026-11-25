@@ -53,11 +53,13 @@ Sleep Mode stays active when the Alexa alarm starts ringing at its scheduled tim
 
 Alexa Media Player reports that an alarm was dismissed, but does not reliably identify whether dismissal came from a voice command or an app. In the normal flow, “Alexa, stop the alarm” triggers this automation; dismissing the bedroom alarm another way can also trigger it. The alarm must be dismissed, not snoozed.
 
-### Manually spoken Alexa alarms during quiet hours
+### Alexa alarms during quiet hours
 
-The `Alexa - Alarm - Warn about manual night alarms` automation listens for Alexa Media Player's `alexa_media_voice_command` event. It recognizes spoken alarm-setting phrases with a numeric time, compares that time with `input_datetime.echo_quiet_time` and `input_datetime.echo_quiet_end`, and sends a warning to the S25 if the alarm falls inside that interval. The message includes the Echo that heard the command. The interval supports crossing midnight; its start is included and its end is excluded.
+When a next-alarm sensor changes, `Alexa: Wecker in Sperrzeit blockieren (Universal)` checks its alarm time against `input_datetime.echo_quiet_time` and `input_datetime.echo_quiet_end`. If it falls inside the interval, the S25 first receives a notification with the time and the Echo that owns the alarm. Without an override, Home Assistant then sends the delete command to that Echo. This also catches alarms created in the Alexa app, provided Alexa Media Player updates the alarm sensor.
 
-This covers voice commands recorded by Alexa Media Player. An alarm created only in the Alexa app, a command Alexa does not expose in voice history, or a spoken time format the template cannot parse may not be detected. The event confirms that Alexa heard the command, not that Amazon accepted or saved the alarm, so the notification asks you to verify it.
+`input_boolean.alexa_alarm_quiet_override` temporarily allows alarms during quiet hours. When enabled, a detected alarm stays active and the phone reports that the override is on. The helper turns itself off when the configured quiet period ends; its state is restored across Home Assistant restarts until then. It is available in **Home 🏠 → Echo & Licht → Echo quiet hours**.
+
+The notification runs before deletion and does not depend on Alexa voice-history events. Alexa Media Player exposes text fields such as the voice-command summary and response, but no voice recording as an audio attachment. The existing deletion action is an Alexa custom command, not a spoken Home Assistant confirmation.
 
 ```mermaid
 flowchart LR
@@ -169,6 +171,7 @@ The full list of GUI helper names and purposes is in the [helper catalogue](docs
 | `input_text.samsung_work_mode_id` | `104` | Samsung Work Mode routine ID |
 | `input_text.samsung_sleep_mode_id` | `100` | Samsung Sleep Mode routine ID |
 | `input_text.bt_phone_source` | Paired phone source, set locally | Bluetooth source selected on the bedroom Echo |
+| `input_boolean.alexa_alarm_quiet_override` | `off` | Keeps alarms during quiet hours; resets automatically when quiet hours end |
 
 Boolean helpers such as `input_boolean.sleep_mode_state`, `input_boolean.work_mode_state`, `input_boolean.dnd_override`, and `input_boolean.enforce_sleep` are state markers or dashboard controls. Their state changes at runtime and is not a schedule setting.
 
@@ -249,7 +252,7 @@ Heating bars assume you are home and the relevant windows are closed. The office
 - Shelly TRV commands use retry scripts that poll for the requested temperature and repeat until the device reports the target. When a window is open, a separate monitor checks the affected radiator using the two helpers above. If the reported target remains above `window_open_temp` after the configured checks, Home Assistant sends an alert to the Samsung phone and through Telegram. These check helpers are not shown on the dashboard. Window sensors are optional inputs to the heat decision; a sensor that is unavailable is not a required gate.
 - Motion lighting keeps the kitchen and separate front/rear hallway zones on while motion is detected. A two-minute off delay is supplemented by the ten-minute hallway fail-safe. The hallway remote’s left “All On” button turns on all available Home Assistant light entities and the current Shelly lighting relays; the right “All Off” button turns them all off. The relay list includes both kitchen channels (ceiling light and extractor hood), the living- and bedroom-ceiling outputs, the office ceiling, and the LED controller. The WLED preset selection uses its actual `select.wled_voreinstellung` entity.
 - `Home Leave - All` switches off the configured lights and non-workspace equipment while keeping PC/server and the protected workspace controls out of the away shutdown.
-- At `echo_quiet_time` (22:00 by default), all Echoes switch to Night Volume through `echo_quiet_end_time` (07:00 by default). If the alarm or no-alarm fallback is later, announcements stay capped at `echo_night_volume` until that transition. The alarm, Sleep Mode, and volume-helper changes recalculate the schedule. The Home dashboard shows both editable quiet-hours times in Echo & Light; without an alarm, daytime volume returns at `echo_fallback_time` (12:00 by default).
+- At `echo_quiet_time` (22:00 by default), all Echoes switch to Night Volume through `echo_quiet_end` (07:00 by default). If the alarm or no-alarm fallback is later, announcements stay capped at `echo_night_volume` until that transition. The alarm, Sleep Mode, and volume-helper changes recalculate the schedule. The Home dashboard shows both editable quiet-hours times in Echo & Light; without an alarm, daytime volume returns at `echo_fallback_time` (12:00 by default).
 - Spoken Alexa announcements use the shared output script and run only while `person.niwo` is `home`. When away or when presence is unknown, announcements are skipped before Echo volume or DND is changed; Alexa custom commands used for device control remain available.
 - The bedroom bedside and standing lights turn on after `wake_light_delay` (currently one minute after the calculated alarm time). Separately, the bedroom Echo display turns on 15 seconds after alarm dismissal.
 - Sleep Mode asks the office Echo to switch off the Popotan “Mückenlampe”; outside Sleep Mode it asks the same Echo to switch it on. The plug is controlled through Alexa custom commands rather than a native Home Assistant switch entity. The bedroom Echo display is switched off/on through Alexa commands around Sleep Mode and Home Assistant startup.

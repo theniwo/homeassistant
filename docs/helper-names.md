@@ -80,7 +80,8 @@ GUI helper names use concise English labels. Temperature helpers use the room na
 | `input_number.echo_day_volume` | Echo day volume | Daytime volume on a 0–10 scale |
 | `input_number.echo_night_volume` | Echo night volume | Nighttime volume on a 0–10 scale |
 | `input_datetime.echo_quiet_time` | Echo quiet time | Start of quiet hours |
-| `input_datetime.echo_quiet_end_time` | Echo quiet end | End of quiet hours; default 07:00 |
+| `input_datetime.echo_quiet_end` | Echo quiet end | End of quiet hours; default 07:00 |
+| `input_boolean.alexa_alarm_quiet_override` | Alexa alarm quiet override | Allow detected Alexa alarms during quiet hours until the quiet period ends; shown on Home dashboard |
 | `input_datetime.echo_fallback_time` | Echo fallback time | Fallback time to restore volume |
 | `input_text.samsung_work_mode_id` | Samsung Work mode ID | Samsung routine identifier |
 | `input_text.samsung_sleep_mode_id` | Samsung Sleep mode ID | Samsung routine identifier |

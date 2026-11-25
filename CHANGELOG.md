@@ -2,7 +2,9 @@
 
 ## 2026-11-25
 
-- ✨ Added a Samsung S25 warning when a spoken Alexa alarm-setting command specifies a time inside the configured Echo quiet hours; it checks both transcript fields and names the Echo that heard it.
+- 🐛 Moved quiet-hours alarm detection to Alexa next-alarm sensor changes so the S25 is notified before Home Assistant sends the delete command, without depending on Alexa voice-history events.
+- ✨ Added a temporary dashboard override that preserves early alarms during quiet hours and resets when the configured quiet period ends.
+- 🐛 Aligned the repository helper key for the quiet-hours end with the live entity ID `input_datetime.echo_quiet_end`.
 - 🐛 Kept Echo announcements at Night Volume until the alarm or no-alarm fallback, in addition to the fixed quiet interval.
 - ✨ Grouped the editable quiet-hours start and end in the Home dashboard’s Echo & Light card.
 
