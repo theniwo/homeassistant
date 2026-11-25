@@ -4,8 +4,14 @@ entities:
   - entity: input_number.echo_day_volume
   - entity: input_number.echo_night_volume
   - entity: input_number.echo_announcement_volume
+  - type: section
+    label: Echo quiet hours
   - entity: input_datetime.echo_quiet_time
-  - entity: input_datetime.echo_quiet_end_time
+    name: Quiet hours start
+    icon: mdi:weather-night
+  - entity: input_datetime.echo_quiet_end
+    name: Quiet hours end
+    icon: mdi:weather-sunrise
   - entity: input_datetime.echo_fallback_time
   - entity: input_number.motion_off_delay
   - type: section

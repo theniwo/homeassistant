@@ -4276,11 +4276,11 @@
     at: input_datetime.echo_quiet_time
   - trigger: time
     id: quiet_end
-    at: input_datetime.echo_quiet_end_time
+    at: input_datetime.echo_quiet_end
   - trigger: state
     entity_id:
     - input_datetime.echo_quiet_time
-    - input_datetime.echo_quiet_end_time
+    - input_datetime.echo_quiet_end
     - input_datetime.echo_fallback_time
     - input_number.echo_day_volume
     - input_number.echo_night_volume
@@ -4307,14 +4307,14 @@
       night_volume: "{{ (states('input_number.echo_night_volume') | float(3)) / 10 }}"
       quiet_hours: >-
         {% set quiet_start_raw = states('input_datetime.echo_quiet_time') %}
-        {% set quiet_end_raw = states('input_datetime.echo_quiet_end_time') %}
+        {% set quiet_end_raw = states('input_datetime.echo_quiet_end') %}
         {% set quiet_start = today_at(quiet_start_raw if quiet_start_raw not in ['unknown', 'unavailable', 'none', ''] else '22:00') %}
         {% set quiet_end = today_at(quiet_end_raw if quiet_end_raw not in ['unknown', 'unavailable', 'none', ''] else '07:00') %}
         {{ (quiet_start > quiet_end and (now() >= quiet_start or now() < quiet_end))
            or (quiet_start < quiet_end and now() >= quiet_start and now() < quiet_end) }}
       scheduled_volume: >-
         {% set quiet_start_raw = states('input_datetime.echo_quiet_time') %}
-        {% set quiet_end_raw = states('input_datetime.echo_quiet_end_time') %}
+        {% set quiet_end_raw = states('input_datetime.echo_quiet_end') %}
         {% set quiet_start = today_at(quiet_start_raw if quiet_start_raw not in ['unknown', 'unavailable', 'none', ''] else '22:00') %}
         {% set quiet_end = today_at(quiet_end_raw if quiet_end_raw not in ['unknown', 'unavailable', 'none', ''] else '07:00') %}
         {% set quiet_hours = (quiet_start > quiet_end and (now() >= quiet_start or now() < quiet_end))
@@ -5566,7 +5566,7 @@
     - variables:
         quiet_window_match: >-
           {%- set start_state = states('input_datetime.echo_quiet_time') -%}
-          {%- set end_state = states('input_datetime.echo_quiet_end_time') -%}
+          {%- set end_state = states('input_datetime.echo_quiet_end') -%}
           {%- set alarm_parts = alarm_time.split(':') if alarm_time else [] -%}
           {%- if start_state in ['unknown', 'unavailable', 'none', '']
                 or end_state in ['unknown', 'unavailable', 'none', '']
@@ -5606,7 +5606,7 @@
           {% set parts = states('input_datetime.echo_quiet_time').split(':') %}
           {{ '%02d:%02d' | format(parts[0] | int(0), parts[1] | int(0)) if parts | length > 1 else 'unbekannt' }}
         quiet_end: >-
-          {% set parts = states('input_datetime.echo_quiet_end_time').split(':') %}
+          {% set parts = states('input_datetime.echo_quiet_end').split(':') %}
           {{ '%02d:%02d' | format(parts[0] | int(0), parts[1] | int(0)) if parts | length > 1 else 'unbekannt' }}
     - condition: template
       value_template: "{{ quiet_window_match | trim | bool(false) }}"

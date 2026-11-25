@@ -3,6 +3,8 @@
 ## 2026-11-25
 
 - ✨ Added a Samsung S25 warning when a spoken Alexa alarm-setting command specifies a time inside the configured Echo quiet hours; it checks both transcript fields and names the Echo that heard it.
+- 🐛 Kept Echo announcements at Night Volume until the alarm or no-alarm fallback, in addition to the fixed quiet interval.
+- ✨ Grouped the editable quiet-hours start and end in the Home dashboard’s Echo & Light card.
 
 ## 2026-11-24
 
